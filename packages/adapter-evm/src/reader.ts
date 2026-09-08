@@ -10,6 +10,8 @@
 import { zeroAddress, type AbiEvent, type Address, type PublicClient } from "viem";
 import type {
   AccountId,
+  ActionEligibility,
+  PoolAvailability,
   ActivityEntry,
   ActivityKind,
   ChainReader,
@@ -31,6 +33,7 @@ import { shieldReceiptNftAbi } from "./abis/shieldReceiptNft.js";
 import { splitRiskPoolAbi } from "./abis/splitRiskPool.js";
 import { splitRiskPoolFactoryAbi } from "./abis/splitRiskPoolFactory.js";
 import { decodePositionId, encodePositionId } from "./positionId.js";
+import { readSnapshot, SNAPSHOT_VALIDITY_SECONDS } from "./snapshot.js";
 
 const BPS = 10_000n;
 const ratioBps = (num: bigint, den: bigint): bigint | null => (den > 0n ? (num * BPS) / den : null);
@@ -79,6 +82,121 @@ export function netShieldAmount(
   const fees = rates.reduce((total, rate) => total + ceilDiv(ceilDiv(gain * rate, BPS) * scale, price), 0n);
   return fees >= amount ? 0n : amount - fees;
 }
+const openingPolicyAbi = [
+  {
+    type: "function",
+    name: "protectionOpeningEligibilityRequired",
+    inputs: [{ name: "token", type: "address" }],
+    outputs: [{ type: "bool" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "isProtectionOpeningAllowed",
+    inputs: [{ name: "token", type: "address" }],
+    outputs: [{ type: "bool" }],
+    stateMutability: "view",
+  },
+] as const;
+const ready = (): ActionEligibility => ({ state: "available", blockers: [] });
+const unavailable = (code: string, message: string, state: "blocked" | "unknown" = "blocked"): ActionEligibility => ({
+  state,
+  blockers: [{ code, message }],
+});
+const VIEW_VALIDITY_SECONDS = SNAPSHOT_VALIDITY_SECONDS;
+const MAX_DEPOSIT = (1n << 128n) - 1n;
+
+export type DepositCapacityInput = {
+  shieldedPrice: bigint;
+  backingPrice: bigint;
+  shieldedDecimals: number;
+  backingDecimals: number;
+  totalProtectorTokens: bigint;
+  totalShieldCollateralAmount: bigint;
+  totalValueAtDeposit: bigint;
+  trackedTvlUsd: bigint;
+  maxTvlUsd: bigint;
+  collateralRatioBps: bigint;
+  minDeposit: bigint;
+  maxDeposit: bigint;
+  totalProtectorShares?: bigint;
+};
+/** Exact integer predicates used by pool deposits, including both independent collateral constraints. */
+export function maximumDeposit(input: DepositCapacityInput, side: "shield" | "backing"): bigint {
+  const {
+    shieldedPrice,
+    backingPrice,
+    shieldedDecimals,
+    backingDecimals,
+    totalProtectorTokens,
+    totalShieldCollateralAmount,
+    totalValueAtDeposit,
+    trackedTvlUsd,
+    maxTvlUsd,
+    collateralRatioBps,
+    minDeposit,
+    maxDeposit,
+  } = input;
+  if (
+    backingPrice <= 0n ||
+    (side === "shield" && shieldedPrice <= 0n) ||
+    collateralRatioBps <= 0n ||
+    maxDeposit <= 0n ||
+    minDeposit < 0n ||
+    trackedTvlUsd >= maxTvlUsd
+  )
+    return 0n;
+  const shieldScale = 10n ** BigInt(shieldedDecimals),
+    backingScale = 10n ** BigInt(backingDecimals);
+  const value = (amount: bigint) =>
+    side === "shield" ? (amount * shieldedPrice) / shieldScale : (amount * backingPrice) / backingScale;
+  const nativeCap = (usd: bigint) => (ceilDiv(usd * collateralRatioBps, BPS) * backingScale) / backingPrice;
+  const protectorUsd = (totalProtectorTokens * backingPrice) / backingScale;
+  const existingShares = totalProtectorTokens === 0n ? 0n : (input.totalProtectorShares ?? 0n);
+  const mintedShares = (amount: bigint) =>
+    existingShares > 0n ? (amount * existingShares) / totalProtectorTokens : (amount * 10n ** 18n) / backingScale;
+  const fits = (amount: bigint) => {
+    const usd = value(amount);
+    return (
+      trackedTvlUsd + usd <= maxTvlUsd &&
+      (side === "backing"
+        ? input.totalProtectorShares === undefined || existingShares + mintedShares(amount) <= 10n ** 38n
+        : ceilDiv((totalValueAtDeposit + usd) * collateralRatioBps, BPS) <= protectorUsd &&
+          totalShieldCollateralAmount + nativeCap(usd) <= totalProtectorTokens)
+    );
+  };
+  let lo = 0n,
+    hi = maxDeposit < MAX_DEPOSIT ? maxDeposit : MAX_DEPOSIT;
+  while (lo < hi) {
+    const mid = (lo + hi + 1n) / 2n;
+    if (fits(mid)) lo = mid;
+    else hi = mid - 1n;
+  }
+  return lo < minDeposit ||
+    value(lo) === 0n ||
+    (side === "shield" && nativeCap(value(lo)) === 0n) ||
+    (side === "backing" && input.totalProtectorShares !== undefined && mintedShares(lo) === 0n)
+    ? 0n
+    : lo;
+}
+
+function simulationFailure(error: unknown): ActionEligibility {
+  let cause: unknown = error;
+  const seen = new Set<unknown>();
+  while (cause && typeof cause === "object" && !seen.has(cause)) {
+    seen.add(cause);
+    const e = cause as { name?: string; shortMessage?: string; cause?: unknown; data?: { errorName?: string } };
+    if (e.name === "ContractFunctionRevertedError" || e.data?.errorName)
+      return unavailable("preflight-failed", e.shortMessage ?? "The contract cannot execute this action now.");
+    cause = e.cause;
+  }
+  return unavailable(
+    "preflight-unavailable",
+    "Withdrawal checks are unavailable. Refresh before continuing.",
+    "unknown",
+  );
+}
+
 const closedSessionPriceAbi = [
   {
     type: "function",
@@ -191,9 +309,11 @@ export function createReader(client: PublicClient, deps: EvmReaderDeps): ChainRe
 
   return {
     async loadPools(): Promise<PoolData[]> {
-      const blockNumber = await client.getBlockNumber();
+      const snapshot = await readSnapshot(client, "Pool");
+      const block = snapshot.block;
+      const blockNumber = block.number;
       const pools = await allPools(blockNumber);
-      if (pools.length === 0) return [];
+      if (pools.length === 0) return snapshot.finish([]);
       const infos = await Promise.all(
         pools.map((address) =>
           client.readContract({ ...factory, functionName: "getPoolInfo", args: [address], blockNumber }),
@@ -236,11 +356,29 @@ export function createReader(client: PublicClient, deps: EvmReaderDeps): ChainRe
             { ...poolOracle, functionName: "isTokenChallengeable", args: [info.backingToken] },
             { ...poolOracle, functionName: "getPrice", args: [info.shieldedToken] },
             { ...poolOracle, functionName: "getPrice", args: [info.backingToken] },
+            { ...poolC(p), functionName: "poolState" },
+            { ...poolC(p), functionName: "totalShieldedTokens" },
+            { ...poolC(p), functionName: "requiresStrictProtectedBackingPrice" },
+            { ...poolC(p), functionName: "shieldedTokenTransferIntegrityBroken" },
+            { ...poolOracle, functionName: "getPriceWithStrictCircuitBreaker", args: [info.backingToken] },
+            {
+              address: config[9],
+              abi: openingPolicyAbi,
+              functionName: "protectionOpeningEligibilityRequired",
+              args: [info.shieldedToken],
+            },
+            {
+              address: config[9],
+              abi: openingPolicyAbi,
+              functionName: "isProtectionOpeningAllowed",
+              args: [info.shieldedToken],
+            },
+            { ...poolC(p), functionName: "totalProtectorShares" },
           ];
         }),
         blockNumber,
       );
-      const PER = 22;
+      const PER = 30;
 
       const nftAddrs = pools.map((_, i) => requireRead<Address>(perPool[i * PER + 8]));
       const nexts = await rawMulticall(
@@ -267,7 +405,7 @@ export function createReader(client: PublicClient, deps: EvmReaderDeps): ChainRe
         if (receiptOwner(countOwners[i])) counts[call.pool] = counts[call.pool]! + 1n;
       });
 
-      return pools.map((p, i): PoolData => {
+      const result = pools.map((p, i): PoolData => {
         const info = infos[i]!;
         const at = (j: number) => perPool[i * PER + j];
         const config = requireRead<
@@ -322,7 +460,88 @@ export function createReader(client: PublicClient, deps: EvmReaderDeps): ChainRe
         );
         const oracleHealth: PoolOracleHealth = { status, feeds, paused: status === "paused" };
 
-        const maxTvlUsd = config?.[4] ?? 0n;
+        const maxTvlUsd = config[4];
+        const poolState = ok<readonly [bigint, bigint]>(at(22));
+        const totalShielded = ok<bigint>(at(23));
+        const strict = ok<boolean>(at(24));
+        const shieldedPrice = ok<bigint>(at(20));
+        const backingPrice = strict === null ? null : ok<bigint>(at(strict ? 26 : 21));
+        const openingRequired = ok<boolean>(at(27));
+        const openingAllowed = ok<boolean>(at(28));
+        const transferBroken = ok<boolean>(at(25));
+        const totalProtectorShares = ok<bigint>(at(29));
+        const hasShieldExposure =
+          poolState === null || totalShielded === null
+            ? null
+            : poolState[0] !== 0n || totalShielded !== 0n || totalValueAtDeposit !== 0n || totalShieldCollateral !== 0n;
+        const trackedTvlUsd =
+          poolState !== null &&
+          backingPrice !== null &&
+          backingPrice > 0n &&
+          hasShieldExposure !== null &&
+          (!hasShieldExposure || (shieldedPrice !== null && shieldedPrice > 0n))
+            ? (hasShieldExposure ? (poolState[0] * shieldedPrice!) / 10n ** BigInt(shieldedDecimals) : 0n) +
+              (poolState[1] * backingPrice) / 10n ** BigInt(backingDecimals)
+            : null;
+        const capacityInput = {
+          shieldedPrice: shieldedPrice ?? 0n,
+          backingPrice: backingPrice ?? 0n,
+          shieldedDecimals,
+          backingDecimals,
+          totalProtectorTokens,
+          totalShieldCollateralAmount: totalShieldCollateral,
+          totalValueAtDeposit,
+          trackedTvlUsd: trackedTvlUsd ?? 0n,
+          maxTvlUsd,
+          collateralRatioBps: info.colleteralRatio,
+          totalProtectorShares: totalProtectorShares ?? undefined,
+        };
+        const maxShieldedDeposit =
+          trackedTvlUsd === null || shieldedPrice === null || shieldedPrice <= 0n
+            ? null
+            : maximumDeposit({ ...capacityInput, minDeposit: config[0], maxDeposit: config[1] }, "shield");
+        const maxBackingDeposit =
+          trackedTvlUsd === null || totalProtectorShares === null
+            ? null
+            : maximumDeposit({ ...capacityInput, minDeposit: config[2], maxDeposit: config[3] }, "backing");
+        const eligibility = (side: "shield" | "backing"): ActionEligibility => {
+          const blockers: ActionEligibility["blockers"] = [];
+          let unknown = false;
+          const add = (code: string, message: string, isUnknown = false) => {
+            blockers.push({ code, message });
+            unknown ||= isUnknown;
+          };
+          if (!active) add("pool-inactive", "This pool no longer accepts deposits.");
+          if (paused) add("pool-paused", "This pool is paused.");
+          if (side === "shield") {
+            if (openingRequired === null || (openingRequired && openingAllowed === null))
+              add("status-unknown", "Opening eligibility is unavailable.", true);
+            else if (openingRequired && !openingAllowed)
+              add("opening-unavailable", "New protection is unavailable under this asset's opening policy.");
+            if (transferBroken === null) add("status-unknown", "Token transfer checks are unavailable.", true);
+            else if (transferBroken) add("token-transfer-paused", "This token is paused for transfer checks.");
+          }
+          if (feeds[1]!.status === "paused" || backingPrice === null || backingPrice <= 0n)
+            add("price-unavailable", "Backing-token pricing is unavailable.", true);
+          if ((side === "shield" || hasShieldExposure !== false) && feeds[0]!.status === "paused")
+            add("price-unavailable", "Stock pricing is unavailable.", true);
+          const capacity = side === "shield" ? maxShieldedDeposit : maxBackingDeposit;
+          if (capacity === null) add("capacity-unavailable", "Pool capacity is unavailable.", true);
+          else if (capacity === 0n) add("capacity-exhausted", "This pool has no capacity for a valid deposit.");
+          if (accessControl !== zeroAddress)
+            add("account-restriction", "Connect a wallet to check this pool's account restrictions.", true);
+          return blockers.length ? { state: unknown ? "unknown" : "blocked", blockers } : ready();
+        };
+        const availability: PoolAvailability = {
+          blockNumber,
+          evaluatedAt: block.timestamp,
+          validUntil: block.timestamp + VIEW_VALIDITY_SECONDS,
+          openPosition: eligibility("shield"),
+          provideCollateral: eligibility("backing"),
+          maxShieldedDeposit,
+          maxBackingDeposit,
+          trackedTvlUsd,
+        };
         return {
           address: p,
           stats: {
@@ -339,7 +558,7 @@ export function createReader(client: PublicClient, deps: EvmReaderDeps): ChainRe
             utilizationBps: ratioBps(totalShieldCollateral, totalProtectorTokens),
             maxTvlUsd,
             shieldTvlUsd: totalValueAtDeposit,
-            capacityBps: maxTvlUsd > 0n ? clampBps((totalValueAtDeposit * BPS) / maxTvlUsd) : null,
+            capacityBps: maxTvlUsd > 0n && trackedTvlUsd !== null ? clampBps((trackedTvlUsd * BPS) / maxTvlUsd) : null,
             shieldedMinDeposit: config?.[0] ?? 0n,
             shieldedMaxDeposit: config?.[1] ?? 0n,
             backingMinDeposit: config?.[2] ?? 0n,
@@ -351,18 +570,20 @@ export function createReader(client: PublicClient, deps: EvmReaderDeps): ChainRe
           shielded,
           backing,
           oracle: oracleHealth,
+          availability,
         };
       });
+      return snapshot.finish(result);
     },
 
     async getOwnerPositions(owner: AccountId): Promise<OwnerPositions> {
       const user = owner as Address;
-      const block = await client.getBlock();
+      const snapshot = await readSnapshot(client, "Position");
+      const block = snapshot.block;
       const blockNumber = block.number;
-      if (blockNumber === null) throw new Error("On-chain data unavailable.");
       const now = block.timestamp;
       const pools = await allPools(blockNumber);
-      if (pools.length === 0) return { shield: [], protector: [] };
+      if (pools.length === 0) return snapshot.finish({ shield: [], protector: [] });
 
       const meta = await rawMulticall(
         client,
@@ -375,10 +596,11 @@ export function createReader(client: PublicClient, deps: EvmReaderDeps): ChainRe
           { ...poolC(p), functionName: "shieldedTokenDecimals" },
           { ...poolC(p), functionName: "COMMISSION_RATE" },
           { ...poolC(p), functionName: "POOL_FEE" },
+          { ...poolC(p), functionName: "shieldedTokenTransferIntegrityBroken" },
         ]),
         blockNumber,
       );
-      const M = 8;
+      const M = 9;
 
       type Side = {
         pool: Address;
@@ -391,6 +613,7 @@ export function createReader(client: PublicClient, deps: EvmReaderDeps): ChainRe
         decimals: number;
         oracle: Address;
         rates: readonly bigint[];
+        transferIntegrityBroken: boolean | null;
       };
       const sides: Side[] = [];
       pools.forEach((p, i) => {
@@ -407,13 +630,14 @@ export function createReader(client: PublicClient, deps: EvmReaderDeps): ChainRe
           decimals: requireRead<number>(meta[i * M + 5]),
           oracle: config[9],
           rates: [requireRead<bigint>(meta[i * M + 6]), requireRead<bigint>(meta[i * M + 7]), config[8]],
+          transferIntegrityBroken: ok<boolean>(meta[i * M + 8]),
         };
         const shieldNft = requireRead<Address>(meta[i * M + 1]);
         const protectorNft = requireRead<Address>(meta[i * M + 2]);
         if (cnt[0] > 0n) sides.push({ ...base, expectedCount: cnt[0], nft: shieldNft, kind: "shield" });
         if (cnt[1] > 0n) sides.push({ ...base, expectedCount: cnt[1], nft: protectorNft, kind: "protector" });
       });
-      if (sides.length === 0) return { shield: [], protector: [] };
+      if (sides.length === 0) return snapshot.finish({ shield: [], protector: [] });
 
       // Receipt NFTs are not enumerable, so scan ownerOf over [0, nextTokenId) per side (capped).
       const nexts = await rawMulticall(
@@ -506,16 +730,19 @@ export function createReader(client: PublicClient, deps: EvmReaderDeps): ChainRe
           }>(details[i] as Result<never>);
           const vi = shieldHeld.indexOf(h) * 4;
           const currentValueUsd = ok<bigint>(values[vi]);
-          const feePrice = ok<bigint>(values[vi + 1]) ?? ok<bigint>(values[vi + 2]);
-          if (feePrice === null) throw new Error("Current price feed unavailable for withdrawal quote.");
-          const netAmount = netShieldAmount(
-            pos.amount,
-            pos.valueAtDeposit,
-            requireRead<bigint>(values[vi + 3]),
-            feePrice,
-            s.decimals,
-            s.rates,
-          );
+          const normalFeePrice = ok<bigint>(values[vi + 1]);
+          const feePrice = normalFeePrice !== null && normalFeePrice > 0n ? normalFeePrice : ok<bigint>(values[vi + 2]);
+          const baseline = ok<bigint>(values[vi + 3]);
+          const ordinaryQuote = feePrice !== null && feePrice > 0n && baseline !== null;
+          // The contract's recovery branch waives fee settlement after transfer integrity fails.
+          const quoteAvailable =
+            s.transferIntegrityBroken === true || (s.transferIntegrityBroken === false && ordinaryQuote);
+          const netAmount =
+            s.transferIntegrityBroken === true
+              ? pos.amount
+              : quoteAvailable
+                ? netShieldAmount(pos.amount, pos.valueAtDeposit, baseline!, feePrice!, s.decimals, s.rates)
+                : 0n;
           const depositTime = BigInt(pos.depositTime);
           const unlockAt = depositTime + s.minimumPoolTime;
           shield.push({
@@ -523,6 +750,9 @@ export function createReader(client: PublicClient, deps: EvmReaderDeps): ChainRe
             pool: s.pool,
             deposited: pos.amount,
             withdrawableNet: netAmount,
+            sameAssetQuoteAvailable: quoteAvailable,
+            evaluatedAt: now,
+            validUntil: now + VIEW_VALIDITY_SECONDS,
             valueAtDepositUsd: pos.valueAtDeposit,
             collateralAmount: pos.collateralAmount,
             depositTime,
@@ -556,7 +786,57 @@ export function createReader(client: PublicClient, deps: EvmReaderDeps): ChainRe
           });
         }
       });
-      return { shield, protector };
+      await Promise.all(
+        shield.map(async (position) => {
+          const decoded = decodePositionId(position.id);
+          const side = sides.find((s) => s.pool.toLowerCase() === decoded.pool.toLowerCase() && s.kind === "shield")!;
+          if (!position.sameAssetQuoteAvailable)
+            position.sameAssetExit = unavailable(
+              "price-unavailable",
+              "Stock withdrawal pricing is unavailable.",
+              "unknown",
+            );
+          else if (position.withdrawableNet === 0n)
+            position.sameAssetExit = unavailable("no-output", "No positive stock withdrawal amount is available.");
+          else {
+            try {
+              await client.simulateContract({
+                ...poolC(decoded.pool),
+                functionName: "shieldedWithdraw",
+                args: [decoded.tokenId, side.shieldedToken, position.withdrawableNet],
+                account: user,
+                blockNumber,
+              });
+              position.sameAssetExit = ready();
+            } catch (error) {
+              position.sameAssetExit = simulationFailure(error);
+            }
+          }
+          if (!position.protectedExitUnlocked)
+            position.protectedExit = unavailable(
+              "withdrawal-delay",
+              "This position's protected exit delay has not elapsed.",
+            );
+          else {
+            try {
+              const quote = await this.getProtectedExitQuote!(position.id);
+              // Recheck for the enumerated owner: a receipt may have transferred between snapshots.
+              await client.simulateContract({
+                ...poolC(decoded.pool),
+                functionName: "shieldedWithdraw",
+                args: [decoded.tokenId, quote.token as Address, quote.amount],
+                account: user,
+                blockNumber: quote.blockNumber,
+              });
+              position.protectedExitQuote = quote;
+              position.protectedExit = ready();
+            } catch (error) {
+              position.protectedExit = simulationFailure(error);
+            }
+          }
+        }),
+      );
+      return snapshot.finish({ shield, protector });
     },
 
     async listWhitelistedTokens(): Promise<SeedToken[]> {
@@ -618,19 +898,20 @@ export function createReader(client: PublicClient, deps: EvmReaderDeps): ChainRe
     async getProtectedExitQuote(position) {
       const { pool, side, tokenId } = decodePositionId(position);
       if (side !== "shield") throw new Error("Position type does not match a protected exit.");
-      const block = await client.getBlock();
-      if (block.number === null) throw new Error("On-chain data unavailable.");
+      const snapshot = await readSnapshot(client, "Protected exit");
+      const block = snapshot.block;
       const blockNumber = block.number;
       await client.readContract({ ...factory, functionName: "getPoolInfo", args: [pool], blockNumber });
-      const [config, nft, backingToken, decimals, paused] = await Promise.all([
+      const [config, nft, backingToken, decimals, paused, strict] = await Promise.all([
         client.readContract({ ...poolC(pool), functionName: "poolConfig", blockNumber }),
         client.readContract({ ...poolC(pool), functionName: "shieldReceiptNFT", blockNumber }),
         client.readContract({ ...poolC(pool), functionName: "BACKING_TOKEN", blockNumber }),
         client.readContract({ ...poolC(pool), functionName: "backingTokenDecimals", blockNumber }),
         client.readContract({ ...poolC(pool), functionName: "paused", blockNumber }),
+        client.readContract({ ...poolC(pool), functionName: "requiresStrictProtectedBackingPrice", blockNumber }),
       ]);
       if (paused) throw new Error("Pool is paused.");
-      const [pos, price] = await Promise.all([
+      const [pos, price, receiptOwner] = await Promise.all([
         client.readContract({
           address: nft,
           abi: shieldReceiptNftAbi,
@@ -641,8 +922,15 @@ export function createReader(client: PublicClient, deps: EvmReaderDeps): ChainRe
         client.readContract({
           address: config[9],
           abi: compositeOracleAbi,
-          functionName: "getPriceWithStrictCircuitBreaker",
+          functionName: strict ? "getPriceWithStrictCircuitBreaker" : "getPrice",
           args: [backingToken],
+          blockNumber,
+        }),
+        client.readContract({
+          address: nft,
+          abi: shieldReceiptNftAbi,
+          functionName: "ownerOf",
+          args: [tokenId],
           blockNumber,
         }),
       ]);
@@ -650,7 +938,16 @@ export function createReader(client: PublicClient, deps: EvmReaderDeps): ChainRe
       const uncapped = (pos.valueAtDeposit * 10n ** BigInt(decimals)) / price;
       const amount = uncapped < pos.collateralAmount ? uncapped : pos.collateralAmount;
       if (amount <= 0n) throw new Error("No positive protected exit quote is available.");
-      return { amount, token: backingToken, blockNumber, quotedAt: block.timestamp };
+      if (block.timestamp < BigInt(pos.depositTime) + config[5])
+        throw new Error("This position's protected exit delay has not elapsed.");
+      await client.simulateContract({
+        ...poolC(pool),
+        functionName: "shieldedWithdraw",
+        args: [tokenId, backingToken, amount],
+        account: receiptOwner,
+        blockNumber,
+      });
+      return snapshot.finish({ amount, token: backingToken, blockNumber, quotedAt: block.timestamp });
     },
 
     async getActivity(owner: AccountId): Promise<ActivityEntry[]> {

@@ -46,11 +46,11 @@ export type PoolStats = {
   coverageBps: bigint | null;
   /** Collateral backing savers vs total protector backing — protector capacity in use. */
   utilizationBps: bigint | null;
-  /** TVL cap in USD (8dp); 0n means uncapped. */
+  /** TVL cap in USD (8dp). Interpret zero according to the adapter's availability result. */
   maxTvlUsd: bigint;
   /** Shield-side USD value at deposit (8dp). Lower bound on TVL. */
   shieldTvlUsd: bigint;
-  /** Fraction of the TVL cap used, by shield USD (bps); null when uncapped. */
+  /** Fraction of the TVL cap used (bps); null when current valuation is unavailable or the cap is zero. */
   capacityBps: bigint | null;
   /** Deposit bounds (base units); 0n means no bound. */
   shieldedMinDeposit: bigint;
@@ -64,6 +64,24 @@ export type PoolStats = {
   hasAccessControl: boolean;
 };
 
+/** Action-specific observations; the submitted transaction still requires fresh simulation. */
+export type ActionEligibility = {
+  state: "available" | "blocked" | "unknown";
+  blockers: { code: string; message: string }[];
+};
+
+export type PoolAvailability = {
+  blockNumber: bigint;
+  evaluatedAt: bigint;
+  validUntil: bigint;
+  openPosition: ActionEligibility;
+  provideCollateral: ActionEligibility;
+  /** Pool limits in native deposit-token units, before the connected wallet's balance limit. */
+  maxShieldedDeposit: bigint | null;
+  maxBackingDeposit: bigint | null;
+  trackedTvlUsd: bigint | null;
+};
+
 /** One pool, fully assembled for display (stats + token metadata + oracle health). */
 export type PoolData = {
   address: PoolId;
@@ -71,6 +89,7 @@ export type PoolData = {
   shielded: TokenInfo;
   backing: TokenInfo;
   oracle: PoolOracleHealth;
+  availability?: PoolAvailability;
 };
 
 // --- Positions ------------------------------------------------------------------
@@ -82,6 +101,14 @@ export type ShieldPositionView = {
   deposited: bigint;
   /** True withdrawable now (settled principal). */
   withdrawableNet: bigint;
+  /** False means withdrawableNet is unavailable, not an actual zero-value quote. */
+  sameAssetQuoteAvailable?: boolean;
+  /** Pinned-block lifetime of the position exit checks (Unix seconds). */
+  evaluatedAt?: bigint;
+  validUntil?: bigint;
+  sameAssetExit?: ActionEligibility;
+  protectedExit?: ActionEligibility;
+  protectedExitQuote?: { amount: bigint; token: TokenId; blockNumber: bigint; quotedAt: bigint };
   /** USD value at entry (8dp). */
   valueAtDepositUsd: bigint;
   /** Backing collateral attributable to this position. */

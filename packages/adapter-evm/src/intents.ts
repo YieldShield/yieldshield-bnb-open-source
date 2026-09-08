@@ -19,6 +19,8 @@ import { splitRiskPoolAbi } from "./abis/splitRiskPool.js";
 import { splitRiskPoolFactoryAbi } from "./abis/splitRiskPoolFactory.js";
 import { tokenFaucetAbi } from "./abis/tokenFaucet.js";
 import { decodePositionId, encodePositionId } from "./positionId.js";
+import { assertDepositPreflight } from "./preflight.js";
+import { readFaucetStatus } from "./faucet.js";
 
 export type EvmStep = {
   /** Short human label for progress UX ("Approve USDG", "Confirm deposit"). */
@@ -31,6 +33,8 @@ export type EvmStep = {
 
 export type IntentPlan = {
   steps: EvmStep[];
+  /** Refresh action-specific eligibility before every signature, including approvals. */
+  beforeStep?: () => Promise<void>;
   /** Pulls created ids from the FINAL step's receipt. */
   extract?: (receipt: TransactionReceipt) => Partial<Pick<TxResult, "positionId" | "poolId">>;
 };
@@ -92,7 +96,7 @@ export async function planIntent(
     return value as Address;
   };
   validAddress(owner);
-  validAddress(deps.factory);
+  if (intent.kind !== "faucetDrip") validAddress(deps.factory);
   const positiveAmount = (amount: bigint) => {
     if (amount <= 0n || amount > maxUint256) throw new Error("Amount must be positive and within token limits.");
   };
@@ -141,11 +145,15 @@ export async function planIntent(
     case "depositShielded": {
       const poolAddr = intent.pool as Address;
       const asset = intent.shieldedToken as Address;
+      const beforeStep = () =>
+        assertDepositPreflight(client, deps.factory, poolAddr, owner, "shield", asset, intent.amount);
+      await beforeStep();
       const [approvals, nft] = await Promise.all([
         approvalStep(client, owner, asset, poolAddr, intent.amount),
         client.readContract({ address: poolAddr, abi: splitRiskPoolAbi, functionName: "shieldReceiptNFT" }),
       ]);
       return {
+        beforeStep,
         steps: [
           ...approvals,
           {
@@ -167,11 +175,15 @@ export async function planIntent(
     case "depositBacking": {
       const poolAddr = intent.pool as Address;
       const asset = intent.backingToken as Address;
+      const beforeStep = () =>
+        assertDepositPreflight(client, deps.factory, poolAddr, owner, "backing", asset, intent.amount);
+      await beforeStep();
       const [approvals, nft] = await Promise.all([
         approvalStep(client, owner, asset, poolAddr, intent.amount),
         client.readContract({ address: poolAddr, abi: splitRiskPoolAbi, functionName: "protectorReceiptNFT" }),
       ]);
       return {
+        beforeStep,
         steps: [
           ...approvals,
           {
@@ -368,8 +380,33 @@ export async function planIntent(
       if (!deps.faucet) throw new Error("No on-chain faucet on this deployment.");
       validAddress(deps.faucet);
       const recipient = validAddress(intent.recipient ?? owner);
-      // dripAll skips tokens still on cooldown, so one call tops up whatever is available.
+      const beforeStep = async () => {
+        const status = await readFaucetStatus(client, deps.faucet!, recipient);
+        if (!status.ready)
+          throw new Error("No test tokens are available for this wallet yet. Check the dispenser status.");
+        const senderBalance =
+          recipient.toLowerCase() === owner.toLowerCase()
+            ? status.nativeBalance
+            : await client.getBalance({ address: owner });
+        if (senderBalance <= 0n) throw new Error("Add Base Sepolia test ETH to pay the transaction fee.");
+      };
+      await beforeStep();
+      // dripAll skips tokens still on cooldown; an empty successful call is not a claim.
       return {
+        beforeStep,
+        extract: (receipt) => {
+          const drips = parseEventLogs({ abi: tokenFaucetAbi, logs: receipt.logs, eventName: "TokensDripped" });
+          if (
+            !drips.some(
+              (log) =>
+                log.address.toLowerCase() === deps.faucet!.toLowerCase() &&
+                log.args.recipient.toLowerCase() === recipient.toLowerCase() &&
+                log.args.amount > 0n,
+            )
+          )
+            throw new Error("The confirmed transaction sent no test tokens. Refresh dispenser status before retrying.");
+          return {};
+        },
         steps: [
           {
             label: "Get test tokens",

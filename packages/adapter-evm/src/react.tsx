@@ -241,7 +241,10 @@ export async function sendEvmIntent(
     intent,
   );
   let lastReceipt: TransactionReceipt | null = null;
-  for (const step of plan.steps) {
+  for (const [stepIndex, step] of plan.steps.entries()) {
+    const stepProgress = { index: stepIndex + 1, total: plan.steps.length, label: step.label };
+    opts?.onStep?.(stepProgress);
+    await plan.beforeStep?.();
     await assertWalletSession(config, owner, adapter.chain.id, connector.uid);
     // Simulate each step against current chain state before prompting for its signature.
     // Deposits are simulated after approvals mine, so allowance requirements are satisfied.
@@ -262,6 +265,7 @@ export async function sendEvmIntent(
       chainId: adapter.chain.id,
       connector,
     });
+    opts?.onStep?.({ ...stepProgress, txId: hash });
     opts?.onPhase?.("submitted");
     opts?.onPhase?.("confirming");
     let cancelled = false;
@@ -277,7 +281,10 @@ export async function sendEvmIntent(
           !sealedHash(replacement.transaction.hash)
         )
           cancelled = true;
-        else expectedHash = replacement.transaction.hash;
+        else {
+          expectedHash = replacement.transaction.hash;
+          opts?.onStep?.({ ...stepProgress, txId: expectedHash });
+        }
       },
     });
     if (cancelled || !sameHex(lastReceipt.transactionHash, expectedHash))

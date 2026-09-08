@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { zeroAddress, zeroHash, encodeFunctionData, encodeEventTopics } from "viem";
+import { zeroAddress, zeroHash, encodeFunctionData, encodeEventTopics, encodeAbiParameters } from "viem";
 import { erc721TransferEventAbi } from "../src/abis/erc20";
+import { tokenFaucetAbi } from "../src/abis/tokenFaucet";
 import { splitRiskPoolAbi } from "../src/abis/splitRiskPool";
 import { planIntent } from "../src/intents";
-import { createReader, netShieldAmount } from "../src/reader";
+import { createReader, netShieldAmount, maximumDeposit } from "../src/reader";
 import { assertWalletSession, sendEvmIntent, readCanonicalStepReceipt } from "../src/react";
 import { encodePositionId } from "../src/positionId";
 import { friendlyError } from "../src/errors";
@@ -15,6 +16,10 @@ vi.mock("@wagmi/core", async (original) => ({
   waitForTransactionReceipt: vi.fn(),
   writeContract: vi.fn(),
 }));
+beforeEach(() => {
+  vi.spyOn(Date, "now").mockReturnValue(1_000_000);
+});
+
 const owner = "0x1111111111111111111111111111111111111111";
 const other = "0x2222222222222222222222222222222222222222";
 const pool = "0x3333333333333333333333333333333333333333";
@@ -129,7 +134,16 @@ function clientFor(overrides: Record<string, any> = {}) {
     poolConfig: [1n, 10000n, 1n, 10000n, 100000000000n, 60n, 100n, owner, 200n, oracle],
     paused: false,
     isPoolActive: true,
-    totalProtectorTokens: 150n,
+    totalProtectorTokens: 300n,
+    totalProtectorShares: 300n * 10n ** 18n,
+    poolState: [100n, 300n],
+    totalShieldedTokens: 100n,
+    requiresStrictProtectedBackingPrice: true,
+    shieldedTokenTransferIntegrityBroken: false,
+    protectionOpeningEligibilityRequired: true,
+    isProtectionOpeningAllowed: true,
+    canDepositShielded: true,
+    canDepositProtector: true,
     totalShieldCollateralAmount: 100n,
     totalValueAtDeposit: 10000000000n,
     shieldedTokenDecimals: 0,
@@ -163,7 +177,7 @@ function clientFor(overrides: Record<string, any> = {}) {
     getPriceForClosedSessionExit: 100000000n,
     feeValueBaselineUsd: 10000000000n,
     decimals: 0,
-    balanceOf: 100n,
+    balanceOf: (c: any) => (c.args[0] === owner ? 100n : 300n),
     getWhitelistedTokens: [shielded],
     ...overrides,
   };
@@ -173,7 +187,7 @@ function clientFor(overrides: Record<string, any> = {}) {
     request: rawRpc(),
     getBlockNumber: vi.fn(async () => 10n),
     getChainId: vi.fn(async () => 84532),
-    getBlock: vi.fn(async () => ({ number: 10n, timestamp: 1000n })),
+    getBlock: vi.fn(async () => ({ number: 10n, hash: canonicalBlockHash, timestamp: 1000n })),
     readContract: vi.fn(async (call) => {
       const result = value(call);
       if (result?.status === "failure") throw result.error;
@@ -361,6 +375,41 @@ describe("wallet session and receipt safety", () => {
     const result = await sendEvmIntent(adapter(clientFor({ allowance: 100n })), config, owner, deposit);
     expect(result.txId).toBe(replacementHash);
   });
+  it("reports every approval and deposit step with its hash before confirmation", async () => {
+    const events: any[] = [];
+    await sendEvmIntent(adapter(clientFor()), config, owner, deposit, { onStep: (step) => events.push(step) });
+    expect(events).toEqual([
+      { index: 1, total: 2, label: "Approve spending" },
+      { index: 1, total: 2, label: "Approve spending", txId: txHash },
+      { index: 2, total: 2, label: "Confirm deposit" },
+      { index: 2, total: 2, label: "Confirm deposit", txId: txHash },
+    ]);
+  });
+  it("updates the recoverable transaction hash after a valid repricing", async () => {
+    const replacementHash = `0x${"b".repeat(64)}`;
+    vi.mocked(waitForTransactionReceipt).mockImplementation(async (_config, args: any) => {
+      args.onReplaced({
+        reason: "repriced",
+        replacedTransaction: { hash: txHash },
+        transaction: { hash: replacementHash },
+      });
+      return { status: "success", transactionHash: replacementHash, logs: [] } as any;
+    });
+    const events: any[] = [];
+    await sendEvmIntent(adapter(clientFor({ allowance: 100n })), config, owner, deposit, {
+      onStep: (step) => events.push(step),
+    });
+    expect(events.map((step) => step.txId)).toEqual([undefined, txHash, replacementHash]);
+  });
+  it("keeps the submitted hash available if receipt verification later fails", async () => {
+    const events: any[] = [];
+    const client = clientFor({ allowance: 100n });
+    client.request = rawRpc({ receipt: { blockHash: zeroHash } });
+    await expect(
+      sendEvmIntent(adapter(client), config, owner, deposit, { onStep: (step) => events.push(step) }),
+    ).rejects.toThrow("sealed confirmation");
+    expect(events.at(-1).txId).toBe(txHash);
+  });
 });
 
 describe("truthful pool and position reads", () => {
@@ -414,7 +463,8 @@ describe("truthful pool and position reads", () => {
   });
   it("allows expired notice windows to be restarted", async () => {
     const client = clientFor();
-    client.getBlock.mockResolvedValue({ number: 10n, timestamp: 1100n + 604801n });
+    vi.mocked(Date.now).mockReturnValue(Number(1100n + 604801n) * 1000);
+    client.getBlock.mockResolvedValue({ number: 10n, hash: canonicalBlockHash, timestamp: 1100n + 604801n });
     const positions = await createReader(client, deps).getOwnerPositions(owner);
     expect(positions.protector[0]!.isUnlocking).toBe(false);
   });
@@ -455,17 +505,21 @@ describe("withdrawal fee quotes", () => {
   it("matches fee ceil rounding for dust and caps at the position amount", () => {
     expect(netShieldAmount(1n, 100000000n, 0n, 100000001n, 0, [1n, 1n, 1n])).toBe(0n);
   });
-  it("does not quote an unavailable fee price as the full balance", async () => {
-    await expect(
-      createReader(
-        clientFor({
-          getUserNFTCounts: [1n, 0n],
-          getPriceForFeeAccrual: failure(),
-          getPriceForClosedSessionExit: failure(),
-        }),
-        deps,
-      ).getOwnerPositions(owner),
-    ).rejects.toThrow("price feed unavailable");
+  it("retains the receipt when fee pricing is unavailable without claiming a zero-value quote", async () => {
+    const positions = await createReader(
+      clientFor({
+        getUserNFTCounts: [1n, 0n],
+        getPriceForFeeAccrual: failure(),
+        getPriceForClosedSessionExit: failure(),
+      }),
+      deps,
+    ).getOwnerPositions(owner);
+    expect(positions.shield).toHaveLength(1);
+    expect(positions.shield[0]).toMatchObject({
+      deposited: 100n,
+      sameAssetQuoteAvailable: false,
+      sameAssetExit: { state: "unknown" },
+    });
   });
 });
 
@@ -604,5 +658,478 @@ describe("canonical wallet transaction evidence", () => {
   it("does not confirm a position without the matching receipt NFT mint", async () => {
     const plan = await planIntent(clientFor({ allowance: 100n }), owner, { factory }, deposit);
     expect(() => plan.extract!({ logs: [] } as any)).toThrow("expected protection position");
+  });
+});
+
+describe("exact native deposit capacity", () => {
+  const base = {
+    shieldedPrice: 100n,
+    backingPrice: 100n,
+    shieldedDecimals: 0,
+    backingDecimals: 0,
+    totalProtectorTokens: 10n,
+    totalShieldCollateralAmount: 0n,
+    totalValueAtDeposit: 0n,
+    trackedTvlUsd: 0n,
+    maxTvlUsd: 100000n,
+    collateralRatioBps: 15000n,
+    minDeposit: 1n,
+    maxDeposit: 1000n,
+  };
+  it("enforces aggregate USD collateral independently of the native collateral reservation", () => {
+    expect(maximumDeposit({ ...base, totalValueAtDeposit: 400n }, "shield")).toBe(2n);
+    expect(maximumDeposit({ ...base, totalShieldCollateralAmount: 9n }, "shield")).toBe(1n);
+  });
+  it("counts all tracked balances toward TVL and treats zero limits as closed", () => {
+    expect(maximumDeposit({ ...base, trackedTvlUsd: 400n, maxTvlUsd: 500n }, "shield")).toBe(1n);
+    expect(maximumDeposit({ ...base, maxTvlUsd: 0n }, "shield")).toBe(0n);
+    expect(maximumDeposit({ ...base, maxDeposit: 0n }, "backing")).toBe(0n);
+    expect(maximumDeposit({ ...base, minDeposit: 7n }, "shield")).toBe(0n);
+  });
+  it("caps native deposits at uint128 even when pool limits are larger", () => {
+    expect(maximumDeposit({ ...base, maxTvlUsd: 10n ** 60n, maxDeposit: 10n ** 60n }, "backing")).toBe(
+      (1n << 128n) - 1n,
+    );
+  });
+  it("enforces positive minted shares and the aggregate protector reward share bound", () => {
+    expect(
+      maximumDeposit({ ...base, totalProtectorTokens: 1n, totalProtectorShares: 10n ** 38n - 1n }, "backing"),
+    ).toBe(0n);
+    expect(
+      maximumDeposit(
+        {
+          ...base,
+          backingDecimals: 36,
+          backingPrice: 10n ** 36n,
+          totalProtectorTokens: 0n,
+          totalProtectorShares: 100n,
+          maxDeposit: 10n ** 17n,
+          maxTvlUsd: 10n ** 40n,
+        },
+        "backing",
+      ),
+    ).toBe(0n);
+    expect(maximumDeposit({ ...base, totalProtectorTokens: 0n, totalProtectorShares: 10n ** 38n }, "backing")).toBe(
+      1000n,
+    );
+  });
+  it("matches an exhaustive small-unit reference across decimals, depegs, TVL and both collateral bounds", () => {
+    for (let i = 0n; i < 240n; i++) {
+      const input = {
+        ...base,
+        shieldedPrice: 11n + (i % 13n),
+        backingPrice: 5n + (i % 7n),
+        shieldedDecimals: Number(i % 2n),
+        backingDecimals: Number((i / 2n) % 2n),
+        totalProtectorTokens: 3n + (i % 20n),
+        totalShieldCollateralAmount: i % 9n,
+        totalValueAtDeposit: i % 17n,
+        trackedTvlUsd: i % 11n,
+        maxTvlUsd: 10n + (i % 29n),
+        minDeposit: 1n + (i % 4n),
+        maxDeposit: 30n,
+        collateralRatioBps: 10001n + (i % 8000n),
+      };
+      let expected = 0n;
+      for (let amount = input.minDeposit; amount <= input.maxDeposit; amount++) {
+        const value = (amount * input.shieldedPrice) / 10n ** BigInt(input.shieldedDecimals);
+        const cap =
+          (((value * input.collateralRatioBps + 9999n) / 10000n) * 10n ** BigInt(input.backingDecimals)) /
+          input.backingPrice;
+        const aggregate = ((input.totalValueAtDeposit + value) * input.collateralRatioBps + 9999n) / 10000n;
+        if (
+          value > 0n &&
+          cap > 0n &&
+          input.trackedTvlUsd + value <= input.maxTvlUsd &&
+          aggregate <= (input.totalProtectorTokens * input.backingPrice) / 10n ** BigInt(input.backingDecimals) &&
+          input.totalShieldCollateralAmount + cap <= input.totalProtectorTokens
+        )
+          expected = amount;
+      }
+      expect(maximumDeposit(input, "shield")).toBe(expected);
+    }
+  });
+});
+
+describe("pool and wallet deposit eligibility", () => {
+  it("keeps a second asset's opening availability when only the first asset loses its price", async () => {
+    const client = clientFor({
+      poolCount: 2n,
+      getPools: [pool, other],
+      getPoolInfo: (call: any) => ({ ...info, shieldedToken: call.args[0] === pool ? shielded : shieldNft }),
+      getPrice: (call: any) => (call.args[0] === shielded ? failure() : 100000000n),
+    });
+    const [unavailable, healthy] = await createReader(client, deps).loadPools();
+    expect(unavailable.availability.openPosition.state).toBe("unknown");
+    expect(healthy.availability.openPosition.state).toBe("available");
+  });
+
+  it("separates stock opening policy from otherwise eligible collateral deposits", async () => {
+    const client = clientFor({ isProtectionOpeningAllowed: false });
+    const [market] = await createReader(client, deps).loadPools();
+    expect(market.availability.openPosition.state).toBe("blocked");
+    expect(market.availability.provideCollateral.state).toBe("available");
+    expect(market.availability.maxShieldedDeposit).toBe(100n);
+    expect(market.availability.trackedTvlUsd).toBe(40000000000n);
+    expect(market.stats.capacityBps).toBe(4000n);
+    await expect(planIntent(client, owner, { factory }, deposit)).rejects.toThrow("opening policy");
+    const backingPlan = await planIntent(
+      client,
+      owner,
+      { factory },
+      { kind: "depositBacking", pool, backingToken: backing, amount: 100n, minReceived: 100n },
+    );
+    expect(backingPlan.steps.at(-1).functionName).toBe("depositBackingAsset");
+  });
+  it("allows an empty pool's collateral deposit without an unavailable stock feed", async () => {
+    const client = clientFor({
+      poolState: [0n, 0n],
+      totalShieldedTokens: 0n,
+      totalValueAtDeposit: 0n,
+      totalShieldCollateralAmount: 0n,
+      totalProtectorTokens: 0n,
+      totalProtectorShares: 0n,
+      getPrice: (call: any) => (call.args[0] === shielded ? failure() : 100000000n),
+      isTokenChallengeable: (call: any) => call.args[0] === shielded,
+    });
+    const [market] = await createReader(client, deps).loadPools();
+    expect(market.availability.openPosition.state).toBe("unknown");
+    expect(market.availability.provideCollateral.state).toBe("available");
+    await expect(
+      planIntent(
+        client,
+        owner,
+        { factory },
+        { kind: "depositBacking", pool, backingToken: backing, amount: 100n, minReceived: 100n },
+      ),
+    ).resolves.toBeDefined();
+  });
+  it.each([
+    ["paused", true, "not accepting"],
+    ["isPoolActive", false, "not accepting"],
+    ["shieldedTokenTransferIntegrityBroken", true, "transfer checks"],
+    ["isTokenChallengeable", true, "under verification"],
+    ["totalProtectorTokens", 1n, "capacity"],
+    ["getPriceWithStrictCircuitBreaker", failure(), "RPC down"],
+    ["getPriceForFeeAccrual", 0n, "fee pricing"],
+  ])("rejects unavailable %s before an approval is planned", async (field, value, reason) => {
+    const client = clientFor({ [field as string]: value });
+    await expect(planIntent(client, owner, { factory }, deposit)).rejects.toThrow(reason as string);
+    expect(client.readContract.mock.calls.some(([call]: any) => call.functionName === "allowance")).toBe(false);
+  });
+  it("checks the connected wallet's allowlist and balance before approval", async () => {
+    await expect(
+      planIntent(clientFor({ accessControl: other, canDepositShielded: false }), owner, { factory }, deposit),
+    ).rejects.toThrow("wallet is not allowed");
+    await expect(planIntent(clientFor({ balanceOf: 0n }), owner, { factory }, deposit)).rejects.toThrow("balance");
+    await expect(
+      planIntent(clientFor({ balanceOf: (c: any) => (c.args[0] === owner ? 100n : 0n) }), owner, { factory }, deposit),
+    ).rejects.toThrow("accounting");
+  });
+  it("does not classify an allowlisted pool as publicly available", async () => {
+    const [market] = await createReader(clientFor({ accessControl: other }), deps).loadPools();
+    expect(market.availability.openPosition).toMatchObject({
+      state: "unknown",
+      blockers: [{ code: "account-restriction" }],
+    });
+  });
+  it("rejects dust amounts even when a larger deposit would fit", async () => {
+    await expect(
+      planIntent(
+        clientFor({ shieldedTokenDecimals: 18 }),
+        owner,
+        { factory },
+        { ...deposit, amount: 1n, minReceived: 1n },
+      ),
+    ).rejects.toThrow("capacity");
+  });
+  it("pins every deposit check and rejects stale or reorganized snapshots", async () => {
+    const client = clientFor();
+    const plan = await planIntent(client, owner, { factory }, deposit);
+    client.readContract.mockClear();
+    await plan.beforeStep!();
+    expect(client.readContract.mock.calls.every(([call]: any) => call.blockNumber === 10n)).toBe(true);
+    client.getBlock.mockResolvedValue({ number: 10n, hash: canonicalBlockHash, timestamp: 800n });
+    await expect(plan.beforeStep!()).rejects.toThrow("out of date");
+    client.getBlock.mockImplementation(async ({ blockNumber }: any) => ({
+      number: 10n,
+      hash: blockNumber ? txHash : canonicalBlockHash,
+      timestamp: 1000n,
+    }));
+    await expect(plan.beforeStep!()).rejects.toThrow("state changed");
+  });
+  it("refreshes opening eligibility before the next approval or deposit signature", async () => {
+    let allowed = true;
+    const plan = await planIntent(
+      clientFor({ isProtectionOpeningAllowed: () => allowed }),
+      owner,
+      { factory },
+      deposit,
+    );
+    allowed = false;
+    await expect(plan.beforeStep!()).rejects.toThrow("opening policy");
+  });
+});
+
+describe("independent position exit preflight", () => {
+  it("exposes the position check lifetime and rejects stale or unsealed protected quote evidence", async () => {
+    const client = clientFor({ getUserNFTCounts: [1n, 0n] });
+    const { shield } = await createReader(client, deps).getOwnerPositions(owner);
+    expect(shield[0]).toMatchObject({ evaluatedAt: 1000n, validUntil: 1020n });
+    client.getBlock.mockResolvedValue({ number: 10n, hash: canonicalBlockHash, timestamp: 800n });
+    await expect(createReader(client, deps).getProtectedExitQuote!(shield[0].id)).rejects.toThrow("out of date");
+    client.getBlock.mockResolvedValue({ number: 10n, hash: zeroHash, timestamp: 1000n });
+    await expect(createReader(client, deps).getProtectedExitQuote!(shield[0].id)).rejects.toThrow("out of date");
+    client.getBlock.mockImplementation(async ({ blockNumber }: any) => ({
+      number: 10n,
+      hash: blockNumber ? txHash : canonicalBlockHash,
+      timestamp: 1000n,
+    }));
+    await expect(createReader(client, deps).getProtectedExitQuote!(shield[0].id)).rejects.toThrow("state changed");
+  });
+  it("preserves the contract's same-asset recovery route after transfer integrity fails", async () => {
+    const client = clientFor({
+      getUserNFTCounts: [1n, 0n],
+      shieldedTokenTransferIntegrityBroken: true,
+      getPriceForFeeAccrual: failure(),
+      getPriceForClosedSessionExit: failure(),
+    });
+    client.simulateContract.mockImplementation(async (call: any) => {
+      if (call.args[1] === backing) throw { data: { errorName: "IncompatibleShieldedTokenForCrossAssetWithdrawal" } };
+      return { request: {} };
+    });
+    const { shield } = await createReader(client, deps).getOwnerPositions(owner);
+    expect(shield[0]).toMatchObject({
+      sameAssetQuoteAvailable: true,
+      withdrawableNet: 100n,
+      sameAssetExit: { state: "available" },
+      protectedExit: { state: "blocked" },
+    });
+  });
+
+  it("retains all receipts when one exit quote fails and distinguishes failed simulation from missing data", async () => {
+    const client = clientFor({
+      getUserNFTCounts: [1n, 1n],
+      getPriceForFeeAccrual: failure(),
+      getPriceForClosedSessionExit: failure(),
+    });
+    client.simulateContract.mockRejectedValue({ cause: { data: { errorName: "OraclePendingChallenge" } } });
+    const positions = await createReader(client, deps).getOwnerPositions(owner);
+    expect(positions.shield).toHaveLength(1);
+    expect(positions.protector).toHaveLength(1);
+    expect(positions.shield[0]).toMatchObject({
+      sameAssetQuoteAvailable: false,
+      sameAssetExit: { state: "unknown" },
+      protectedExit: { state: "blocked" },
+    });
+    expect(positions.shield[0].protectedExitQuote).toBeUndefined();
+  });
+  it.each([failure(), 0n])(
+    "allows the verified last-close same-asset route when normal fee pricing fails",
+    async (normalFee) => {
+      const client = clientFor({
+        getUserNFTCounts: [1n, 0n],
+        isProtectionOpeningAllowed: false,
+        getPriceForFeeAccrual: normalFee,
+      });
+      const { shield } = await createReader(client, deps).getOwnerPositions(owner);
+      expect(shield[0]).toMatchObject({
+        sameAssetQuoteAvailable: true,
+        withdrawableNet: 100n,
+        sameAssetExit: { state: "available" },
+        protectedExit: { state: "available" },
+      });
+      expect(
+        client.simulateContract.mock.calls.some(([call]: any) => call.args[1] === shielded && call.account === owner),
+      ).toBe(true);
+      expect(
+        client.readContract.mock.calls.some(([call]: any) => call.functionName === "isProtectionOpeningAllowed"),
+      ).toBe(false);
+    },
+  );
+  it("does not offer a positive mathematical protected quote when execution fails", async () => {
+    const client = clientFor();
+    client.simulateContract.mockRejectedValue(new Error("pending price challenge"));
+    await expect(
+      createReader(client, deps).getProtectedExitQuote!(encodePositionId(pool, "shield", 0n)),
+    ).rejects.toThrow("price challenge");
+  });
+  it("enforces the actual protected-exit delay before simulation", async () => {
+    const client = clientFor({
+      getPosition: { amount: 100n, depositTime: 990n, valueAtDeposit: 10000000000n, collateralAmount: 150n },
+    });
+    await expect(
+      createReader(client, deps).getProtectedExitQuote!(encodePositionId(pool, "shield", 0n)),
+    ).rejects.toThrow("delay");
+    expect(client.simulateContract).not.toHaveBeenCalled();
+  });
+  it("simulates for the receipt owner and follows the pool's backing-price mode without an opening gate", async () => {
+    const client = clientFor({
+      ownerOf: other,
+      requiresStrictProtectedBackingPrice: false,
+      getPriceWithStrictCircuitBreaker: failure(),
+      isProtectionOpeningAllowed: false,
+    });
+    const quote = await createReader(client, deps).getProtectedExitQuote!(encodePositionId(pool, "shield", 0n));
+    expect(quote.amount).toBe(100n);
+    expect(client.simulateContract).toHaveBeenCalledWith(
+      expect.objectContaining({ account: other, blockNumber: 10n, args: [0n, backing, 100n] }),
+    );
+    expect(
+      client.readContract.mock.calls.some(([call]: any) => call.functionName === "isProtectionOpeningAllowed"),
+    ).toBe(false);
+  });
+  it("does not award the previous owner execution eligibility after a receipt transfers", async () => {
+    const client = clientFor({ getUserNFTCounts: [1n, 0n] });
+    client.simulateContract.mockImplementation(async (call: any) => {
+      if (call.args[1] === backing && call.account === owner) throw { data: { errorName: "NotReceiptOwner" } };
+      return { request: {} };
+    });
+    const { shield } = await createReader(client, deps).getOwnerPositions(owner);
+    expect(shield[0].sameAssetExit.state).toBe("available");
+    expect(shield[0].protectedExit.state).toBe("blocked");
+    expect(shield[0].protectedExitQuote).toBeUndefined();
+  });
+});
+
+describe("test-token transaction preflight", () => {
+  const faucetClient = (overrides: Record<string, any> = {}) =>
+    Object.assign(
+      clientFor({
+        getAllTokens: [shielded],
+        enabledTokens: true,
+        dripAmount: 10n,
+        canDrip: [true, 0n],
+        ...overrides,
+      }),
+      { getCode: vi.fn(async () => "0x6000"), getBalance: vi.fn(async () => 1000000000000000n) },
+    );
+  it("allows the configured faucet independently of a missing protocol factory", async () => {
+    const plan = await planIntent(
+      faucetClient(),
+      owner,
+      { factory: zeroAddress, faucet: other },
+      { kind: "faucetDrip" },
+    );
+    expect(plan.steps).toHaveLength(1);
+    expect(plan.steps[0]).toMatchObject({ address: other, functionName: "dripAll", args: [owner] });
+  });
+  it.each([{ getAllTokens: [] }, { canDrip: [false, 1200n] }, { enabledTokens: false }, { dripAmount: 1000n }])(
+    "rejects a successful-but-empty dispense before prompting",
+    async (overrides) => {
+      await expect(
+        planIntent(faucetClient(overrides), owner, { factory, faucet: other }, { kind: "faucetDrip" }),
+      ).rejects.toThrow("No test tokens");
+    },
+  );
+  it("requires native test ETH for the wallet transaction", async () => {
+    const client = faucetClient();
+    client.getBalance.mockResolvedValue(0n);
+    await expect(planIntent(client, owner, { factory, faucet: other }, { kind: "faucetDrip" })).rejects.toThrow(
+      "test ETH",
+    );
+  });
+  it("requires a positive dispense event for the exact faucet and recipient", async () => {
+    const plan = await planIntent(faucetClient(), owner, { factory, faucet: other }, { kind: "faucetDrip" });
+    const log = {
+      address: other,
+      data: encodeAbiParameters([{ type: "uint256" }], [10n]),
+      topics: encodeEventTopics({
+        abi: tokenFaucetAbi,
+        eventName: "TokensDripped",
+        args: { token: shielded, recipient: owner },
+      }),
+    };
+    expect(plan.extract!({ logs: [log] } as any)).toEqual({});
+    for (const logs of [
+      [],
+      [{ ...log, address: pool }],
+      [{ ...log, data: encodeAbiParameters([{ type: "uint256" }], [0n]) }],
+      [
+        {
+          ...log,
+          topics: encodeEventTopics({
+            abi: tokenFaucetAbi,
+            eventName: "TokensDripped",
+            args: { token: shielded, recipient: other },
+          }),
+        },
+      ],
+    ])
+      expect(() => plan.extract!({ logs } as any)).toThrow("sent no test tokens");
+  });
+});
+
+describe("sealed and current reader snapshots", () => {
+  const paths = [
+    ["pools", {}, (reader: any) => reader.loadPools()],
+    ["empty pools", { poolCount: 0n }, (reader: any) => reader.loadPools()],
+    ["positions", {}, (reader: any) => reader.getOwnerPositions(owner)],
+    ["positions with no pools", { poolCount: 0n }, (reader: any) => reader.getOwnerPositions(owner)],
+    ["positions with no receipts", { getUserNFTCounts: [0n, 0n] }, (reader: any) => reader.getOwnerPositions(owner)],
+  ] as const;
+  it.each(paths)(
+    "rejects malformed, unsealed, future, and expired blocks before reading %s",
+    async (_name, overrides, load) => {
+      for (const bad of [
+        { number: null },
+        { number: 0n },
+        { number: -1n },
+        { number: "10" },
+        { hash: null },
+        { hash: zeroHash },
+        { hash: "0x1234" },
+        { hash: `0x${"g".repeat(64)}` },
+        { timestamp: null },
+        { timestamp: 0n },
+        { timestamp: "1000" },
+        { timestamp: 1001n },
+        { timestamp: 980n },
+      ]) {
+        const client = clientFor(overrides);
+        client.getBlock.mockResolvedValue({ number: 10n, hash: canonicalBlockHash, timestamp: 1000n, ...bad });
+        await expect(load(createReader(client, deps))).rejects.toThrow("out of date or unconfirmed");
+        expect(client.readContract).not.toHaveBeenCalled();
+        expect(client.multicall).not.toHaveBeenCalled();
+      }
+    },
+  );
+  it.each(paths)("rechecks canonical block identity before returning %s", async (_name, overrides, load) => {
+    for (const changed of [{ number: 11n }, { hash: txHash }, { timestamp: 999n }]) {
+      const client = clientFor(overrides);
+      client.getBlock.mockImplementation(async ({ blockNumber }: any) => ({
+        number: 10n,
+        hash: canonicalBlockHash,
+        timestamp: 1000n,
+        ...(blockNumber === undefined ? {} : changed),
+      }));
+      await expect(load(createReader(client, deps))).rejects.toThrow("state changed during verification");
+      expect(client.getBlock).toHaveBeenLastCalledWith({ blockNumber: 10n });
+    }
+  });
+  it.each(paths)(
+    "does not turn an unavailable final canonical read into a %s result",
+    async (_name, overrides, load) => {
+      const client = clientFor(overrides);
+      client.getBlock.mockImplementation(async ({ blockNumber }: any) => {
+        if (blockNumber !== undefined) throw new Error("canonical RPC unavailable");
+        return { number: 10n, hash: canonicalBlockHash, timestamp: 1000n };
+      });
+      await expect(load(createReader(client, deps))).rejects.toThrow("canonical RPC unavailable");
+    },
+  );
+  it.each(paths)("rejects %s if its snapshot expires while the read is in flight", async (_name, overrides, load) => {
+    const client = clientFor(overrides);
+    client.getBlock.mockImplementation(async ({ blockNumber }: any) => {
+      if (blockNumber !== undefined) vi.mocked(Date.now).mockReturnValue(1_020_000);
+      return { number: 10n, hash: canonicalBlockHash, timestamp: 1000n };
+    });
+    await expect(load(createReader(client, deps))).rejects.toThrow("out of date or unconfirmed");
+  });
+  it.each(paths)("accepts a still-current %s snapshot and verifies its final block", async (_name, overrides, load) => {
+    const client = clientFor(overrides);
+    client.getBlock.mockResolvedValue({ number: 10n, hash: canonicalBlockHash, timestamp: 981n });
+    await expect(load(createReader(client, deps))).resolves.toBeDefined();
+    expect(client.getBlock).toHaveBeenLastCalledWith({ blockNumber: 10n });
   });
 });
