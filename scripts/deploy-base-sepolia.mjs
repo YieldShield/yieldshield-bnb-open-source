@@ -58,10 +58,23 @@ function loadEnv() {
 }
 function toRequest(value) {const req={...value};for(const key of ['gas','maxFeePerGas','maxPriorityFeePerGas','value'])if(req[key]!==undefined)req[key]=BigInt(req[key]);return req;}
 function assertReceiptIdentity(receipt,hash,id) {assert.equal(receipt?.transactionHash,hash,`${id}: receipt transaction hash does not match saved transaction`);}
+function maximumExecutionCost(request) {
+ const gas=BigInt(request.gas),fee=BigInt(request.maxFeePerGas);
+ assert(gas>0n&&fee>=0n,'Invalid saved transaction gas or maximum fee');return gas*fee;
+}
 
 export class SequentialDeployment {
  constructor({client,account,broadcast,manifestPath,manifest,nonce,maxFeePerGas,spendLimit}) {Object.assign(this,{client,account,broadcast,manifestPath,manifest,maxFeePerGas,spendLimit});this.cursor=nonce;this.plan=[];this.links={};this.preparedResults=new Map();}
  save(){if(this.broadcast)atomicJson(this.manifestPath,this.manifest);}
+ async assertSubmissionLimits(request,additionalRequest=false) {
+  const maximumCost=maximumExecutionCost(request);
+  assert(BigInt(request.gas)<=16000000n,'Transaction exceeds conservative Base gas cap');
+  assert(BigInt(request.maxFeePerGas)<=this.maxFeePerGas,'Transaction fee exceeds configured deployment cap');
+  // Derive the reservation from signed request fields, never editable summary metadata.
+  const reserved=Object.values(this.manifest.transactions).reduce((n,t)=>n+maximumExecutionCost(t.request),0n);
+  assert(reserved+(additionalRequest?maximumCost:0n)<=this.spendLimit,'Deployment cumulative maximum fee budget exceeded');
+  assert(await this.client.getBalance({address:this.account.address})>=maximumCost+parseEther('0.0001'),'Insufficient test ETH including L1 fee reserve');
+ }
  async transaction(id,{to,data,kind='call'}) {
   currentStage=id;
   const intent={chainId:CHAIN_ID,from:this.account.address,to:to??null,data,value:'0'},intentHash=sha(intent);
@@ -92,12 +105,9 @@ export class SequentialDeployment {
    assert.equal(latest,pending,'Unrelated pending transaction; stop and reconcile before bootstrap');
    const estimated=await this.client.estimateGas({account:this.account,to,data,value:0n});
    const gas=(estimated*120n+99n)/100n;assert(gas<=16000000n,'Transaction exceeds conservative Base gas cap');
-   const fees=await this.client.estimateFeesPerGas();assert(fees.maxFeePerGas<=this.maxFeePerGas,'Network fee exceeds configured deployment cap');
-   const maximumCost=gas*fees.maxFeePerGas;
-   const reserved=Object.values(this.manifest.transactions).reduce((n,t)=>n+BigInt(t.maximumCost??0),0n);
-   assert(reserved+maximumCost<=this.spendLimit,'Deployment cumulative maximum fee budget exceeded');
-   assert(await this.client.getBalance({address:this.account.address})>=maximumCost+parseEther('0.0001'),'Insufficient test ETH including L1 fee reserve');
+   const fees=await this.client.estimateFeesPerGas();
    const request={chainId:CHAIN_ID,type:'eip1559',nonce:latest,to,data,value:0n,gas,maxFeePerGas:fees.maxFeePerGas,maxPriorityFeePerGas:fees.maxPriorityFeePerGas};
+   await this.assertSubmissionLimits(request,true);const maximumCost=maximumExecutionCost(request);
    const serialized=await this.account.signTransaction(request);const hash=keccak256(serialized);
    entry={intentHash,request,hash,maximumCost:maximumCost.toString(),status:'prepared'};
    this.manifest.transactions[id]=entry;this.save(); // Intent/hash durably recorded BEFORE network submission.
@@ -106,6 +116,8 @@ export class SequentialDeployment {
   try {receipt=await this.client.getTransactionReceipt({hash:entry.hash});}catch(error){if(error.name!=='TransactionReceiptNotFoundError')throw error;}
   if(receipt)assertReceiptIdentity(receipt,entry.hash,id);
   if(!receipt) {
+   // Operator limits and available funds may have changed since this intent was saved.
+   await this.assertSubmissionLimits(entry.request);
    const serialized=await this.account.signTransaction(toRequest(entry.request));assert.equal(keccak256(serialized),entry.hash,'Resume signature/hash mismatch');
    const consumed=await this.client.getTransactionCount({address:this.account.address,blockTag:'latest'});
    assert(consumed<=entry.request.nonce,`${id}: nonce consumed without known receipt; do not resend a new transaction`);

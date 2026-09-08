@@ -74,3 +74,35 @@ test('a matching initial receipt does not excuse a different finality receipt',a
  await assert.rejects(run.transaction('operation',{to,data:'0x1234'}),/receipt transaction hash does not match/);
  assert.equal(manifest.transactions.operation.status,'prepared');
 });
+
+for(const status of ['prepared','submitted'])for(const limit of ['fee','budget','balance'])test(`a ${status} transaction must satisfy the current ${limit} limit before resubmission`,async()=>{
+ const {run,client,manifest,raws}=fixture({failFirst:true});
+ await assert.rejects(run.transaction('operation',{to,data:'0x1234'}),/uncertain/);
+ const entry=manifest.transactions.operation;entry.status=status;
+ if(limit==='fee')run.maxFeePerGas=1n;
+ if(limit==='budget')run.spendLimit=BigInt(entry.request.gas)*BigInt(entry.request.maxFeePerGas)-1n;
+ if(limit==='balance')client.getBalance=async()=>0n;
+ run.account={address:account.address,signTransaction:()=>{throw Error('must reject before signing');}};
+ const reason={fee:/Transaction fee exceeds configured deployment cap/,budget:/cumulative maximum fee budget exceeded/,balance:/Insufficient test ETH/}[limit];
+ await assert.rejects(run.transaction('operation',{to,data:'0x1234'}),reason);
+ assert.equal(raws.length,1);assert.equal(entry.status,status);
+});
+for(const metadata of ['0',undefined])test(`saved cost metadata ${metadata===undefined?'missing':'reduced to zero'} cannot bypass the resumed budget`,async()=>{
+ const {run,manifest,raws}=fixture({failFirst:true});await assert.rejects(run.transaction('operation',{to,data:'0x1234'}),/uncertain/);
+ manifest.transactions.operation.maximumCost=metadata;run.spendLimit=0n;
+ await assert.rejects(run.transaction('operation',{to,data:'0x1234'}),/cumulative maximum fee budget exceeded/);assert.equal(raws.length,1);
+});
+test('new transactions reserve historical signed request costs even if summary metadata is reduced',async()=>{
+ const {run,manifest,raws}=fixture();await run.transaction('operation',{to,data:'0x1234'});
+ const original=manifest.transactions.operation;original.maximumCost='0';run.spendLimit=BigInt(original.request.gas)*BigInt(original.request.maxFeePerGas);
+ await assert.rejects(run.transaction('next-operation',{to,data:'0xabcd'}),/cumulative maximum fee budget exceeded/);
+ assert.equal(raws.length,1);assert.equal(manifest.transactions['next-operation'],undefined);
+});
+for(const status of ['prepared','submitted','confirmed'])test(`an already mined ${status} transaction can be reconciled after limits are lowered`,async()=>{
+ const {run,client,manifest,raws}=fixture();await run.transaction('operation',{to,data:'0x1234'});
+ manifest.transactions.operation.status=status;run.maxFeePerGas=0n;run.spendLimit=0n;
+ client.getBalance=async()=>{throw Error('reconciliation must not check submission balance');};
+ client.sendRawTransaction=async()=>{throw Error('must not resubmit an already mined transaction');};
+ const receipt=await run.transaction('operation',{to,data:'0x1234'});
+ assert.equal(receipt.transactionHash,manifest.transactions.operation.hash);assert.equal(manifest.transactions.operation.status,'confirmed');assert.equal(raws.length,1);
+});
