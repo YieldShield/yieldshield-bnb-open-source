@@ -1,8 +1,8 @@
 {
-  "name": "yieldshield-base",
+  "name": "yieldshield-bnb",
   "private": true,
   "version": "0.1.0",
-  "description": "YieldShield Base alpha: live stock references and valueless Sepolia protection trials.",
+  "description": "YieldShield on BNB Chain: live token references and interactive protection scenarios.",
   "workspaces": [
     "packages/*",
     "apps/*"
@@ -22,10 +22,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "dev": "npm run dev -w web",
-    "dev:robinhood": "npm run dev -w web -- --mode robinhood-testnet",
-    "build:robinhood": "npm run build:packages && npm run build -w web -- --mode robinhood-testnet",
-    "start:api": "node services/base-api.mjs",
-    "test:base": "node --test services/base-market-data.test.mjs scripts/deploy-base-sepolia.test.mjs && vitest run packages/adapter-evm/test/security.test.ts"
+    "start:api": "node services/bnb-api.mjs",
+    "test:base": "node --test services/base-market-data.test.mjs scripts/deploy-base-sepolia.test.mjs && vitest run packages/adapter-evm/test/security.test.ts",
+    "test:bnb": "node --test services/bnb-market-data.test.mjs && vitest run packages/adapter-evm/test/security.test.ts"
   },
   "dependencies": {
     "@solana-program/token": "^0.14.0",

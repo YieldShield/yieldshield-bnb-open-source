@@ -1,64 +1,57 @@
-# YieldShield on Base
+# YieldShield on BNB Chain
 
-An **unaudited early alpha** for exploring Coinbase tokenized-stock references on Base mainnet and testing conditional protection with valueless mock tokens on Base Sepolia.
+A working token-risk preview with a yellow BNB design, live BNB Smart Chain price references, and interactive collateral scenarios.
 
-- Website: https://base.yieldshield.ai
-- Market API: https://base-api.yieldshield.ai/api/markets
 - Operator: Hawig Ventures UG (haftungsbeschränkt), Germany
 - Contact: david@yieldshield.ai
+- Source: https://github.com/YieldShield/yieldshield-bnb
+- Release and grant evidence: [BNB release notes](docs/BNB_RELEASE.md)
+- Origin: [pinned Base baseline](BASELINE.md)
 
-## Current release state
+## What works
 
-The frontend and read-only market service are implemented. Public Base Sepolia contract deployment is **pending test-ETH funding and a live, fresh market session**. The UI explicitly shows deployment pending until verified contract addresses are published. No mainnet transactions or real-asset deposits are supported. Recurring Sepolia oracle submissions remain disabled pending the operator's explicit authorization.
+Explore WBNB, BTCB, Binance-Peg ETH and CAKE without connecting a wallet. Change token quantity, market movement and available collateral to compare holding a position with a modeled collateral exit. Source addresses, oracle timestamps and the BSC block are available from the interface.
 
-The consumer design comes from the existing YieldShield application; Solidity comes from the existing YieldShield contracts. The Base edition adds blue branding, stock references, legal/risk pages, fail-closed reads, verified exit quotes and a Base-compatible immutable module deployment.
+The API reads Chainlink feeds on BNB Smart Chain (chain 56). WBNB uses BNB/USD, BTCB uses BTC/USD and Binance-Peg ETH uses ETH/USD; those references do not measure wrapper or peg risk and are not executable swap quotes. The browser stops calculations when observations expire or the service fails.
 
-## Two separate networks
+**Protection contracts are not deployed on BSC in this release.** There are no real deposits, live pools, insurance policies, guaranteed exits or yield claims. The future wallet flow is restricted to BSC Testnet (chain 97) and stays disabled until reviewed deployment addresses are registered. Mainnet references are read only.
 
-| Function | Network | Assets and trust |
-|---|---|---|
-| Stock references and scenarios | Base mainnet, 8453 | Canonical AAPLc, NVDAc, METAc and GOOGLc identities; official Chainlink TRV feeds and Coinbase registry. Read only. |
-| Protection / collateral / faucet | Base Sepolia, 84532 | Valueless mock stocks and TestUSDC. Operator-attested source relay; **not** Coinbase-issued shares or a Chainlink-operated Sepolia feed. Pending public deployment. |
+## Run locally
 
-Protection can fail, collateral may be insufficient, and there is no guaranteed return or insurance. Internal agent reviews and automated tests are not an independent audit.
-
-## Development
-
-Use Node.js 24 and the committed lockfiles. The existing repository includes compatibility adapters for other chains; the web build defaults to Base Sepolia EVM.
+Use Node.js 24 and npm. No wallet or private key is required.
 
 ```sh
 npm ci
 npm run build
 npm run start:api
-# In a separate terminal:
+# In a second terminal:
 npm run dev -w web -- --host 127.0.0.1
 ```
 
-The Vite preview forwards `/api/markets` to the local API on port 3001. The Railway API has an isolated `services/package.json` and lockfile, and installs only its own runtime dependencies. No wallet key is needed for live market references.
+Open http://127.0.0.1:5174. Vite forwards /api/markets to the local service on port 3002. The local API also exposes /health. An optional server-only BSC_MAINNET_RPC_URL can replace the public RPC endpoints; never place credentials in a VITE_ variable.
 
 ```sh
 npm run test:web
-npx vitest run packages/adapter-evm/test/security.test.ts
-node --test services/base-market-data.test.mjs scripts/deploy-base-sepolia.test.mjs
-node scripts/verify-base-modules.mjs
+npm run test:bnb
 ```
 
-## Contract review and deployment
+The tests cover source identity, stale/future data, incomplete RPC responses, cache expiration, HTTP failures, scenario math and inherited EVM transaction guards.
 
-- [Immutable module review](contracts/config/BASE_MODULE_SECURITY_REVIEW.md)
-- [Oracle review and primary sources](docs/BASE_ORACLE_REVIEW.md)
-- [Full local deployment rehearsal](contracts/config/BASE_SEPOLIA_REHEARSAL_REPORT.md)
-- [Deployment preparation and recovery](contracts/config/BASE_SEPOLIA_DEPLOYMENT_CHECKLIST.md)
-- [Explicit exchange-session calendar](contracts/config/base-us-equity-sessions-2026.json)
+## Deploy the preview
 
-Initialize pinned contract dependencies with `git submodule update --init --recursive`, install the contract package dependencies, and build Foundry artifacts with storage layouts before preparation. Never commit private keys. Local test deployment configuration belongs only in ignored `contracts/.env.base.local`.
+Vercel builds the web app and hosts api/markets.mjs in the same project. It does not depend on the Base API or a Railway service. The committed Vercel configuration routes page URLs to the SPA while keeping the market API separate. There is no scheduled oracle relay.
 
-The deployment script defaults to preparation. Public execution requires the explicit `--broadcast` option and enforces chain 84532, a dedicated signer, module sizes, artifact hashes, governance/bootstrap closure, source identity and live-session checks. Its public manifest is written only from actual confirmed transactions; do not publish unsigned-plan placeholder addresses.
+```sh
+vercel link --project yieldshield-bnb
+vercel deploy --prod
+```
 
-Stock openings require an original source price no older than one hour and an explicit allowed session. A fresh relay transaction never makes an old price fresh. Independent source-state observations expire after ten minutes. A source pause, stale observation or unavailable sequencer causes the alpha to stop accepting affected actions.
+Choose the intended Vercel team when linking. No deployment keys belong in Git. The upload excludes contract sources, other-chain services, faucets, scripts, tests, environment files and local build artifacts.
 
-## Hosting
+## Inherited source and future contracts
 
-Vercel builds only the web service and forwards `/api/markets` to Railway. Railway uses `Dockerfile.base-api`, port 3001, `/health`, one replica and the GitHub main branch. `/health` indicates service availability and separately reports source readiness; unavailable market observations return 503. No recurring wallet-funded updater is enabled in this release.
+The repo starts from a committed Base edition snapshot. Its contract modules and compatibility adapters remain as source for the next phase. Files named Base, Robinhood or Solana, their scripts and historical reports are inherited references; they are not evidence of a BNB deployment or BNB audit.
 
-Vercel excludes contracts, local environment files and development artifacts from the frontend upload. Railway's image includes only the market service and its production dependencies. After a completed public deployment, run `node scripts/sync-base-deployment.mjs` to verify contract bytecode and deployment receipts before publishing frontend addresses. Rebuild and deploy the frontend afterward.
+Do not run the Base deployment or stock relay scripts to deploy this edition. A BSC-specific contract configuration, mock-token setup, oracle design, deployment rehearsal and transaction verification are still required. Start with one test-token pair and prove the complete protection and collateral lifecycle before expanding to four assets. A public testnet release requires actual deployment receipts and a reviewed manifest; placeholders must never enable transactions.
+
+[Oracle review and trust assumptions](docs/BNB_ORACLE_REVIEW.md) describes the current read-only path.

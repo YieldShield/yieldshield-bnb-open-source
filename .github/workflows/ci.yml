@@ -1,4 +1,4 @@
-name: Base alpha checks
+name: BNB preview checks
 on:
   push:
     branches: [main]
@@ -18,7 +18,9 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm run test:web
-      - run: npm run test:base
+      - run: npm run test:bnb
+      - name: Inherited Base regression tests
+        run: npm run test:base
       - run: npx eslint apps/web/src packages/adapter-evm/src packages/adapter-evm/test packages/core/src/port.ts packages/core/src/views.ts services
       - run: npm audit --omit=dev --audit-level=moderate
   contracts:
@@ -37,7 +39,7 @@ jobs:
       - name: Module and deployment lifecycle regressions
         working-directory: contracts
         run: forge test --match-path 'test/base-modules/*.t.sol' --extra-output storageLayout
-      - name: Stock oracle and relay regressions
+      - name: Inherited stock oracle and relay regressions
         working-directory: contracts
         run: forge test --match-path 'test/Base*.t.sol' --extra-output storageLayout
       - run: node scripts/verify-base-modules.mjs

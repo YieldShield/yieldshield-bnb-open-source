@@ -1,14 +1,17 @@
 {
+  "buildCommand": "npm run build",
+  "outputDirectory": "apps/web/dist",
+  "framework": "vite",
+  "functions": {
+    "api/markets.mjs": {
+      "maxDuration": 30,
+      "includeFiles": "config/bnb-assets.json"
+    }
+  },
   "rewrites": [
     {
-      "source": "/api/markets",
-      "destination": "https://base-api.yieldshield.ai/api/markets"
-    },
-    {
       "source": "/((?!api/).*)",
-      "destination": {
-        "service": "web"
-      }
+      "destination": "/index.html"
     }
   ],
   "headers": [
@@ -33,19 +36,5 @@
         }
       ]
     }
-  ],
-  "services": {
-    "web": {
-      "buildCommand": "npm run build",
-      "outputDirectory": "apps/web/dist",
-      "framework": "vite",
-      "root": ".",
-      "rewrites": [
-        {
-          "source": "/(.*)",
-          "destination": "/index.html"
-        }
-      ]
-    }
-  }
+  ]
 }
