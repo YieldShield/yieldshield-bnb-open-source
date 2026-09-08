@@ -157,7 +157,9 @@ export async function planIntent(
         ],
         extract: (receipt) => {
           const tokenId = mintedTokenId(receipt, nft, owner);
-          return tokenId !== null ? { positionId: encodePositionId(poolAddr, "shield", tokenId) } : {};
+          if (tokenId === null)
+            throw new Error("Confirmed deposit receipt does not contain the expected protection position.");
+          return { positionId: encodePositionId(poolAddr, "shield", tokenId) };
         },
       };
     }
@@ -181,7 +183,9 @@ export async function planIntent(
         ],
         extract: (receipt) => {
           const tokenId = mintedTokenId(receipt, nft, owner);
-          return tokenId !== null ? { positionId: encodePositionId(poolAddr, "protector", tokenId) } : {};
+          if (tokenId === null)
+            throw new Error("Confirmed deposit receipt does not contain the expected collateral position.");
+          return { positionId: encodePositionId(poolAddr, "protector", tokenId) };
         },
       };
     }
@@ -235,7 +239,9 @@ export async function planIntent(
               log.args.user.toLowerCase() === owner.toLowerCase() &&
               log.args.oldTokenId === tokenId,
           )?.args.newTokenId;
-          return newTokenId !== undefined ? { positionId: encodePositionId(poolAddr, "shield", newTokenId) } : {};
+          if (newTokenId === undefined)
+            throw new Error("Confirmed withdrawal receipt does not identify the remaining position.");
+          return { positionId: encodePositionId(poolAddr, "shield", newTokenId) };
         },
       };
     }

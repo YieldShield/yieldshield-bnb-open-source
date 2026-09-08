@@ -6,7 +6,17 @@
 import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { getAccount, switchChain, waitForTransactionReceipt, writeContract, type Config } from "@wagmi/core";
-import type { Abi, Address } from "viem";
+import {
+  encodeFunctionData,
+  formatTransactionReceipt,
+  zeroHash,
+  type Abi,
+  type Address,
+  type Hash,
+  type PublicClient,
+  type TransactionReceipt,
+  type RpcTransactionReceipt,
+} from "viem";
 import { WagmiProvider, createConfig, http, injected, useAccount, useConnect, useDisconnect, useConfig } from "wagmi";
 import type {
   AccountId,
@@ -17,7 +27,7 @@ import type {
   WalletConnectionApi,
 } from "@yieldshield/core";
 import type { EvmAdapter } from "./adapter.js";
-import { planIntent } from "./intents.js";
+import { planIntent, type EvmStep } from "./intents.js";
 
 const AdapterContext = createContext<EvmAdapter | null>(null);
 
@@ -118,6 +128,98 @@ export async function assertWalletSession(
     throw new Error("Wallet account changed. Review the action and start again.");
 }
 
+const sameHex = (left: unknown, right: unknown) =>
+  typeof left === "string" && typeof right === "string" && left.toLowerCase() === right.toLowerCase();
+const sealedHash = (value: unknown): value is Hash =>
+  typeof value === "string" && /^0x[0-9a-fA-F]{64}$/.test(value) && !sameHex(value, zeroHash);
+const quantity = (value: unknown): bigint | null =>
+  typeof value === "string" && /^0x[0-9a-fA-F]+$/.test(value) ? BigInt(value) : null;
+
+/** Confirmation uses raw sealed RPC evidence, not cached/chain-formatted preconfirmation data. */
+export async function readCanonicalStepReceipt(
+  client: PublicClient,
+  hash: Hash,
+  owner: Address,
+  step: EvmStep,
+  chainId: number,
+): Promise<TransactionReceipt> {
+  const data = encodeFunctionData({ abi: step.abi, functionName: step.functionName, args: step.args });
+  const readReceipt = async () => {
+    const receipt = await client.request({ method: "eth_getTransactionReceipt", params: [hash] });
+    if (!receipt || !sameHex(receipt.transactionHash, hash))
+      throw new Error("Transaction receipt identity is unavailable.");
+    if (receipt.status !== "0x1") throw new Error(`Transaction did not succeed: ${hash}`);
+    const height = quantity(receipt.blockNumber);
+    const index = quantity(receipt.transactionIndex);
+    if (
+      !sealedHash(receipt.blockHash) ||
+      height === null ||
+      height <= 0n ||
+      index === null ||
+      index > BigInt(Number.MAX_SAFE_INTEGER)
+    )
+      throw new Error(`Transaction is awaiting sealed confirmation. Check wallet activity before retrying: ${hash}`);
+    if (!sameHex(receipt.from, owner) || !sameHex(receipt.to, step.address))
+      throw new Error("Transaction receipt does not match the reviewed account and contract.");
+    const logIndices = new Set<string>();
+    if (!Array.isArray(receipt.logs)) throw new Error("Canonical transaction logs are unavailable.");
+    for (const log of receipt.logs) {
+      if (
+        log.removed ||
+        !sameHex(log.transactionHash, hash) ||
+        !sameHex(log.blockHash, receipt.blockHash) ||
+        quantity(log.blockNumber) !== height ||
+        quantity(log.transactionIndex) !== index ||
+        quantity(log.logIndex) === null ||
+        logIndices.has(log.logIndex!)
+      )
+        throw new Error("Transaction logs do not match the canonical receipt.");
+      logIndices.add(log.logIndex!);
+    }
+    return { receipt, height, index: Number(index) };
+  };
+  const verifyBlock = async (observed: Awaited<ReturnType<typeof readReceipt>>) => {
+    const block = await client.request({
+      method: "eth_getBlockByNumber",
+      params: [observed.receipt.blockNumber, false],
+    });
+    if (
+      !block ||
+      quantity(block.number) !== observed.height ||
+      !sameHex(block.hash, observed.receipt.blockHash) ||
+      !sameHex(block.transactions[observed.index], hash)
+    )
+      throw new Error("Transaction is not included in the canonical block. Check wallet activity before retrying.");
+  };
+  const observed = await readReceipt();
+  await verifyBlock(observed);
+  const [transaction, latest] = await Promise.all([
+    client.request({ method: "eth_getTransactionByHash", params: [hash] }),
+    client.request({ method: "eth_getBlockByNumber", params: ["latest", false] }),
+  ]);
+  if (
+    !transaction ||
+    !sameHex(transaction.hash, hash) ||
+    !sameHex(transaction.from, owner) ||
+    !sameHex(transaction.to, step.address) ||
+    !sameHex(transaction.input, data) ||
+    quantity(transaction.value) !== 0n ||
+    !sameHex(transaction.blockHash, observed.receipt.blockHash) ||
+    quantity(transaction.blockNumber) !== observed.height ||
+    quantity(transaction.transactionIndex) !== BigInt(observed.index) ||
+    (transaction.chainId !== undefined && quantity(transaction.chainId) !== BigInt(chainId))
+  )
+    throw new Error("Mined transaction differs from the reviewed action. Check wallet activity before retrying.");
+  const latestHeight = quantity(latest?.number);
+  if (!latest || !sealedHash(latest.hash) || latestHeight === null || latestHeight < observed.height + 1n)
+    throw new Error(`Transaction needs two sealed confirmations. Check wallet activity before retrying: ${hash}`);
+  const fresh = await readReceipt();
+  if (fresh.height !== observed.height || !sameHex(fresh.receipt.blockHash, observed.receipt.blockHash))
+    throw new Error("Transaction changed blocks during confirmation. Check wallet activity before retrying.");
+  await verifyBlock(fresh);
+  return formatTransactionReceipt(fresh.receipt as RpcTransactionReceipt);
+}
+
 /** Plan once for the selected account; stop if it changes while any signature is pending. */
 export async function sendEvmIntent(
   adapter: EvmAdapter,
@@ -138,7 +240,7 @@ export async function sendEvmIntent(
     { factory: adapter.addresses.factory, faucet: adapter.addresses.faucet },
     intent,
   );
-  let lastReceipt: Awaited<ReturnType<typeof waitForTransactionReceipt>> | null = null;
+  let lastReceipt: TransactionReceipt | null = null;
   for (const step of plan.steps) {
     await assertWalletSession(config, owner, adapter.chain.id, connector.uid);
     // Simulate each step against current chain state before prompting for its signature.
@@ -163,16 +265,32 @@ export async function sendEvmIntent(
     opts?.onPhase?.("submitted");
     opts?.onPhase?.("confirming");
     let cancelled = false;
+    let expectedHash = hash;
     lastReceipt = await waitForTransactionReceipt(config, {
       hash,
       chainId: adapter.chain.id,
+      confirmations: 2,
       onReplaced: (replacement) => {
-        if (replacement.reason !== "repriced") cancelled = true;
+        if (
+          replacement.reason !== "repriced" ||
+          !sameHex(replacement.replacedTransaction.hash, expectedHash) ||
+          !sealedHash(replacement.transaction.hash)
+        )
+          cancelled = true;
+        else expectedHash = replacement.transaction.hash;
       },
     });
-    if (cancelled)
+    if (cancelled || !sameHex(lastReceipt.transactionHash, expectedHash))
       throw new Error("Transaction was cancelled or replaced. Review your wallet activity before retrying.");
-    if (lastReceipt.status !== "success") throw new Error(`transaction reverted: ${lastReceipt.transactionHash}`);
+    // Even repriced replacements must preserve the exact account, calldata,
+    // contract and zero-value intent. Never extract position IDs from a waiter cache.
+    lastReceipt = await readCanonicalStepReceipt(
+      adapter.publicClient,
+      lastReceipt.transactionHash,
+      owner,
+      step,
+      adapter.chain.id,
+    );
   }
   if (!lastReceipt) throw new Error("Nothing to submit.");
   return { txId: lastReceipt.transactionHash, ...(plan.extract?.(lastReceipt) ?? {}) };

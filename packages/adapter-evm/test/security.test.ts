@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { zeroAddress } from "viem";
+import { zeroAddress, zeroHash, encodeFunctionData, encodeEventTopics } from "viem";
+import { erc721TransferEventAbi } from "../src/abis/erc20";
+import { splitRiskPoolAbi } from "../src/abis/splitRiskPool";
 import { planIntent } from "../src/intents";
 import { createReader, netShieldAmount } from "../src/reader";
-import { assertWalletSession, sendEvmIntent } from "../src/react";
+import { assertWalletSession, sendEvmIntent, readCanonicalStepReceipt } from "../src/react";
 import { encodePositionId } from "../src/positionId";
 import { friendlyError } from "../src/errors";
 import { getAccount, waitForTransactionReceipt, writeContract } from "@wagmi/core";
@@ -46,6 +48,76 @@ const deposit = {
 const success = (result: unknown) => ({ status: "success", result });
 const failure = () => ({ status: "failure", error: new Error("RPC down") });
 const burned = () => ({ status: "failure", error: { cause: { data: { errorName: "ERC721NonexistentToken" } } } });
+const canonicalBlockHash = `0x${"c".repeat(64)}`;
+const canonicalStep = {
+  address: pool,
+  abi: splitRiskPoolAbi,
+  functionName: "depositShieldedAsset",
+  args: [shielded, 100n, 99n],
+};
+function rawRpc(overrides: Record<string, any> = {}) {
+  let activeHash = txHash;
+  let receiptReads = 0;
+  return vi.fn(async ({ method, params }: any) => {
+    const step = overrides.step ?? vi.mocked(writeContract).mock.calls.at(-1)?.[1] ?? canonicalStep;
+    if (method === "eth_getTransactionReceipt" || method === "eth_getTransactionByHash") activeHash = params[0];
+    const receipt = {
+      transactionHash: activeHash,
+      blockHash: canonicalBlockHash,
+      blockNumber: "0xa",
+      transactionIndex: "0x0",
+      from: owner,
+      to: step.address,
+      status: "0x1",
+      gasUsed: "0x100",
+      cumulativeGasUsed: "0x100",
+      effectiveGasPrice: "0x1",
+      type: "0x2",
+      contractAddress: null,
+      logs:
+        step.functionName === "depositShieldedAsset"
+          ? [
+              {
+                address: shieldNft,
+                blockHash: canonicalBlockHash,
+                blockNumber: "0xa",
+                transactionHash: activeHash,
+                transactionIndex: "0x0",
+                logIndex: "0x0",
+                removed: false,
+                data: "0x",
+                topics: encodeEventTopics({
+                  abi: erc721TransferEventAbi,
+                  eventName: "Transfer",
+                  args: { from: zeroAddress, to: owner, tokenId: 1n },
+                }),
+              },
+            ]
+          : [],
+      ...overrides.receipt,
+    };
+    if (method === "eth_getTransactionReceipt")
+      return { ...receipt, ...(receiptReads++ > 0 ? overrides.freshReceipt : {}) };
+    if (method === "eth_getTransactionByHash")
+      return {
+        hash: activeHash,
+        from: owner,
+        to: step.address,
+        input: encodeFunctionData({ abi: step.abi, functionName: step.functionName, args: step.args }),
+        value: "0x0",
+        blockHash: canonicalBlockHash,
+        blockNumber: "0xa",
+        transactionIndex: "0x0",
+        chainId: "0x14a34",
+        ...overrides.transaction,
+      };
+    if (method === "eth_getBlockByNumber")
+      return params[0] === "latest"
+        ? { number: "0xb", hash: `0x${"d".repeat(64)}`, transactions: [], ...overrides.head }
+        : { number: "0xa", hash: canonicalBlockHash, transactions: [activeHash], ...overrides.block };
+    throw new Error(`unexpected RPC method ${method}`);
+  });
+}
 function clientFor(overrides: Record<string, any> = {}) {
   const values: Record<string, any> = {
     poolCount: 1n,
@@ -98,6 +170,7 @@ function clientFor(overrides: Record<string, any> = {}) {
   const value = (call: any) =>
     typeof values[call.functionName] === "function" ? values[call.functionName](call) : values[call.functionName];
   return {
+    request: rawRpc(),
     getBlockNumber: vi.fn(async () => 10n),
     getChainId: vi.fn(async () => 84532),
     getBlock: vi.fn(async () => ({ number: 10n, timestamp: 1000n })),
@@ -255,10 +328,34 @@ describe("wallet session and receipt safety", () => {
     await expect(sendEvmIntent(adapter(clientFor()), config, owner, deposit)).rejects.toThrow("cancelled or replaced");
     expect(writeContract).toHaveBeenCalledTimes(1);
   });
+  it("does not accept an unrelated waiter hash without a replacement event", async () => {
+    vi.mocked(waitForTransactionReceipt).mockResolvedValue({
+      status: "success",
+      transactionHash: `0x${"b".repeat(64)}`,
+      logs: [],
+    } as any);
+    await expect(sendEvmIntent(adapter(clientFor({ allowance: 100n })), config, owner, deposit)).rejects.toThrow(
+      "cancelled or replaced",
+    );
+  });
+  it("ignores a zero waiter block hash and verifies fresh raw sealed evidence", async () => {
+    vi.mocked(waitForTransactionReceipt).mockResolvedValue({
+      status: "success",
+      transactionHash: txHash,
+      blockHash: zeroHash,
+      logs: [],
+    } as any);
+    const result = await sendEvmIntent(adapter(clientFor({ allowance: 100n })), config, owner, deposit);
+    expect(result.positionId).toBe(encodePositionId(pool, "shield", 1n));
+  });
   it("returns the mined replacement hash when only the gas price was raised", async () => {
     const replacementHash = `0x${"b".repeat(64)}`;
     vi.mocked(waitForTransactionReceipt).mockImplementation(async (_config, args: any) => {
-      args.onReplaced({ reason: "repriced" });
+      args.onReplaced({
+        reason: "repriced",
+        replacedTransaction: { hash: txHash },
+        transaction: { hash: replacementHash },
+      });
       return { status: "success", transactionHash: replacementHash, logs: [] } as any;
     });
     const result = await sendEvmIntent(adapter(clientFor({ allowance: 100n })), config, owner, deposit);
@@ -468,5 +565,44 @@ describe("protected exit quote safety", () => {
       deps,
     ).getOwnerPositions(owner);
     expect(positions.protector[0]!.claimableCommission).toBe(7n);
+  });
+});
+
+describe("canonical wallet transaction evidence", () => {
+  const verify = (overrides: Record<string, any> = {}) => {
+    const client = clientFor();
+    client.request = rawRpc({ step: canonicalStep, ...overrides });
+    return readCanonicalStepReceipt(client, txHash as any, owner, canonicalStep as any, 84532);
+  };
+  it("uses raw sealed evidence and returns only the canonical receipt logs", async () => {
+    const receipt = await verify();
+    expect(receipt.blockHash).toBe(canonicalBlockHash);
+    expect(receipt.blockNumber).toBe(10n);
+    expect(receipt.logs).toHaveLength(1);
+  });
+  it.each([null, zeroHash, "0x1234"])("rejects unsealed raw receipt hashes (%s)", async (blockHash) => {
+    await expect(verify({ receipt: { blockHash } })).rejects.toThrow("sealed confirmation");
+  });
+  it("rejects a receipt moved or reorged during confirmation", async () => {
+    await expect(verify({ freshReceipt: { blockHash: `0x${"e".repeat(64)}` } })).rejects.toThrow();
+    await expect(verify({ block: { transactions: [`0x${"f".repeat(64)}`] } })).rejects.toThrow("canonical block");
+  });
+  it.each([{ from: other }, { to: other }, { input: "0x1234" }, { value: "0x1" }, { chainId: "0x2105" }])(
+    "rejects changed mined action %s",
+    async (transaction) => {
+      await expect(verify({ transaction })).rejects.toThrow("reviewed action");
+    },
+  );
+  it("requires two sealed block confirmations", async () => {
+    await expect(verify({ head: { number: "0xa" } })).rejects.toThrow("two sealed confirmations");
+  });
+  it("rejects fabricated event provenance", async () => {
+    await expect(
+      verify({ receipt: { logs: [{ transactionHash: txHash, blockHash: zeroHash, removed: false }] } }),
+    ).rejects.toThrow("logs");
+  });
+  it("does not confirm a position without the matching receipt NFT mint", async () => {
+    const plan = await planIntent(clientFor({ allowance: 100n }), owner, { factory }, deposit);
+    expect(() => plan.extract!({ logs: [] } as any)).toThrow("expected protection position");
   });
 });
