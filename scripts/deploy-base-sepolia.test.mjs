@@ -16,8 +16,9 @@ function fixture({broadcast=true,failFirst=false,pending=false}={}) {
   estimateGas:async()=>21000n,estimateFeesPerGas:async()=>({maxFeePerGas:10n,maxPriorityFeePerGas:1n}),getBalance:async()=>10n**18n,
   getTransactionReceipt:async()=>{if(!receipt)throw missing();return receipt;},
   getTransaction:async()=>{throw new Error('not found');},
-  sendRawTransaction:async({serializedTransaction})=>{attempts++;raws.push(serializedTransaction);const saved=JSON.parse(readFileSync(path));assert.equal(saved.transactions.operation.hash,keccak256(serializedTransaction),'intent saved before submission');assert(!readFileSync(path,'utf8').includes(TEST_KEY));assert(!readFileSync(path,'utf8').includes(serializedTransaction));if(failFirst&&attempts===1)throw new Error('uncertain network result');nonce++;receipt={status:'success',transactionHash:keccak256(serializedTransaction),blockHash:'0x'+'22'.repeat(32),blockNumber:1n,gasUsed:21000n,logs:[]};return receipt.transactionHash;},
+  sendRawTransaction:async({serializedTransaction})=>{attempts++;raws.push(serializedTransaction);const saved=JSON.parse(readFileSync(path));assert.equal(saved.transactions.operation.hash,keccak256(serializedTransaction),'intent saved before submission');assert(!readFileSync(path,'utf8').includes(TEST_KEY));assert(!readFileSync(path,'utf8').includes(serializedTransaction));if(failFirst&&attempts===1)throw new Error('uncertain network result');nonce++;receipt={status:'success',transactionHash:keccak256(serializedTransaction),blockHash:'0x'+'22'.repeat(32),blockNumber:1n,gasUsed:21000n,transactionIndex:0,logs:[]};return receipt.transactionHash;},
   waitForTransactionReceipt:async()=>receipt,
+  getBlock:async({blockTag})=>({number:blockTag==='latest'?2n:1n,hash:'0x'+'22'.repeat(32),transactions:[receipt?.transactionHash]}),
  };
  const run=new SequentialDeployment({client,account,broadcast,manifestPath:path,manifest,nonce:0,maxFeePerGas:100n,spendLimit:10n**18n});
  return {run,client,path,manifest,raws};
@@ -30,7 +31,7 @@ test('runtime verification ignores only compiler-declared immutables and detects
 test('runtime verification preserves Solidity library address patching',()=>{const a={deployedBytecode:{object:'0x73'+'00'.repeat(20)+'30146000',linkReferences:{},immutableReferences:{}}};assertRuntimeMatches(a,'0x73'+to.slice(2)+'30146000',to,{});});
 
 test('exclusive deployment lock blocks a second process and releases explicitly',()=>{const path=join(mkdtempSync(join(tmpdir(),'ys-base-lock-test-')),'deployment.lock');const release=acquireDeploymentLock(path);assert.throws(()=>acquireDeploymentLock(path),/EEXIST/);release();const releaseAgain=acquireDeploymentLock(path);releaseAgain();});
-test('persisted transaction calldata tampering is rejected even with the old intent digest',async()=>{const {run,path}=fixture({failFirst:true});await assert.rejects(run.transaction('operation',{to,data:'0x1234'}));run.manifest.transactions.operation.request.data='0xbeef';await assert.rejects(run.transaction('operation',{to,data:'0x1234'}),/persisted transaction calldata changed/);});
+test('persisted transaction calldata tampering is rejected even with the old intent digest',async()=>{const {run}=fixture({failFirst:true});await assert.rejects(run.transaction('operation',{to,data:'0x1234'}));run.manifest.transactions.operation.request.data='0xbeef';await assert.rejects(run.transaction('operation',{to,data:'0x1234'}),/persisted transaction calldata changed/);});
 test('repeated identical preparation step consumes one nonce only',async()=>{const {run}=fixture({broadcast:false});await run.transaction('operation',{to,data:'0x1234'});await run.transaction('operation',{to,data:'0x1234'});assert.equal(run.plan.length,1);assert.equal(run.cursor,1);await assert.rejects(run.transaction('operation',{to,data:'0x9999'}),/conflicting prepared intent/);});
 
 const replacementHash='0x'+'ab'.repeat(32);
@@ -105,4 +106,22 @@ for(const status of ['prepared','submitted','confirmed'])test(`an already mined 
  client.sendRawTransaction=async()=>{throw Error('must not resubmit an already mined transaction');};
  const receipt=await run.transaction('operation',{to,data:'0x1234'});
  assert.equal(receipt.transactionHash,manifest.transactions.operation.hash);assert.equal(manifest.transactions.operation.status,'confirmed');assert.equal(raws.length,1);
+});
+
+test('a cached zero-hash wait result is replaced by a fresh sealed receipt',async()=>{
+ const {run,client,manifest}=fixture();const original=client.waitForTransactionReceipt;
+ client.waitForTransactionReceipt=async()=>({...await original(),blockHash:'0x'+'00'.repeat(32)});
+ await run.transaction('operation',{to,data:'0x1234'});
+ assert.equal(manifest.transactions.operation.receipt.blockHash,'0x'+'22'.repeat(32));
+});
+test('a fresh unsealed receipt cannot mark a submitted transaction confirmed',async()=>{
+ const {run,client,manifest}=fixture();const original=client.getTransactionReceipt;
+ client.getTransactionReceipt=async()=>({...await original(),blockHash:'0x'+'00'.repeat(32)});
+ await assert.rejects(run.transaction('operation',{to,data:'0x1234'}),/not sealed/);
+ assert.equal(manifest.transactions.operation.status,'submitted');assert.equal(manifest.transactions.operation.receipt,undefined);
+});
+test('a confirmed resume must still belong to the canonical block',async()=>{
+ const {run,client,raws}=fixture();await run.transaction('operation',{to,data:'0x1234'});
+ client.getBlock=async()=>({number:1n,hash:'0x'+'33'.repeat(32),transactions:[]});
+ await assert.rejects(run.transaction('operation',{to,data:'0x1234'}),/canonical block/);assert.equal(raws.length,1);
 });

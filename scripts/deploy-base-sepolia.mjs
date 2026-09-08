@@ -58,6 +58,30 @@ function loadEnv() {
 }
 function toRequest(value) {const req={...value};for(const key of ['gas','maxFeePerGas','maxPriorityFeePerGas','value'])if(req[key]!==undefined)req[key]=BigInt(req[key]);return req;}
 function assertReceiptIdentity(receipt,hash,id) {assert.equal(receipt?.transactionHash,hash,`${id}: receipt transaction hash does not match saved transaction`);}
+/** Read sealed canonical receipts explicitly; confirmation waiters can retain preconfirmation data. */
+export async function readCanonicalReceipt(client,hash,id) {
+ const checkReceipt=receipt=>{
+  assertReceiptIdentity(receipt,hash,id);assert.equal(receipt.status,'success',`${id}: transaction reverted`);
+  assert(typeof receipt.blockNumber==='bigint'&&receipt.blockNumber>0n,`${id}: invalid receipt block number`);
+  assert(/^0x[0-9a-fA-F]{64}$/.test(receipt.blockHash??'')&&receipt.blockHash!==zeroHash,`${id}: receipt block hash is not sealed`);
+  assert(Number.isSafeInteger(receipt.transactionIndex)&&receipt.transactionIndex>=0,`${id}: invalid receipt transaction index`);
+ };
+ const checkBlock=(receipt,block)=>{
+  assert.equal(block.number,receipt.blockNumber,`${id}: canonical block height mismatch`);
+  assert.equal(block.hash,receipt.blockHash,`${id}: receipt differs from canonical block`);
+  assert.equal(block.transactions?.[receipt.transactionIndex],hash,`${id}: transaction missing from canonical block`);
+ };
+ const receipt=await client.getTransactionReceipt({hash});checkReceipt(receipt);
+ checkBlock(receipt,await client.getBlock({blockNumber:receipt.blockNumber}));
+ const head=await client.getBlock({blockTag:'latest'});
+ assert(typeof head.number==='bigint'&&head.number>=receipt.blockNumber+1n,`${id}: two sealed block confirmations required`);
+ assert(/^0x[0-9a-fA-F]{64}$/.test(head.hash??'')&&head.hash!==zeroHash,`${id}: latest block is not sealed`);
+ const fresh=await client.getTransactionReceipt({hash});checkReceipt(fresh);
+ assert.equal(fresh.blockNumber,receipt.blockNumber,`${id}: receipt moved during confirmation`);
+ assert.equal(fresh.blockHash,receipt.blockHash,`${id}: receipt reorged during confirmation`);
+ checkBlock(fresh,await client.getBlock({blockNumber:fresh.blockNumber}));
+ return fresh;
+}
 function maximumExecutionCost(request) {
  const gas=BigInt(request.gas),fee=BigInt(request.maxFeePerGas);
  assert(gas>0n&&fee>=0n,'Invalid saved transaction gas or maximum fee');return gas*fee;
@@ -96,7 +120,7 @@ export class SequentialDeployment {
   }
   if(previous?.status==='confirmed') {
    assert.equal(keccak256(await this.account.signTransaction(toRequest(previous.request))),previous.hash,`${id}: saved transaction does not match dedicated signer`);
-   const receipt=await this.client.getTransactionReceipt({hash:previous.hash});assertReceiptIdentity(receipt,previous.hash,id);assert.equal(receipt.status,'success',`${id}: receipt no longer successful`);assert.equal(receipt.blockHash,previous.receipt.blockHash,`${id}: confirmed transaction reorged`);return receipt;
+   const receipt=await readCanonicalReceipt(this.client,previous.hash,id);assert.equal(receipt.blockHash,previous.receipt.blockHash,`${id}: confirmed transaction reorged`);assert.equal(receipt.blockNumber,BigInt(previous.receipt.blockNumber),`${id}: confirmed transaction moved`);return receipt;
   }
   let entry=previous;
   if(!entry) {
@@ -131,7 +155,7 @@ export class SequentialDeployment {
   // A cancellation/replacement is never completion of the saved bootstrap intent.
   receipt=await this.client.waitForTransactionReceipt({hash:entry.hash,confirmations:2,checkReplacement:false,timeout:120000,pollingInterval:2000});
   assertReceiptIdentity(receipt,entry.hash,id);
-  assert.equal(receipt.status,'success',`${id}: transaction reverted; resume requires review`);
+  receipt=await readCanonicalReceipt(this.client,entry.hash,id);
   entry.status='confirmed';entry.receipt={transactionHash:receipt.transactionHash,blockHash:receipt.blockHash,blockNumber:receipt.blockNumber,contractAddress:receipt.contractAddress,gasUsed:receipt.gasUsed};this.save();
   console.log(`Confirmed ${id}: ${entry.hash}`);return receipt;
  }
