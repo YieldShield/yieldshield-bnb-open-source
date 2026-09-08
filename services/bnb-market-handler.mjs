@@ -18,10 +18,15 @@ export function createMarketHandler(client, { now = Date.now } = {}) {
     }
     try {
       if (!snapshot || now() - savedAt > 20_000) {
-        if (!pending) pending = readSourceSnapshot(client, { now }).then((result) => {
-          snapshot = result;
-          savedAt = now();
-        }).finally(() => { pending = undefined; });
+        if (!pending)
+          pending = readSourceSnapshot(client, { now })
+            .then((result) => {
+              snapshot = result;
+              savedAt = now();
+            })
+            .finally(() => {
+              pending = undefined;
+            });
         await pending;
       }
       // Evaluate time-sensitive state again on every response; cache age does not refresh feed age.
@@ -38,7 +43,12 @@ export function createMarketHandler(client, { now = Date.now } = {}) {
 const endpoints = process.env.BSC_MAINNET_RPC_URL
   ? [process.env.BSC_MAINNET_RPC_URL]
   : ["https://bsc-dataseed.bnbchain.org", "https://bsc-dataseed.nariox.org"];
-export const marketHandler = createMarketHandler(createPublicClient({
-  chain: bsc,
-  transport: fallback(endpoints.map((url) => http(url, { timeout: 6000, retryCount: 0 })), { retryCount: 0 }),
-}));
+export const marketHandler = createMarketHandler(
+  createPublicClient({
+    chain: bsc,
+    transport: fallback(
+      endpoints.map((url) => http(url, { timeout: 6000, retryCount: 0 })),
+      { retryCount: 0 },
+    ),
+  }),
+);

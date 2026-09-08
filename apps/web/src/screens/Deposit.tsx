@@ -157,7 +157,7 @@ function DepositFlow({ pool }: { pool: PoolView }) {
       <div className="mb-1 flex items-center gap-2">
         <h1 className="text-[24px] font-extrabold tracking-tight2">{VOCAB.addMoney}</h1>
       </div>
-      <p className="mb-5 text-[14px] text-body">{preset.asset} · Base Sepolia test-token position</p>
+      <p className="mb-5 text-[14px] text-body">{preset.asset} · BSC Testnet test-token position</p>
 
       {step === "amount" ? (
         <>
@@ -173,7 +173,7 @@ function DepositFlow({ pool }: { pool: PoolView }) {
             error={error}
           />
           <p className="mt-3 px-1 text-[13px] text-body">
-            Test tokens have no redeemable value. Stock price gains and protection are not guaranteed.
+            Test tokens have no redeemable value. Token price gains and protection are not guaranteed.
           </p>
           <div className="mt-6">
             <Button variant="ink" full disabled={!canContinue} onClick={() => setStep("review")}>

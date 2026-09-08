@@ -10,16 +10,17 @@ export default {
   theme: {
     extend: {
       colors: {
-        ink: "#0E1114",
+        ink: "#171A1E",
+        brand: { DEFAULT: "#F0B90B", hover: "#DCA909", tint: "#FFF7DC", deep: "#785800" },
         body: "#5B6470",
         muted: "#8A929E",
         faint: "#A6ADB6",
         hairline: "#ECEEF1",
         "hairline-2": "#E8EAED",
-        canvas: "#F4F5F7",
+        canvas: "#F7F7F2",
         surface: "#FFFFFF",
-        subtle: "#F7F8FA",
-        "subtle-2": "#F1F2F5",
+        subtle: "#F7F7F2",
+        "subtle-2": "#EFEEE7",
         green: {
           DEFAULT: "#1F8A5B",
           bright: "#34A56B",

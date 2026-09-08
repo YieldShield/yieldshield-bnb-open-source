@@ -58,17 +58,17 @@ export function Connect() {
         </Link>
         <h1 className="mt-12 text-[32px] font-extrabold tracking-tight2">Test alpha not live yet</h1>
         <p className="mt-4 text-[16px] leading-relaxed text-body">
-          Explore stock prices and model risk now. Wallet transactions will be available after contract deployment.
+          Explore token prices and model risk now. Wallet transactions will be available after contract deployment.
         </p>
         <Link
           to="/markets"
-          className="mt-7 inline-flex min-h-12 items-center rounded-input bg-[#0052FF] px-5 py-3 text-[15px] font-bold text-white hover:bg-blue-700"
+          className="mt-7 inline-flex min-h-12 items-center rounded-input bg-brand px-5 py-3 text-[15px] font-bold text-ink hover:bg-brand-hover"
         >
-          Explore stocks & scenarios
+          Explore tokens & scenarios
         </Link>
         <p className="mt-3 text-[13px] text-body">No wallet needed.</p>
         <p className="mt-8 rounded-input bg-amber-tint p-4 text-[13px] leading-relaxed text-amber-deep">
-          When live, protection will use free test tokens on Base Sepolia. Never send real assets.
+          When live, protection will use free test tokens on BSC Testnet. Never send real assets.
         </p>
       </div>
     );
@@ -85,7 +85,7 @@ export function Connect() {
         <div className="animate-fade-up">
           <h1 className="text-[28px] font-extrabold tracking-tight2">Connect a wallet</h1>
           <p className="mt-2 text-[15px] text-body">
-            Connect an installed EVM wallet. Transactions use Base Sepolia test tokens only.
+            Connect an installed EVM wallet. Transactions use BSC Testnet test tokens only.
           </p>
 
           <DeploymentStatus />

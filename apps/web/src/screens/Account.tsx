@@ -79,8 +79,8 @@ export function Account() {
             <div className="min-w-0 flex-1">
               <div className="text-[16px] font-extrabold tracking-tight2">Get test tokens</div>
               <p className="mt-0.5 text-[13px] leading-relaxed text-white/85">
-                Base Sepolia test tokens let you try deposits and pools. They are simulated assets with no redeemable
-                value or stock ownership rights.
+                BSC Testnet test tokens let you try deposits and pools. They are simulated assets with no redeemable
+                monetary value.
               </p>
             </div>
           </div>

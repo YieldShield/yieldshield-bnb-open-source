@@ -76,7 +76,7 @@ export function Dot({ tone }: { tone: "green" | "indigo" | "amber" | "solana" })
 export function ChainBadge({ className }: { className?: string }) {
   return (
     <span className={cn("inline-flex items-center gap-1.5 text-[12px] font-semibold text-muted", className)}>
-      <span className="h-2.5 w-2.5 rounded-[3px] bg-[#0052FF]" />
+      <span className="h-2.5 w-2.5 rounded-[3px] bg-brand" />
       {chain.label}
     </span>
   );

@@ -22,7 +22,7 @@ export function Explore() {
     <div className="animate-fade-up">
       <h1 className="mb-1 text-[26px] font-extrabold tracking-tight2 md:text-[30px]">Explore</h1>
       <p className="mb-5 text-[14px] text-body">
-        Explore Base Sepolia pools with valueless test stocks. Protection is conditional and can fail.
+        Explore BSC Testnet pools with valueless test tokens. Protection is conditional and can fail.
       </p>
 
       <div className="no-scrollbar -mx-1 mb-5 flex gap-2 overflow-x-auto px-1">
@@ -45,7 +45,7 @@ export function Explore() {
       ) : error ? (
         <Card>
           <p className="text-[14px] text-body">
-            Pool data is unavailable. Retry shortly; live stock references are available on Markets.
+            Pool data is unavailable. Retry shortly; live token references are available on Markets.
           </p>
         </Card>
       ) : pools.length === 0 ? (

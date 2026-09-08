@@ -11,16 +11,16 @@ export type PoolPreset = {
 export const POOL_PRESETS: readonly PoolPreset[] = [];
 export function presetFor(symbol: string, assetName?: string): PoolPreset {
   const names: Record<string, string> = {
-    tAAPLc: "Apple",
-    tNVDAc: "NVIDIA",
-    tMETAc: "Meta",
-    tGOOGLc: "Alphabet",
+    tWBNB: "Test Wrapped BNB",
+    tBTCB: "Test Bitcoin",
+    tETH: "Test Ethereum",
+    tCAKE: "Test PancakeSwap",
     TestUSDC: "Test USDC",
   };
   return {
     symbol,
     asset: names[symbol] || assetName || symbol || "Test asset",
-    source: `${symbol} · Base Sepolia test token`,
+    source: `${symbol} · BSC Testnet test token`,
     protectedApy: null,
     premiumApy: null,
     glyph: /USDC|USDG|USD/i.test(symbol) ? "usdc" : "generic",

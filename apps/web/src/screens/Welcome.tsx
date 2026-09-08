@@ -1,70 +1,86 @@
-import { protocolDeployed } from "@/chain/adapter";
-import { DeploymentStatus } from "@/components/AlphaNotice";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Wordmark } from "@/components/Logo";
-import { Button } from "@/components/ui";
+
 export function Welcome() {
-  const navigate = useNavigate();
   return (
-    <div className="bg-gradient-to-b from-[#fbfbfc] to-[#f1f3f6]">
-      <div className="mx-auto flex min-h-[calc(100vh-140px)] max-w-[1100px] flex-col px-6 py-7 md:px-10">
+    <div className="welcome-surface">
+      <div className="mx-auto flex min-h-[calc(100svh-132px)] max-w-[1160px] flex-col px-6 py-7 md:px-10">
         <header className="flex flex-wrap items-center justify-between gap-5">
-          <Wordmark size={30} />
-          <Link to="/markets" className="text-[14px] font-bold text-[#0052FF]">
-            Explore stocks ↗
+          <Wordmark size={32} />
+          <Link to="/markets" className="text-[14px] font-bold text-ink hover:underline underline-offset-4">
+            Explore tokens ↗
           </Link>
         </header>
-        <div className="flex flex-1 flex-col justify-center gap-10 py-12 md:grid md:grid-cols-2 md:items-center md:gap-16">
+        <div className="flex flex-1 flex-col justify-center gap-12 py-14 md:grid md:grid-cols-[1.1fr_1fr] md:items-center md:gap-16">
           <div className="animate-fade-up">
-            <div className="mb-5 text-[12px] font-bold uppercase tracking-[0.14em] text-[#0052FF]">
-              Tokenized stocks · On Base
+            <div className="mb-6 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-brand-deep">
+              <span className="h-2 w-2 rotate-45 bg-brand" /> Built for BNB Chain
             </div>
-            <h1 className="max-w-[12ch] text-[46px] font-extrabold leading-[1.04] tracking-hero md:text-[64px]">
-              Stock risk,
+            <h1 className="max-w-[12ch] text-[48px] font-extrabold leading-[1.04] tracking-hero md:text-[70px]">
+              Token risk,
               <br />
-              <span className="text-[#0052FF]">made visible.</span>
+              <span className="brand-underline">made visible.</span>
             </h1>
-            <p className="mt-5 max-w-[46ch] text-[17px] leading-relaxed text-body">
-              Explore Coinbase stock tokens on Base. Model how price changes and shared collateral affect a position.
+            <p className="mt-7 max-w-[40ch] text-[18px] leading-relaxed text-body">
+              Know what backs your position. Explore token prices and see how protection behaves when markets move.
             </p>
-            <p className="mt-6 max-w-[44ch] text-[13px] leading-relaxed text-body">
-              Protection can fail. No guaranteed yield, insurance or capital protection.
-            </p>
+            <Link
+              to="/markets"
+              className="mt-8 inline-flex min-h-14 items-center justify-center gap-5 rounded-input bg-brand px-6 text-[15px] font-bold text-ink transition-colors hover:bg-brand-hover"
+            >
+              Explore tokens & scenarios <span aria-hidden>↗</span>
+            </Link>
+            <p className="mt-4 text-[12px] text-body">Live BSC references. No wallet needed.</p>
           </div>
-          <div className="rounded-hero bg-surface p-6 shadow-welcome md:p-8">
-            <div className="mb-8 flex items-center gap-3">
-              <span className="flex h-12 w-12 items-center justify-center rounded-input bg-[#0052FF] text-2xl font-bold text-white">
-                ↗
+          <div className="animate-fade-up rounded-hero border border-white bg-surface p-6 shadow-welcome md:p-8">
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="text-[21px] font-extrabold tracking-tight2">Understand the downside.</h2>
+              <span
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-input bg-brand-tint text-xl text-brand-deep"
+                aria-hidden
+              >
+                ↘
               </span>
-              <div>
-                <h2 className="text-[22px] font-extrabold tracking-tight2">Try a scenario</h2>
-              </div>
             </div>
-            <div className="space-y-5">
+            <div
+              className="my-7 flex items-center gap-2 rounded-input bg-subtle p-3.5"
+              aria-label="Supported token references"
+            >
               {[
-                ["01", "Choose a stock", "Apple, NVIDIA, Meta or Alphabet."],
-                ["02", "Model the downside", "Adjust the price and available collateral."],
-                ...(protocolDeployed ? [["03", "Try protection", "Use free test stocks on Base Sepolia."]] : []),
+                ["WBNB", "◆"],
+                ["BTCB", "₿"],
+                ["ETH", "Ξ"],
+                ["CAKE", "◉"],
+              ].map(([symbol, glyph]) => (
+                <div key={symbol} className="flex flex-1 flex-col items-center gap-2 py-1">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[22px] font-bold text-ink">
+                    {glyph}
+                  </span>
+                  <span className="text-[10px] font-bold tracking-wide text-body">{symbol}</span>
+                </div>
+              ))}
+            </div>
+            <div className="space-y-6">
+              {[
+                ["01", "Pick your token", "Start with a live, traceable price reference."],
+                ["02", "Move the market", "Try a price drop or a collateral shortfall."],
+                ["03", "Compare your options", "See holding value beside a modeled collateral exit."],
               ].map(([n, title, sub]) => (
                 <div key={n} className="flex gap-4">
-                  <span className="mt-1 text-[12px] font-bold text-[#0052FF]">{n}</span>
+                  <span className="mt-1 text-[12px] font-bold text-brand-deep">{n}</span>
                   <div>
                     <div className="text-[15px] font-bold">{title}</div>
-                    <p className="mt-0.5 text-[13px] text-body">{sub}</p>
+                    <p className="mt-1 text-[13px] leading-relaxed text-body">{sub}</p>
                   </div>
                 </div>
               ))}
             </div>
-            <DeploymentStatus />
-            <div className="mt-8 flex flex-col gap-3">
-              <Button full onClick={() => navigate("/markets")} className="bg-[#0052FF] hover:bg-blue-700">
-                Explore stocks & scenarios
-              </Button>
-              <Button variant="secondary" full onClick={() => navigate("/connect")}>
-                {protocolDeployed ? "Connect test wallet" : "Test alpha status"}
-              </Button>
+            <div className="mt-7 border-t border-hairline pt-5 text-[12px] leading-relaxed text-body">
+              A working risk explorer. Protection deposits are not live yet.{" "}
+              <Link to="/connect" className="font-bold text-ink underline underline-offset-2">
+                View testnet status
+              </Link>
             </div>
-            <p className="mt-5 text-center text-[12px] text-body">No wallet needed to explore.</p>
           </div>
         </div>
       </div>

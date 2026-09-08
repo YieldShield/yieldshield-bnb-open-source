@@ -6,6 +6,10 @@
   :root {
     color-scheme: light;
   }
+  :focus-visible {
+    outline: 2px solid #785800;
+    outline-offset: 4px;
+  }
   html,
   body,
   #root {
@@ -19,6 +23,21 @@
   .tnum {
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum" 1;
+  }
+}
+
+.welcome-surface {
+  background: radial-gradient(ellipse at 83% 55%, #f7e8a980, transparent 58%), #f7f7f2;
+}
+.brand-underline {
+  background: linear-gradient(transparent 79%, #f0b90b 79%, #f0b90b 95%, transparent 95%);
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
 

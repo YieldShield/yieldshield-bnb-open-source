@@ -66,8 +66,8 @@ function Sidebar() {
       </nav>
 
       <div className="mt-auto flex flex-col gap-3">
-        <Link to="/markets" className="rounded-input bg-blue-50 px-3.5 py-3 text-[13px] font-bold text-[#0052FF]">
-          Live Base stocks ↗
+        <Link to="/markets" className="rounded-input bg-brand-tint px-3.5 py-3 text-[13px] font-bold text-brand-deep">
+          Live BNB tokens ↗
         </Link>
         <HealthCard />
         <LegalLinks />

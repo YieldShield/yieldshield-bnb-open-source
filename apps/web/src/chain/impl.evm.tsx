@@ -1,4 +1,4 @@
-/** EVM chain implementation — bundled when VITE_CHAIN_FAMILY is "evm" (e.g. Robinhood deploys). */
+/** BNB preview wallet implementation — restricted to reviewed BSC testnet deployments. */
 import type { ReactNode } from "react";
 import type { AccountId, FaucetApi } from "@yieldshield/core";
 import {
@@ -13,16 +13,17 @@ import {
 } from "@yieldshield/adapter-evm";
 import type { ChainImpl } from "./impl-contract";
 
-const chainName = (import.meta.env.VITE_EVM_CHAIN ?? "baseSepolia") as EvmChainName;
+const chainName = (import.meta.env.VITE_EVM_CHAIN ?? "bscTestnet") as EvmChainName;
+if (chainName !== "bscTestnet") throw new Error("The BNB preview only supports BSC testnet wallet interactions.");
 const chain = evmChains[chainName];
 if (!chain) throw new Error(`unknown VITE_EVM_CHAIN: ${chainName}`);
 
 const adapter = createEvmAdapter({
   chain,
   rpcUrl: import.meta.env.VITE_RPC_URL || undefined,
-  factory: import.meta.env.VITE_FACTORY_ADDRESS || undefined,
-  compositeOracle: import.meta.env.VITE_COMPOSITE_ORACLE_ADDRESS || undefined,
-  label: import.meta.env.VITE_CHAIN_LABEL || "Base Sepolia",
+  // BSC addresses must enter the reviewed deployment registry before wallet flows are enabled.
+  // Build-time environment overrides must not enable unverified public contracts.
+  label: "BSC Testnet",
 });
 
 function ChainProvider({ children }: { children: ReactNode }) {

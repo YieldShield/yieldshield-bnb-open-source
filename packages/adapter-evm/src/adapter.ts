@@ -59,7 +59,7 @@ export function createEvmAdapter(config: EvmAdapterConfig): EvmAdapter {
         : new Proxy({} as ChainAdapter["reader"], {
             get: () => async () => {
               throw new Error(
-                "Sepolia contracts are awaiting deployment. Live Base stock references remain available on Markets.",
+                "Protection contracts are awaiting deployment. Live token references remain available on Markets.",
               );
             },
           }),

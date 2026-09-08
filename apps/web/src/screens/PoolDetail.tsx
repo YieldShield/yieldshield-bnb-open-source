@@ -75,7 +75,7 @@ function ActiveDetail({ pool, onSave }: { pool: PoolView; onSave: () => void }) 
         <div className="section-label">Early alpha</div>
         <div className="mt-1 hero-num text-[36px] text-green-dark">Test tokens only</div>
         <p className="mt-1 text-[14px] text-body">
-          No verified annual return. Stock price gains and protection are not guaranteed.
+          No verified annual return. Token price gains and protection are not guaranteed.
         </p>
       </Card>
 

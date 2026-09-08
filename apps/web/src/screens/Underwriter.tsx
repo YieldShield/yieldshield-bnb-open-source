@@ -141,7 +141,7 @@ function UnderwriterPosition({ p, refresh }: { p: ProtectorVM; refresh: () => vo
           </Button>
           <p className="mt-1.5 text-center text-[12px] text-muted">
             This pool requires {formatDuration(unlockDuration)} notice. Withdrawals also need sufficient unlocked
-            collateral and valid prices. On Base, the withdrawal window lasts seven days after notice completes.
+            collateral and valid prices. Withdrawal timing depends on the deployed pool configuration.
           </p>
         </div>
       ) : (

@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from "react";
-import { Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { AlphaNotice, LegalLinks } from "@/components/AlphaNotice";
 import { Shell } from "@/layout/Shell";
 import { Spinner } from "@/components/ui";
@@ -71,6 +71,7 @@ export default function App() {
 }
 
 function RequireWallet() {
+  const location = useLocation();
   const { connected, connecting, isReady } = useWalletConnection();
   // Persisted sessions restore ASYNCHRONOUSLY after mount (wagmi reconnectOnMount /
   // framework-kit walletPersistence). Bouncing to Welcome the instant we see "disconnected"
@@ -82,7 +83,7 @@ function RequireWallet() {
   }, []);
 
   // Restored wallets must not enter transaction screens before contracts exist.
-  if (!protocolDeployed) return <Navigate to="/connect" replace />;
+  if (!protocolDeployed) return <Navigate to={location.pathname === "/" ? "/welcome" : "/connect"} replace />;
   if (connected) return <Outlet />;
   if (!isReady || connecting || !settled) return <Splash />;
   return <Navigate to="/welcome" replace />;

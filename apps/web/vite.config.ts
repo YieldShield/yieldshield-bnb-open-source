@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => {
         "@": fileURLToPath(new URL("./src", import.meta.url)),
       },
     },
-    server: { port: 5173, proxy: { "/api/markets": "http://127.0.0.1:3001" } },
+    server: { port: 5174, proxy: { "/api/markets": "http://127.0.0.1:3002" } },
     build: {
       chunkSizeWarningLimit: 900,
     },

@@ -2,294 +2,254 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import useSWR from "swr";
 import { Wordmark } from "@/components/Logo";
-import { protocolDeployed } from "@/chain/adapter";
 import { Card, Pill } from "@/components/ui";
+import { calculateScenario, fetchMarkets, referenceIsFresh } from "@/lib/markets";
 
-type Stock = {
-  symbol: string;
-  name: string;
-  token: string;
-  feed: string;
-  priceUsd: number;
-  multiplier: number;
-  openingPriceFresh: boolean;
-  sourceUpdatedAt: number;
-  sourceRoundId: string;
-  oraclePaused: boolean;
-  status: string;
-};
-type Snapshot = {
-  chainId: number;
-  blockNumber: string;
-  observedAt: number;
-  validUntil: number;
-  sequencerUp: boolean;
-  stocks: Stock[];
-};
-async function fetchMarkets(): Promise<Snapshot> {
-  const response = await fetch("/api/markets", { signal: AbortSignal.timeout(15000) });
-  if (!response.ok) throw new Error("Live Base references are temporarily unavailable.");
-  const data = (await response.json()) as Snapshot;
-  const now = Date.now() / 1000;
-  if (
-    !Number.isFinite(data.validUntil) ||
-    now > data.validUntil ||
-    data.observedAt > now + 15 ||
-    now - data.observedAt > 180 ||
-    !/^\d+$/.test(data.blockNumber) ||
-    data.stocks?.some(
-      (s) =>
-        ["symbol", "name", "status", "token", "feed", "sourceRoundId"].some(
-          (k) => typeof s[k as keyof Stock] !== "string",
-        ) ||
-        !/^0x[0-9a-fA-F]{40}$/.test(s.token) ||
-        !/^0x[0-9a-fA-F]{40}$/.test(s.feed) ||
-        s.sourceUpdatedAt > data.observedAt,
-    )
-  )
-    throw new Error("The market observation could not be verified.");
-  if (
-    data.chainId !== 8453 ||
-    !Array.isArray(data.stocks) ||
-    !Number.isFinite(data.observedAt) ||
-    data.stocks.some(
-      (s) =>
-        !Number.isFinite(s.priceUsd) ||
-        s.priceUsd <= 0 ||
-        !Number.isFinite(s.multiplier) ||
-        s.multiplier <= 0 ||
-        !Number.isFinite(s.sourceUpdatedAt),
-    )
-  )
-    throw new Error("The market response could not be verified.");
-  return data;
-}
 const usd = (value: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(value);
-function age(timestamp: number) {
-  const minutes = Math.max(0, Math.floor((Date.now() / 1000 - timestamp) / 60));
-  return minutes < 1
-    ? "less than a minute ago"
-    : minutes < 60
-      ? `${minutes}m ago`
-      : `${Math.floor(minutes / 60)}h ${minutes % 60}m ago`;
-}
+const glyphs: Record<string, string> = { WBNB: "◆", BTCB: "₿", ETH: "Ξ", CAKE: "◉" };
 const short = (address: string) => `${address.slice(0, 6)}…${address.slice(-4)}`;
+function age(timestamp: number, now: number) {
+  const elapsed = Math.max(0, Math.floor(now - timestamp));
+  return elapsed < 60
+    ? `${elapsed}s ago`
+    : elapsed < 3600
+      ? `${Math.floor(elapsed / 60)}m ago`
+      : `${Math.floor(elapsed / 3600)}h ago`;
+}
+const examples = [
+  { label: "10% price drop", change: -10, backing: 100 },
+  { label: "50% price drop", change: -50, backing: 100 },
+  { label: "Collateral shortfall", change: -25, backing: 60 },
+];
+
 export function Markets() {
-  const { data, error, isLoading, mutate } = useSWR("base-mainnet-markets", fetchMarkets, {
+  const { data, error, isLoading, isValidating, mutate } = useSWR("bnb-mainnet-markets", fetchMarkets, {
     refreshInterval: 30000,
     shouldRetryOnError: false,
   });
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(Date.now() / 1000);
   useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 5000);
+    const timer = setInterval(() => setNow(Date.now() / 1000), 1000);
     return () => clearInterval(timer);
   }, []);
-  const [symbol, setSymbol] = useState("AAPLc");
-  const [unitsInput, setUnitsInput] = useState("10");
-  const units = Number(unitsInput);
-  const unitsValid = unitsInput.trim() !== "" && Number.isFinite(units) && units >= 0.01 && units <= 10000;
-  const [shock, setShock] = useState(-25);
+  const [symbol, setSymbol] = useState("WBNB");
+  const [unitsInput, setUnitsInput] = useState("1");
+  const [change, setChange] = useState(-25);
   const [collateral, setCollateral] = useState(100);
-  const current =
-    !!data &&
-    !error &&
-    now / 1000 <= data.validUntil &&
-    now / 1000 - data.observedAt <= 120 &&
-    data.observedAt <= now / 1000 + 15;
-  const stocks = current ? data.stocks.filter((s) => s.symbol !== "USDC") : [];
-  const selected = stocks.find((s) => s.symbol === symbol);
-  const entry = unitsValid ? (selected?.priceUsd ?? 0) * units : 0,
-    marketValue = entry * (1 + shock / 100),
-    exitValue = Math.min(entry, (entry * collateral) / 100);
+  const units = Number(unitsInput);
+  const unitsValid = unitsInput.trim() !== "" && Number.isFinite(units) && units >= 0.000001 && units <= 10000;
+  const current = !!data && !error && now <= data.validUntil && data.observedAt <= now + 15;
+  const tokens = current ? data.tokens : [];
+  const selected = tokens.find((token) => token.symbol === symbol);
+  const usable = !!selected && referenceIsFresh(selected, now);
+  const scenario =
+    usable && unitsValid && selected.priceUsd !== null
+      ? calculateScenario(selected.priceUsd, units, change, collateral)
+      : null;
+  function reset() {
+    setUnitsInput("1");
+    setChange(-25);
+    setCollateral(100);
+  }
+
   return (
-    <div className="mx-auto max-w-[1120px] px-5 py-7 md:px-10">
+    <div className="mx-auto max-w-[1160px] px-5 py-7 md:px-10">
       <header className="mb-12 flex flex-wrap items-center justify-between gap-5">
         <Link to="/welcome" aria-label="YieldShield home">
-          <Wordmark size={30} />
+          <Wordmark size={32} />
         </Link>
-        <Link to="/connect" className="rounded-input bg-ink px-5 py-3 text-[14px] font-bold text-white">
-          {protocolDeployed ? "Open test alpha" : "Test alpha status"}
+        <Link to="/connect" className="rounded-input bg-ink px-4 py-3 text-[13px] font-bold text-white">
+          Testnet status ↗
         </Link>
       </header>
-      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+      <div className="mb-8 flex flex-wrap items-end justify-between gap-5">
         <div>
-          <div className="mb-3 text-[12px] font-bold uppercase tracking-[0.14em] text-[#0052FF]">
-            Base mainnet · Read only
+          <div className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-brand-deep">
+            <span className="h-2 w-2 rotate-45 bg-brand" /> BNB Smart Chain · Read only
           </div>
-          <h1 className="text-[34px] font-extrabold leading-tight tracking-hero md:text-[44px]">Explore stock risk.</h1>
-          <p className="mt-4 max-w-[62ch] text-[15px] leading-relaxed text-body">
-            Choose a stock to model a price change. Oracle prices include corporate actions; they are not trading
-            quotes.
+          <h1 className="text-[36px] font-extrabold leading-tight tracking-hero md:text-[48px]">Explore token risk.</h1>
+          <p className="mt-3 max-w-[58ch] text-[15px] leading-relaxed text-body">
+            Pick a token. Move the market. See what collateral changes.
           </p>
         </div>
         <button
+          type="button"
+          disabled={isValidating}
           onClick={() => void mutate()}
-          className="rounded-input border border-hairline bg-surface px-4 py-2.5 text-[13px] font-bold"
+          className="min-h-11 rounded-input border border-hairline bg-surface px-4 py-2.5 text-[13px] font-bold hover:bg-brand-tint disabled:opacity-50"
         >
-          Refresh ↻
+          {isValidating ? "Refreshing…" : "Refresh prices ↻"}
         </button>
       </div>
       {isLoading ? (
-        <Card role="status" className="py-12 text-center text-body">
-          Reading Base prices…
+        <Card role="status" className="py-16 text-center text-body">
+          Reading BNB Chain prices…
         </Card>
       ) : !current ? (
         <Card role="alert" className="border-amber-border bg-amber-tint">
-          <h2 className="font-bold">Market data unavailable</h2>
-          <p className="mt-2 text-[14px] text-body">
-            {error?.message ?? "The last source check has expired."} Refresh to retry. Scenarios require verified
-            prices.
+          <h2 className="font-bold">Live prices are unavailable</h2>
+          <p className="mt-2 text-[14px] leading-relaxed text-body">
+            {error?.message ?? "The last observation has expired."} Scenarios pause until fresh references return.
           </p>
         </Card>
       ) : (
         <>
           <div className="mb-4 flex flex-wrap items-center gap-3 text-[12px] text-body">
-            <Pill tone={data.sequencerUp ? "neutral" : "amber"}>
-              {data.sequencerUp ? "Base source checked" : "Source sequencer unavailable"}
-            </Pill>
-            <span>Checked {age(data.observedAt)}</span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-green" /> Chainlink references
+            </span>
+            <span aria-hidden>·</span>
+            <span>Checked {age(data.observedAt, now)}</span>
             <a
               className="underline underline-offset-2"
-              href={`https://basescan.org/block/${data.blockNumber}`}
+              href={`https://bscscan.com/block/${data.blockNumber}`}
               target="_blank"
               rel="noreferrer"
             >
-              Block {data.blockNumber} ↗
+              View source block ↗
             </a>
           </div>
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-            {stocks.map((stock) => (
-              <button
-                key={stock.symbol}
-                onClick={() => setSymbol(stock.symbol)}
-                aria-pressed={symbol === stock.symbol}
-                className={`rounded-card border bg-surface p-5 text-left transition-shadow hover:shadow-card ${symbol === stock.symbol ? "border-[#0052FF] ring-1 ring-[#0052FF]" : "border-hairline"}`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-chip bg-blue-50 text-[17px] font-extrabold text-[#0052FF]">
-                    {stock.name[0]}
-                  </span>
-                  <span className="text-[12px] font-bold text-body">{stock.symbol}</span>
-                </div>
-                <h2 className="mt-4 text-[15px] font-bold">{stock.name}</h2>
-                <div className="mt-1 text-[28px] font-extrabold tracking-tight2 tnum">{usd(stock.priceUsd)}</div>
-                <div className="text-[11px] text-body">per token</div>
-                <div className="mt-2 text-[12px] text-body">Price from {age(stock.sourceUpdatedAt)}</div>
-                <div
-                  className={`mt-3 text-[11px] font-bold ${stock.status === "reference-available" ? "text-[#0052FF]" : "text-amber-deep"}`}
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {tokens.map((token) => {
+              const fresh = referenceIsFresh(token, now);
+              return (
+                <button
+                  key={token.symbol}
+                  type="button"
+                  onClick={() => setSymbol(token.symbol)}
+                  aria-pressed={symbol === token.symbol}
+                  className={`min-w-0 rounded-card border p-4 text-left transition-all hover:shadow-card md:p-5 ${symbol === token.symbol ? "border-brand bg-brand-tint ring-1 ring-brand" : "border-hairline bg-surface"}`}
                 >
-                  {stock.status === "reference-available" ? "Reference available" : stock.status.replaceAll("-", " ")}
-                </div>
-              </button>
-            ))}
+                  <div className="flex items-center justify-between gap-2">
+                    <span
+                      className={`flex h-10 w-10 items-center justify-center rounded-full text-[23px] font-bold ${symbol === token.symbol ? "bg-brand text-ink" : "bg-subtle-2 text-ink"}`}
+                      aria-hidden
+                    >
+                      {glyphs[token.symbol]}
+                    </span>
+                    <span className="text-[12px] font-bold text-body">{token.symbol}</span>
+                  </div>
+                  <h2 className="mt-4 min-h-10 text-[13px] font-bold md:text-[14px]">{token.name}</h2>
+                  <div className="mt-1 text-[23px] font-extrabold tracking-tight2 tnum md:text-[27px]">
+                    {fresh && token.priceUsd !== null ? usd(token.priceUsd) : "—"}
+                  </div>
+                  <div className={`mt-2 text-[11px] ${fresh ? "text-body" : "font-bold text-amber-deep"}`}>
+                    {fresh
+                      ? `${token.referenceSymbol}/USD reference`
+                      : token.status === "unavailable"
+                        ? "Source unavailable"
+                        : "Price expired"}
+                  </div>
+                </button>
+              );
+            })}
           </div>
-          {selected && (selected.status !== "reference-available" || !data.sequencerUp) && (
-            <Card className="mt-7 bg-amber-tint">
-              Source unavailable. Scenario paused; prices show the last known values.
+          {selected && !usable && (
+            <Card role="status" className="mt-6 bg-amber-tint">
+              This token's price is unavailable or over five minutes old. Choose another token or refresh to retry.
             </Card>
           )}
-          {selected && selected.status === "reference-available" && data.sequencerUp && (
-            <div className="mt-7 grid gap-5 lg:grid-cols-[1.3fr_1fr]">
+          {selected && usable && selected.priceUsd !== null && (
+            <div id="scenario" className="mt-7 grid gap-5 lg:grid-cols-[1.35fr_1fr]">
               <Card>
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h2 className="text-[22px] font-extrabold tracking-tight2">{selected.name} scenario</h2>
+                  <h2 className="text-[23px] font-extrabold tracking-tight2">{selected.symbol} scenario</h2>
                   <Pill tone="neutral">Illustrative</Pill>
                 </div>
                 <p className="mt-2 text-[13px] leading-relaxed text-body">
-                  Compare holding stock with exchanging the entire position for collateral. Not a quote or forecast.
+                  Compare holding your tokens with exchanging the entire position for available collateral.
                 </p>
                 <div role="group" aria-label="Scenario examples" className="mt-5 flex flex-wrap gap-2">
-                  {[
-                    { label: "10% price drop", price: -10, backing: 100 },
-                    { label: "50% price drop", price: -50, backing: 100 },
-                    { label: "Collateral shortfall", price: -25, backing: 60 },
-                  ].map((example) => (
+                  {examples.map((example) => (
                     <button
                       key={example.label}
                       type="button"
-                      aria-pressed={shock === example.price && collateral === example.backing}
+                      aria-pressed={change === example.change && collateral === example.backing}
                       onClick={() => {
-                        setShock(example.price);
+                        setChange(example.change);
                         setCollateral(example.backing);
                       }}
-                      className="min-h-11 rounded-input border border-hairline px-3 py-2 text-[12px] font-bold hover:bg-blue-50 aria-pressed:border-[#0052FF] aria-pressed:bg-blue-50 aria-pressed:text-[#0052FF]"
+                      className="min-h-11 rounded-input border border-hairline px-3 py-2 text-[12px] font-bold hover:bg-brand-tint aria-pressed:border-brand aria-pressed:bg-brand-tint"
                     >
                       {example.label}
                     </button>
                   ))}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setUnitsInput("10");
-                      setShock(-25);
-                      setCollateral(100);
-                    }}
-                    className="min-h-11 rounded-input px-3 py-2 text-[12px] font-bold text-body underline underline-offset-2 hover:text-ink"
-                  >
-                    Reset scenario
-                  </button>
                 </div>
-                <div className="mt-6 grid gap-6">
-                  <div className="text-[13px] font-bold">
-                    <label htmlFor="scenario-tokens">Number of tokens</label>
-                    <input
-                      id="scenario-tokens"
-                      name="tokens"
-                      aria-describedby={unitsValid ? "token-help" : "token-help token-error"}
-                      aria-invalid={!unitsValid}
-                      inputMode="decimal"
-                      autoComplete="off"
-                      type="number"
-                      min="0.01"
-                      max="10000"
-                      step="any"
-                      value={unitsInput}
-                      onChange={(e) => setUnitsInput(e.target.value)}
-                      className="mt-2 block w-full rounded-input border border-hairline bg-subtle px-4 py-3 text-[18px] tnum"
-                    />
-                    <span id="token-help" className="mt-2 block text-[12px] font-normal text-body">
-                      Each token represents {selected.multiplier} {selected.multiplier === 1 ? "share" : "shares"}.
-                    </span>
-                    {!unitsValid && (
-                      <span id="token-error" role="alert" className="mt-2 block text-[12px] text-amber-deep">
-                        Enter between 0.01 and 10,000 tokens.
+                <div className="mt-6 space-y-6">
+                  <div>
+                    <div className="flex items-center justify-between gap-4">
+                      <label htmlFor="scenario-tokens" className="text-[13px] font-bold">
+                        Number of tokens
+                      </label>
+                      <button
+                        type="button"
+                        onClick={reset}
+                        className="min-h-7 text-[12px] text-body underline underline-offset-2"
+                      >
+                        Reset
+                      </button>
+                    </div>
+                    <div className="relative mt-2">
+                      <input
+                        id="scenario-tokens"
+                        name="tokens"
+                        aria-invalid={!unitsValid}
+                        aria-describedby={unitsValid ? "token-help" : "token-help token-error"}
+                        inputMode="decimal"
+                        autoComplete="off"
+                        type="number"
+                        min="0.000001"
+                        max="10000"
+                        step="any"
+                        value={unitsInput}
+                        onChange={(e) => setUnitsInput(e.target.value)}
+                        className="block w-full rounded-input border border-hairline bg-subtle px-4 py-3 pr-20 text-[20px] font-bold tnum"
+                      />
+                      <span className="pointer-events-none absolute right-4 top-4 text-[12px] font-bold text-body">
+                        {selected.symbol}
                       </span>
+                    </div>
+                    <p id="token-help" className="mt-2 text-[12px] text-body">
+                      Starting reference: {usd(selected.priceUsd)} per token.
+                    </p>
+                    {!unitsValid && (
+                      <p id="token-error" role="alert" className="mt-2 text-[12px] text-amber-deep">
+                        Enter between 0.000001 and 10,000 tokens.
+                      </p>
                     )}
                   </div>
-                  <label className="text-[13px] font-bold">
-                    <span className="flex justify-between">
+                  <label className="block text-[13px] font-bold">
+                    <span className="flex justify-between gap-3">
                       Price change{" "}
                       <span className="tnum">
-                        {shock > 0 ? "+" : ""}
-                        {shock}%
+                        {change > 0 ? "+" : ""}
+                        {change}%
                       </span>
                     </span>
                     <input
                       aria-label="Price change"
-                      aria-valuetext={`${Math.abs(shock)}% ${shock < 0 ? "decrease" : shock > 0 ? "increase" : "change"}`}
-                      name="priceChange"
-                      className="mt-3 h-6 w-full accent-[#0052FF]"
+                      aria-valuetext={`${change}%`}
+                      className="mt-3 h-6 w-full accent-brand"
                       type="range"
                       min="-100"
                       max="50"
-                      value={shock}
-                      onChange={(e) => setShock(Number(e.target.value))}
+                      value={change}
+                      onChange={(e) => setChange(Number(e.target.value))}
                     />
                     <span className="mt-1 block text-[12px] font-normal text-body">
-                      Scenario price: {usd(selected.priceUsd * (1 + shock / 100))} per token.
+                      Scenario price: {usd(selected.priceUsd * (1 + change / 100))} per token.
                     </span>
                   </label>
-                  <label className="text-[13px] font-bold">
-                    <span className="flex justify-between">
+                  <label className="block text-[13px] font-bold">
+                    <span className="flex justify-between gap-3">
                       Available collateral <span className="tnum">{collateral}%</span>
                     </span>
                     <input
                       aria-label="Available collateral"
                       aria-describedby="collateral-help"
                       aria-valuetext={`${collateral}% of entry value`}
-                      name="collateral"
-                      className="mt-3 h-6 w-full accent-[#0052FF]"
+                      className="mt-3 h-6 w-full accent-brand"
                       type="range"
                       min="0"
                       max="150"
@@ -297,110 +257,122 @@ export function Markets() {
                       onChange={(e) => setCollateral(Number(e.target.value))}
                     />
                     <span id="collateral-help" className="mt-1 block text-[12px] font-normal text-body">
-                      Funds available for this exit. 100% equals the entry value.
+                      100% equals the entry value. This is a scenario assumption.
                     </span>
                   </label>
                 </div>
-                {unitsValid ? (
-                  <div className="mt-7 space-y-4" aria-label="Scenario comparison">
-                    <ScenarioBar label="Entry value" value={entry} total={entry * 1.5} color="#8A929E" />
-                    <ScenarioBar label="Hold stock" value={marketValue} total={entry * 1.5} color="#0E1114" />
-                    <ScenarioBar label="Exit to collateral" value={exitValue} total={entry * 1.5} color="#0052FF" />
+                {scenario ? (
+                  <div className="mt-7 space-y-4 border-t border-hairline pt-6" aria-label="Scenario comparison">
+                    <ScenarioBar
+                      label="Entry value"
+                      value={scenario.entry}
+                      total={scenario.entry * 1.5}
+                      color="#B9B6AC"
+                    />
+                    <ScenarioBar
+                      label="Hold tokens"
+                      value={scenario.hold}
+                      total={scenario.entry * 1.5}
+                      color="#171A1E"
+                    />
+                    <ScenarioBar
+                      label="Exit to collateral"
+                      value={scenario.collateralExit}
+                      total={scenario.entry * 1.5}
+                      color="#F0B90B"
+                    />
                   </div>
                 ) : (
                   <p className="mt-7 text-[13px] text-body">Enter a token amount to compare outcomes.</p>
                 )}
-                <p className="mt-5 rounded-input bg-amber-tint p-3.5 text-[12px] leading-relaxed text-amber-deep">
+                <p className="mt-5 rounded-input bg-subtle p-3.5 text-[12px] leading-relaxed text-body">
                   {collateral < 100
-                    ? "Collateral falls short of entry value."
-                    : "Full collateral does not guarantee a withdrawal."}{" "}
-                  Excludes fees, execution price changes, competing claims and outages. Collateral is valued in USD at
-                  withdrawal.
+                    ? "Collateral falls short of entry value. "
+                    : "Full collateral does not guarantee an exit. "}
+                  The model excludes fees, execution changes, competing claims and outages.
                 </p>
               </Card>
               <div className="space-y-5">
-                <Card>
-                  <h2 className="text-[18px] font-extrabold">Price source</h2>
-                  <dl className="mt-5 space-y-4 text-[13px]">
-                    <Detail label="Network">Base mainnet · 8453</Detail>
-                    <Detail label="Token">
-                      <a
-                        href={`https://basescan.org/token/${selected.token}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-[#0052FF] underline"
-                      >
-                        {short(selected.token)} ↗
-                      </a>
-                    </Detail>
-                    <Detail label="Chainlink feed">
-                      <a
-                        href={`https://basescan.org/address/${selected.feed}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-[#0052FF] underline"
-                      >
-                        {short(selected.feed)} ↗
-                      </a>
-                    </Detail>
-                    <Detail label="Shares per raw token">{selected.multiplier}</Detail>
-                    <Detail label="Oracle pause">{selected.oraclePaused ? "Paused" : "Not paused"}</Detail>
-                    <Detail label="Price timestamp">
-                      {new Date(selected.sourceUpdatedAt * 1000).toLocaleString()}
-                    </Detail>
-                  </dl>
-                  {!selected.openingPriceFresh && (
-                    <p className="mt-4 rounded-input bg-amber-tint p-3 text-[12px] text-amber-deep">
-                      Price too old to open a position. Openings require a price from the past hour and an approved
-                      market session.
-                    </p>
-                  )}
-                  <p className="mt-5 border-t border-hairline pt-4 text-[12px] leading-relaxed text-body">
-                    Prices include the share multiplier. They can stop updating outside market hours or during issuer
-                    pauses, even if source checks continue.
+                <Card className="border-transparent bg-ink text-white">
+                  <div className="mb-4 text-[10px] font-bold uppercase tracking-[0.14em] text-brand">
+                    What the numbers mean
+                  </div>
+                  <h2 className="text-[22px] font-extrabold tracking-tight2">Backing matters.</h2>
+                  <p className="mt-3 text-[14px] leading-relaxed text-white/75">
+                    Protectors supply collateral and take risk. A shielded position can exchange its tokens for backing,
+                    subject to the pool's rules and limits.
                   </p>
-                </Card>
-                <Card className="bg-ink text-white">
-                  <h2 className="text-[20px] font-extrabold">
-                    {protocolDeployed ? "Test on Sepolia" : "Test alpha not live yet"}
-                  </h2>
-                  <p className="mt-3 text-[14px] leading-relaxed text-white/70">
-                    {protocolDeployed
-                      ? "Mock stocks have no value, represent no shares and are not issued by Coinbase."
-                      : "Contract testing is not available yet. Explore scenarios without a wallet."}
+                  <p className="mt-4 border-t border-white/15 pt-4 text-[13px] leading-relaxed text-white/75">
+                    The two outcomes are alternatives. You do not keep your tokens and receive the full collateral exit
+                    as well.
                   </p>
                   <Link
-                    to="/connect"
-                    className="mt-5 inline-block rounded-input bg-white px-5 py-3 text-[14px] font-bold text-ink"
+                    to="/risks"
+                    className="mt-5 inline-flex min-h-10 items-center text-[13px] font-bold text-brand underline underline-offset-4"
                   >
-                    {protocolDeployed ? "Open test alpha →" : "View test alpha status →"}
+                    How protection can fail ↗
                   </Link>
                 </Card>
+                <Card>
+                  <h2 className="text-[18px] font-extrabold">Know your price source.</h2>
+                  <p className="mt-3 text-[13px] leading-relaxed text-body">{selected.note}</p>
+                  <div className="mt-4 flex items-center gap-2 text-[12px] text-body">
+                    <span className="h-1.5 w-1.5 rounded-full bg-green" /> Price updated{" "}
+                    {age(selected.sourceUpdatedAt!, now)}
+                  </div>
+                  <details className="mt-5 border-t border-hairline pt-4">
+                    <summary className="cursor-pointer text-[13px] font-bold">View source details</summary>
+                    <dl className="mt-5 space-y-4 text-[12px]">
+                      <Detail label="Network">BSC mainnet · 56</Detail>
+                      <Detail label="Token">
+                        <a
+                          className="underline"
+                          href={`https://bscscan.com/token/${selected.token}`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {short(selected.token)} ↗
+                        </a>
+                      </Detail>
+                      <Detail label="Chainlink feed">
+                        <a
+                          className="underline"
+                          href={`https://bscscan.com/address/${selected.feed}`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {short(selected.feed)} ↗
+                        </a>
+                      </Detail>
+                      <Detail label="Reference">{selected.description}</Detail>
+                      <Detail label="Price timestamp">
+                        {new Date(selected.sourceUpdatedAt! * 1000).toLocaleString()}
+                      </Detail>
+                    </dl>
+                    <a
+                      className="mt-5 inline-block text-[12px] font-bold underline underline-offset-2"
+                      href={`https://data.chain.link/feeds/bsc/mainnet/${selected.feedPath}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Chainlink source page ↗
+                    </a>
+                  </details>
+                </Card>
+                <p className="px-1 text-[12px] leading-relaxed text-body">
+                  No wallet or deposit is needed.{" "}
+                  <Link to="/connect" className="font-semibold underline underline-offset-2">
+                    BSC testnet status ↗
+                  </Link>
+                </p>
               </div>
             </div>
           )}
         </>
       )}
-      <p className="mt-8 text-[12px] leading-relaxed text-body">
-        Hawig Ventures UG (haftungsbeschränkt). No affiliation with or endorsement by Base, Coinbase, Chainlink or stock
-        issuers. No mainnet trading.{" "}
-        <a
-          className="underline"
-          href="https://docs.base.org/specifications/b20/tokenized-stocks-on-base"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Base token specification
-        </a>{" "}
-        ·{" "}
-        <a
-          className="underline"
-          href="https://docs.chain.link/data-feeds/tokenized-equity-feeds/coinbase"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Chainlink feeds
-        </a>
+      <p className="mt-9 text-[11px] leading-relaxed text-body">
+        Hawig Ventures UG (haftungsbeschränkt). Independent software; no endorsement by BNB Chain, Binance, Chainlink or
+        token issuers. References are not executable trading quotes.
       </p>
     </div>
   );
@@ -420,10 +392,10 @@ function ScenarioBar({ label, value, total, color }: { label: string; value: num
         <span className="text-body">{label}</span>
         <strong className="tnum">{usd(value)}</strong>
       </div>
-      <div className="h-3 overflow-hidden rounded-full bg-subtle-2">
+      <div className="h-2.5 overflow-hidden rounded-full bg-subtle-2">
         <div
           className="h-full rounded-full transition-all"
-          style={{ width: `${total > 0 ? Math.max(0, Math.min(100, (value / total) * 100)) : 0}%`, background: color }}
+          style={{ width: `${Math.max(0, Math.min(100, (value / total) * 100))}%`, background: color }}
         />
       </div>
     </div>
