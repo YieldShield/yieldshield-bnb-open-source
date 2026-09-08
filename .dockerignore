@@ -1,0 +1,9 @@
+**/node_modules
+**/.env*
+**/.git
+contracts
+.vercel
+.railway
+artifacts
+apps/web/dist
+**/*.log

@@ -1,0 +1,43 @@
+name: Base alpha checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  application:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run test:web
+      - run: npm run test:base
+      - run: npx eslint apps/web/src packages/adapter-evm/src packages/adapter-evm/test packages/core/src/port.ts packages/core/src/views.ts services
+      - run: npm audit --omit=dev --audit-level=moderate
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: foundry-rs/foundry-toolchain@v1
+      - run: npm ci
+      - run: npm ci --prefix contracts --ignore-scripts
+      - name: Module and deployment lifecycle regressions
+        working-directory: contracts
+        run: forge test --match-path 'test/base-modules/*.t.sol' --extra-output storageLayout
+      - name: Stock oracle and relay regressions
+        working-directory: contracts
+        run: forge test --match-path 'test/Base*.t.sol' --extra-output storageLayout
+      - run: node scripts/verify-base-modules.mjs
