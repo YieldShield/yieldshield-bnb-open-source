@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { impl } from "@chain-impl";
 import type { TxIntent, TxPhase, TxResult } from "@yieldshield/core";
 import { useToast } from "@/components/Toast";
@@ -16,6 +16,7 @@ export type TxState = {
   phase: TxPhase;
   txId: string | null;
   error: string | null;
+  step?: { index: number; total: number; label: string };
 };
 
 const IDLE: TxState = { phase: "idle", txId: null, error: null };
@@ -33,13 +34,25 @@ export function useSubmitTx() {
   const refreshAll = useRefreshAll();
   const { toast } = useToast();
   const [state, setState] = useState<TxState>(IDLE);
+  const inFlight = useRef(false);
   const pending = state.phase === "building" || state.phase === "submitted" || state.phase === "confirming";
 
   const submit = useCallback(
     async (intent: TxIntent): Promise<TxResult | null> => {
+      if (inFlight.current) return null;
+      inFlight.current = true;
+      setState({ phase: "building", txId: null, error: null });
       try {
         const result = await send(intent, {
-          onPhase: (phase) => setState({ phase, txId: null, error: null }),
+          onPhase: (phase) => setState((current) => ({ ...current, phase, error: null })),
+          onStep: (step) =>
+            setState((current) => ({
+              ...current,
+              phase: step.txId ? current.phase : "building",
+              step: { index: step.index, total: step.total, label: step.label },
+              txId: step.txId ?? null,
+              error: null,
+            })),
         });
         setState({ phase: "confirmed", txId: result.txId, error: null });
         void refreshAll();
@@ -47,9 +60,11 @@ export function useSubmitTx() {
         return result;
       } catch (e) {
         const message = friendlyError(e);
-        setState({ phase: "failed", txId: null, error: message });
+        setState((current) => ({ ...current, phase: "failed", error: message }));
         toast({ kind: "error", message });
         return null;
+      } finally {
+        inFlight.current = false;
       }
     },
     [send, refreshAll, toast],

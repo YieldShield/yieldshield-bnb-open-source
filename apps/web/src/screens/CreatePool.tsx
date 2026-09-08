@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toBaseUnits, type PoolId, type TokenId } from "@yieldshield/core";
 import { Expander, Row } from "@/components/Expander";
 import { ArrowLeft } from "@/components/icons";
-import { PendingOverlay, SuccessCard } from "@/components/TxFeedback";
+import { PendingOverlay, SuccessCard, TransactionError } from "@/components/TxFeedback";
 import { AssetGlyph, Button, Card, Pill } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatPct } from "@/lib/format";
@@ -157,7 +157,7 @@ export function CreatePool() {
   // -- pick / config / review -------------------------------------------------
   return (
     <div className="animate-fade-up">
-      {tx.pending && <PendingOverlay label="Creating pool…" />}
+      {tx.pending && <PendingOverlay label="Creating pool…" phase={tx.phase} step={tx.step} txId={tx.txId} />}
 
       <button
         onClick={() => (step === "pick" ? navigate("/protect") : setStep(step === "review" ? "config" : "pick"))}
@@ -291,7 +291,7 @@ export function CreatePool() {
             You'll be the pool creator. Fee recipients default to your wallet. This creates the pool on-chain; you can
             back it or deposit right after.
           </div>
-          {tx.error && <p className="mt-4 text-[13px] font-medium text-amber-deep">{tx.error}</p>}
+          <TransactionError error={tx.error} txId={tx.txId} />
           <div className="mt-5">
             <Button variant="indigo" full onClick={confirm} disabled={tx.pending}>
               Create pool
