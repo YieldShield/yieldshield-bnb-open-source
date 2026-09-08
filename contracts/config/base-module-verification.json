@@ -1,5 +1,5 @@
 {
-  "verifiedAt": "2026-09-08T07:38:01.161Z",
+  "verifiedAt": "2026-09-08T09:33:22.068Z",
   "runtimeLimit": 24576,
   "initcodeLimit": 49152,
   "contracts": [
@@ -20,8 +20,8 @@
     },
     {
       "contract": "BasePoolFeesModule",
-      "runtimeBytes": 15377,
-      "initcodeBytes": 15644
+      "runtimeBytes": 15401,
+      "initcodeBytes": 15668
     },
     {
       "contract": "BasePoolInitializeModule",
@@ -30,18 +30,18 @@
     },
     {
       "contract": "BasePoolPartialExitModule",
-      "runtimeBytes": 13964,
-      "initcodeBytes": 14231
+      "runtimeBytes": 13825,
+      "initcodeBytes": 14092
     },
     {
       "contract": "BasePoolProtectorModule",
-      "runtimeBytes": 14796,
-      "initcodeBytes": 15063
+      "runtimeBytes": 14821,
+      "initcodeBytes": 15088
     },
     {
       "contract": "BasePoolShieldExitModule",
-      "runtimeBytes": 15343,
-      "initcodeBytes": 15610
+      "runtimeBytes": 15204,
+      "initcodeBytes": 15471
     },
     {
       "contract": "BasePoolViewsModule",

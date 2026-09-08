@@ -977,8 +977,10 @@ contract BasePoolFeesModule is Initializable, ISplitRiskPool, ProtocolAccessCont
             return;
         }
 
+        // Fractions already credited to the accumulator cannot also remain as
+        // whole-token dust; recycling them would promise unfunded commissions.
         uint256 representedReward =
-            Math.mulDiv(rewardPerShareIncrement, totalProtectorShares, ConstantsLib.REWARD_PRECISION);
+            Math.mulDiv(rewardPerShareIncrement, totalProtectorShares, ConstantsLib.REWARD_PRECISION, Math.Rounding.Ceil);
         if (representedReward == 0) {
             return;
         }
@@ -1059,8 +1061,11 @@ contract BasePoolFeesModule is Initializable, ISplitRiskPool, ProtocolAccessCont
             return (rewardAmount, 0);
         }
 
+        // Consume the ceiling of the amount represented by this increment.
+        // Its sub-token fraction is already credited to protector shares and
+        // must not be allocated a second time through pending reward dust.
         uint256 representedReward =
-            Math.mulDiv(rewardPerShareIncrement, currentTotalShares, ConstantsLib.REWARD_PRECISION);
+            Math.mulDiv(rewardPerShareIncrement, currentTotalShares, ConstantsLib.REWARD_PRECISION, Math.Rounding.Ceil);
         if (representedReward == 0) {
             pendingProtectorRewardDust = distributableReward;
             accumulatedCommissions += rewardAmount;
