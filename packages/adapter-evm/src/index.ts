@@ -12,3 +12,4 @@ export * from "./errors.js";
 export { planIntent, type EvmIntentDeps, type EvmStep, type IntentPlan } from "./intents.js";
 export { decodePositionId, encodePositionId, type PositionSide } from "./positionId.js";
 export * from "./react.js";
+export { readFaucetStatus, type EvmFaucetStatus } from "./faucet.js";

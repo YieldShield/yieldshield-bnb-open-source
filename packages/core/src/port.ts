@@ -146,7 +146,11 @@ export type TxPhase = "idle" | "building" | "submitted" | "confirming" | "confir
 /** The in-flight phases an adapter reports while `send` runs. */
 export type SendPhase = "building" | "submitted" | "confirming";
 
-export type SendOptions = { onPhase?: (phase: SendPhase) => void };
+export type SendOptions = {
+  onPhase?: (phase: SendPhase) => void;
+  /** One-based step progress; txId is emitted once a hash is known, including a repriced replacement. */
+  onStep?: (step: { index: number; total: number; label: string; txId?: TxId }) => void;
+};
 
 /**
  * Shape of the adapter's send hook (`useIntentSender()`). `send` resolves once the transaction
@@ -165,8 +169,32 @@ export type FaucetResult = { ok: boolean; txId?: TxId; error?: string };
  * Shape of the app's faucet hook (`useFaucet()`), provided per chain implementation: an on-chain
  * drip tx on EVM testnets, an operator-run HTTP drip service on Solana devnet.
  */
+export type FaucetStatus = {
+  address: string;
+  recipient: string;
+  chainId: number;
+  blockNumber: bigint;
+  blockHash: string;
+  evaluatedAt: number;
+  validUntil: number;
+  nativeBalance: bigint;
+  configured: boolean;
+  ready: boolean;
+  tokens: Array<{
+    address: string;
+    enabled: boolean;
+    funded: boolean;
+    canDrip: boolean;
+    dripAmount: bigint;
+    faucetBalance: bigint;
+    nextDripTime: number;
+  }>;
+};
+
 export type FaucetApi = {
   enabled: boolean;
+  address?: string;
+  status?: (recipient: AccountId) => Promise<FaucetStatus>;
   drip: (recipient: AccountId) => Promise<FaucetResult>;
 };
 

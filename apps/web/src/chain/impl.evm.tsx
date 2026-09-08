@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import type { AccountId, FaucetApi } from "@yieldshield/core";
 import {
   createEvmAdapter,
+  readFaucetStatus,
   evmChains,
   EvmChainProvider,
   friendlyError,
@@ -35,6 +36,10 @@ function useFaucet(): FaucetApi {
   const { send } = useIntentSender();
   return {
     enabled: adapter.info.capabilities.faucet,
+    address: adapter.addresses.faucet,
+    status: adapter.addresses.faucet
+      ? (recipient) => readFaucetStatus(adapter.publicClient, adapter.addresses.faucet!, recipient as `0x${string}`)
+      : undefined,
     drip: async (recipient: AccountId) => {
       try {
         const result = await send({ kind: "faucetDrip", recipient });
