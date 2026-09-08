@@ -1,5 +1,5 @@
-import { base, baseSepolia } from "viem/chains";
-export { base, baseSepolia };
+import { base, baseSepolia, bsc, bscTestnet } from "viem/chains";
+export { base, baseSepolia, bsc, bscTestnet };
 import { defineChain } from "viem";
 
 // Canonical Multicall3 — verified deployed on Robinhood testnet (eth_getCode returns bytecode).
@@ -49,5 +49,5 @@ export const robinhoodTestnet = defineChain({
   testnet: true,
 });
 
-export const evmChains = { base, baseSepolia, robinhood, robinhoodTestnet } as const;
+export const evmChains = { base, baseSepolia, bsc, bscTestnet, robinhood, robinhoodTestnet } as const;
 export type EvmChainName = keyof typeof evmChains;
