@@ -2017,7 +2017,10 @@ contract BasePoolProtectorModule is Initializable, ISplitRiskPool, ProtocolAcces
         } else {
             // Partial withdrawal - reset to clean slate to avoid rounding exploits
             // Set rewardDebt to current accumulator for new amount (fresh start)
-            rewardDebt[tokenId] = Math.mulDiv(rewardPerShareAccumulated, newShares, ConstantsLib.REWARD_PRECISION);
+            // The remaining receipt must not reacquire fractions from before
+            // this settlement. Any sub-token residue stays in the reserve.
+            rewardDebt[tokenId] =
+                Math.mulDiv(rewardPerShareAccumulated, newShares, ConstantsLib.REWARD_PRECISION, Math.Rounding.Ceil);
             // Clear commissions claimed - position gets fresh accounting
             delete commissionsClaimed[tokenId];
             protectorShares[tokenId] = newShares;

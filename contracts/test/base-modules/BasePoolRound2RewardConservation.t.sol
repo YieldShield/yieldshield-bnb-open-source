@@ -117,7 +117,9 @@ contract BasePoolRound2RewardConservationTest is Test, TestTimelockHelper {
         uint256 laterId = _join(laterProtector, 1000e6);
         assertEq(pool.getClaimableCommission(laterId), 0, "joining does not acquire prior rewards");
         _accrueFees(2, 4);
-        assertEq(pool.getClaimableCommission(laterId), 2_500_000, "one quarter of subsequent commissions");
+        // Excluding the pre-entry fraction conservatively retains one native
+        // token unit; that rounding residue stays funded in the reserve.
+        assertEq(pool.getClaimableCommission(laterId), 2_499_999, "subsequent share less one rounding unit");
         uint256 sumClaimable = _totalClaimable() + pool.getClaimableCommission(laterId);
         assertLe(sumClaimable, pool.accumulatedCommissions(), "join and subsequent accrual remain funded");
         assertEq(pool.pendingProtectorRewardDust(), 0);

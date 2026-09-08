@@ -1774,7 +1774,10 @@ contract BasePoolDepositsModule is Initializable, ISplitRiskPool, ProtocolAccess
         tokenId = IProtectorReceiptNFT(protectorReceiptNFT).nextTokenId();
         protectorShares[tokenId] = sharesMinted;
         protectorShareEpochs[tokenId] = protectorShareEpoch;
-        rewardDebt[tokenId] = Math.mulDiv(rewardPerShareAccumulated, sharesMinted, ConstantsLib.REWARD_PRECISION);
+        // Exclude pre-entry reward fractions as well as whole units. Flooring
+        // this debt lets multiple new receipts turn old fractions into claims.
+        rewardDebt[tokenId] =
+            Math.mulDiv(rewardPerShareAccumulated, sharesMinted, ConstantsLib.REWARD_PRECISION, Math.Rounding.Ceil);
 
         // The deposit entrypoint is nonReentrant and all receipt/accounting
         // state is committed before the ERC721 receiver callback.

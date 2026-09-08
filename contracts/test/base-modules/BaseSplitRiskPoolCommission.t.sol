@@ -274,11 +274,11 @@ contract BaseSplitRiskPoolCommissionTest is Test, TestTimelockHelper {
         pool.protectorWithdraw(tokenId, withdrawAmount, address(backingToken), 0);
 
         // Step 5: Check that debt was reset to clean slate (new accumulator-based value)
-        // After partial withdrawal, rewardDebt = (rewardPerShareAccumulated * newAmount) / REWARD_PRECISION
+        // Round debt up so the new share balance cannot reacquire pre-settlement fractions.
         uint256 rewardDebtAfter = pool.rewardDebt(tokenId);
         uint256 newAmount = backingAmount - withdrawAmount;
         uint256 accumulator = pool.rewardPerShareAccumulated();
-        uint256 expectedDebt = Math.mulDiv(accumulator, newAmount, ConstantsLib.REWARD_PRECISION);
+        uint256 expectedDebt = Math.mulDiv(accumulator, newAmount, ConstantsLib.REWARD_PRECISION, Math.Rounding.Ceil);
         assertEq(rewardDebtAfter, expectedDebt, "Reward debt should be reset to clean slate");
 
         // Step 6: Verify commissionsClaimed was cleared (starts fresh)
@@ -287,7 +287,7 @@ contract BaseSplitRiskPoolCommissionTest is Test, TestTimelockHelper {
 
         // Step 7: Verify position still valid
         uint256 claimableAfter = pool.getClaimableCommission(tokenId);
-        assertGe(claimableAfter, 0, "Position should still be valid after partial withdrawal");
+        assertEq(claimableAfter, 0, "Settled rewards cannot be reclaimed after partial withdrawal");
     }
 
     /// @notice Test that full withdrawal cleans up debt mapping
@@ -889,10 +889,10 @@ contract BaseSplitRiskPoolCommissionTest is Test, TestTimelockHelper {
             // Verify clean slate: commissionsClaimed should be reset to 0
             assertEq(commissionsClaimedAfter, 0, "Commissions claimed should be reset after partial withdrawal");
 
-            // Verify clean slate: rewardDebt should match accumulator * newAmount
+            // Exclude pre-settlement fractions from the remaining position's new debt.
             uint256 newAmount = remainingAmount - withdrawAmount;
             uint256 accumulator = pool.rewardPerShareAccumulated();
-            uint256 expectedDebt = Math.mulDiv(accumulator, newAmount, ConstantsLib.REWARD_PRECISION);
+            uint256 expectedDebt = Math.mulDiv(accumulator, newAmount, ConstantsLib.REWARD_PRECISION, Math.Rounding.Ceil);
             assertEq(rewardDebtAfter, expectedDebt, "Reward debt should be reset to clean slate");
 
             remainingAmount = newAmount;
