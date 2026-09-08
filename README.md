@@ -2,6 +2,8 @@
 
 A working token-risk preview with a yellow BNB design, live BNB Smart Chain price references, and interactive collateral scenarios.
 
+- Website: https://bnb.yieldshield.ai
+- Token explorer: https://bnb.yieldshield.ai/markets
 - Operator: Hawig Ventures UG (haftungsbeschränkt), Germany
 - Contact: david@yieldshield.ai
 - Source: https://github.com/YieldShield/yieldshield-bnb

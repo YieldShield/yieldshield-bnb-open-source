@@ -18,7 +18,15 @@ Automated tests cover malformed and stale oracle data, wrong networks, changed s
 
 Desktop and 390-pixel mobile checks covered navigation, token selection, quantity changes, price-drop and collateral-shortfall examples. The local API was stopped to verify that prices and calculations disappear behind an unavailable message, then restarted to verify recovery. Testnet status shows no active deposit or wallet-connect action.
 
-Production URL, deployment and final validation results are recorded below after publishing.
+Published at https://bnb.yieldshield.ai with the explorer at https://bnb.yieldshield.ai/markets.
+
+Production application commit: 69d42e3d1cdb2ef289ed814b086306c058b14e9d. Deployment: https://yieldshield-f4qyqm3g8-noc2-6281s-projects.vercel.app. Vercel project: yieldshield-bnb (prj_8BS9I2rfw7mZrHpwjJGbojsQZi1I), team HawigUG. GitHub main is connected for future deployments.
+
+The production build, 15 web tests, 6 BNB service tests, 44 EVM security tests, ESLint, and production dependency audit passed locally. The inherited Base service/deployment suite passed 84 tests. GitHub application and inherited contract checks passed for the release configuration at 1df7502: https://github.com/YieldShield/yieldshield-bnb/actions/runs/34212540204.
+
+Public HTTPS checks confirmed GET /api/markets returns 200 with all four fresh references, POST /api/markets returns 405 with no-store, and the removed /api/drip route returns 404. Direct /markets, /connect and /privacy requests returned 200. A production observation at BSC block 120666263 contained all four available references. The live browser showed no warnings or errors during navigation and scenario checks. Mobile width checks found no horizontal overflow at 390 pixels.
+
+The new repository lives locally at /Users/david/Documents/source/yieldshield-bnb. No Base repository source or deployment was changed by this release.
 
 ## Suggested application wording
 
