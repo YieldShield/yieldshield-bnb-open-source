@@ -16,7 +16,12 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { bscTestnet } from "viem/chains";
-import { planIntent, readCanonicalStepReceipt, readDemoMarket, readDemoTradeQuote } from "../packages/adapter-evm/dist/index.js";
+import {
+  planIntent,
+  readCanonicalStepReceipt,
+  readDemoMarket,
+  readDemoTradeQuote,
+} from "../packages/adapter-evm/dist/index.js";
 import { ROOT, artifact, atomicJson, SequentialDeployment, acquireDeploymentLock } from "./bsc-deployment.mjs";
 import { assertPublicManifest, EXPECTED_DEPLOYER, GENESIS } from "./publish-bsc-deployment.mjs";
 import { assertTradingManifest } from "./verify-bsc-trading.mjs";
@@ -41,8 +46,11 @@ const client = createPublicClient({ chain: bscTestnet, transport: http(rpc, { ti
 assert.equal(await client.getChainId(), 97);
 assert.equal((await client.getBlock({ blockNumber: 0n })).hash, GENESIS);
 const address = (name) => original.contracts[name].address;
-const asset = address("TestWBNB"), quoteToken = address("TestUSDC"), pool = original.pool;
-const factory = address("Factory"), exchange = trading.exchange;
+const asset = address("TestWBNB"),
+  quoteToken = address("TestUSDC"),
+  pool = original.pool;
+const factory = address("Factory"),
+  exchange = trading.exchange;
 const market = await readDemoMarket(client);
 assert.equal(market.exchange.toLowerCase(), exchange.toLowerCase());
 assert.equal(market.assets[0].token.toLowerCase(), asset.toLowerCase());
@@ -68,10 +76,16 @@ assert.equal(journal.genesisHash, GENESIS);
 const save = () => atomicJson(journalPath, journal);
 const release = acquireDeploymentLock(resolve(ROOT, "contracts/.bsc-testnet-deployment.lock"));
 const run = new SequentialDeployment({
-  client, account, broadcast: true, manifestPath: journalPath, manifest: journal,
-  maxFeePerGas: 5_000_000_000n, spendLimit: parseEther("0.02"),
+  client,
+  account,
+  broadcast: true,
+  manifestPath: journalPath,
+  manifest: journal,
+  maxFeePerGas: 5_000_000_000n,
+  spendLimit: parseEther("0.02"),
 });
-const balance = (token) => client.readContract({ address: token, abi: erc20Abi, functionName: "balanceOf", args: [account.address] });
+const balance = (token) =>
+  client.readContract({ address: token, abi: erc20Abi, functionName: "balanceOf", args: [account.address] });
 const allowance = (token, spender) =>
   client.readContract({ address: token, abi: erc20Abi, functionName: "allowance", args: [account.address, spender] });
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -88,9 +102,18 @@ async function sealed(id, to, data, abi) {
     }
   }
   const decoded = decodeFunctionData({ abi, data });
-  return readCanonicalStepReceipt(client, receipt.transactionHash, account.address, {
-    address: to, abi, functionName: decoded.functionName, args: decoded.args,
-  }, 97);
+  return readCanonicalStepReceipt(
+    client,
+    receipt.transactionHash,
+    account.address,
+    {
+      address: to,
+      abi,
+      functionName: decoded.functionName,
+      args: decoded.args,
+    },
+    97,
+  );
 }
 
 async function approve(id, token, spender, amount) {
@@ -98,7 +121,13 @@ async function approve(id, token, spender, amount) {
   const data = encodeFunctionData({ abi: erc20Abi, functionName: "approve", args: [spender, amount] });
   await sealed(id, token, data, erc20Abi);
   assert((await allowance(token, spender)) >= amount, `${id}: allowance not confirmed`);
-  journal.stages[id] = { complete: true, token, spender, amount: amount.toString(), hash: journal.transactions[id].hash };
+  journal.stages[id] = {
+    complete: true,
+    token,
+    spender,
+    amount: amount.toString(),
+    hash: journal.transactions[id].hash,
+  };
   save();
   console.log(`Verified ${id}: ${journal.transactions[id].hash}`);
 }
@@ -109,10 +138,15 @@ async function trade(id, side, amount) {
   const old = journal.transactions[id];
   if (!old) {
     const fresh = await readDemoTradeQuote(client, { asset, side, amount, owner: account.address });
-    const limit = side === "buy"
-      ? (fresh.inputAmount * 110n + 99n) / 100n
-      : (fresh.outputAmount * 90n) / 100n;
-    const intent = { kind: "demoTrade", asset, side, amount, limit, deadline: BigInt(Math.floor(Date.now() / 1000) + 150) };
+    const limit = side === "buy" ? (fresh.inputAmount * 110n + 99n) / 100n : (fresh.outputAmount * 90n) / 100n;
+    const intent = {
+      kind: "demoTrade",
+      asset,
+      side,
+      amount,
+      limit,
+      deadline: BigInt(Math.floor(Date.now() / 1000) + 150),
+    };
     const plan = await planIntent(client, account.address, { factory }, intent);
     assert.equal(plan.steps.length, 1, `${id}: test-token approval is missing`);
     const step = plan.steps[0];
@@ -120,26 +154,38 @@ async function trade(id, side, amount) {
     await plan.beforeStep?.();
     await client.simulateContract({ ...step, account: account.address });
     stage = {
-      side, amount: amount.toString(), limit: limit.toString(), deadline: intent.deadline.toString(),
-      beforeAsset: String(await balance(asset)), beforeQuote: String(await balance(quoteToken)),
-      to: step.address, data: encodeFunctionData(step),
+      side,
+      amount: amount.toString(),
+      limit: limit.toString(),
+      deadline: intent.deadline.toString(),
+      beforeAsset: String(await balance(asset)),
+      beforeQuote: String(await balance(quoteToken)),
+      to: step.address,
+      data: encodeFunctionData(step),
     };
     journal.stages[id] = stage;
     save();
   }
   assert(stage && stage.side === side && stage.amount === amount.toString());
-  const to = old?.request.to ?? stage.to, data = old?.request.data ?? stage.data;
+  const to = old?.request.to ?? stage.to,
+    data = old?.request.data ?? stage.data;
   assert.equal(to.toLowerCase(), exchange.toLowerCase());
   const receipt = await sealed(id, to, data, artifact("BscTestExchange").abi);
-  const events = parseEventLogs({ abi: artifact("BscTestExchange").abi, logs: receipt.logs, eventName: "Swapped" })
-    .filter((event) => event.address.toLowerCase() === exchange.toLowerCase());
+  const events = parseEventLogs({
+    abi: artifact("BscTestExchange").abi,
+    logs: receipt.logs,
+    eventName: "Swapped",
+  }).filter((event) => event.address.toLowerCase() === exchange.toLowerCase());
   assert.equal(events.length, 1, `${id}: no unique exchange trade`);
   const swap = events[0].args;
   assert.equal(swap.trader.toLowerCase(), account.address.toLowerCase());
   assert.equal(swap.stock.toLowerCase(), asset.toLowerCase());
   assert.equal(swap.buy, side === "buy");
   assert.equal(swap.stockAmount, amount);
-  assert(swap.usdcAmount > 0n && (side === "buy" ? swap.usdcAmount <= BigInt(stage.limit) : swap.usdcAmount >= BigInt(stage.limit)));
+  assert(
+    swap.usdcAmount > 0n &&
+      (side === "buy" ? swap.usdcAmount <= BigInt(stage.limit) : swap.usdcAmount >= BigInt(stage.limit)),
+  );
   const assetDelta = (await balance(asset)) - BigInt(stage.beforeAsset);
   const quoteDelta = (await balance(quoteToken)) - BigInt(stage.beforeQuote);
   assert.equal(assetDelta, side === "buy" ? amount : -amount);
@@ -154,31 +200,48 @@ async function protect(id, amount) {
   let stage = journal.stages[id];
   const old = journal.transactions[id];
   if (!old) {
-    const intent = { kind: "depositShielded", pool, shieldedToken: asset, backingToken: quoteToken,
-      amount, minReceived: (amount * 99n) / 100n };
+    const intent = {
+      kind: "depositShielded",
+      pool,
+      shieldedToken: asset,
+      backingToken: quoteToken,
+      amount,
+      minReceived: (amount * 99n) / 100n,
+    };
     const plan = await planIntent(client, account.address, { factory }, intent);
     assert.equal(plan.steps.length, 1, `${id}: pool approval is missing`);
     const step = plan.steps[0];
     assert.equal(step.functionName, "depositShieldedAsset");
     await plan.beforeStep?.();
     await client.simulateContract({ ...step, account: account.address });
-    stage = { amount: amount.toString(), beforeAsset: String(await balance(asset)), to: step.address,
-      data: encodeFunctionData(step) };
+    stage = {
+      amount: amount.toString(),
+      beforeAsset: String(await balance(asset)),
+      to: step.address,
+      data: encodeFunctionData(step),
+    };
     journal.stages[id] = stage;
     save();
   }
   assert(stage && stage.amount === amount.toString());
-  const to = old?.request.to ?? stage.to, data = old?.request.data ?? stage.data;
+  const to = old?.request.to ?? stage.to,
+    data = old?.request.data ?? stage.data;
   assert.equal(to.toLowerCase(), pool.toLowerCase());
   const receipt = await sealed(id, to, data, artifact("SplitRiskPool").abi);
   const nft = address("ShieldReceiptNFT");
-  const minted = parseEventLogs({ abi: erc721Abi, logs: receipt.logs, eventName: "Transfer" })
-    .filter((event) => event.address.toLowerCase() === nft.toLowerCase() &&
-      event.args.from === zeroAddress && event.args.to.toLowerCase() === account.address.toLowerCase());
+  const minted = parseEventLogs({ abi: erc721Abi, logs: receipt.logs, eventName: "Transfer" }).filter(
+    (event) =>
+      event.address.toLowerCase() === nft.toLowerCase() &&
+      event.args.from === zeroAddress &&
+      event.args.to.toLowerCase() === account.address.toLowerCase(),
+  );
   assert.equal(minted.length, 1, `${id}: no owned protection receipt`);
   assert.equal((await balance(asset)) - BigInt(stage.beforeAsset), -amount);
-  Object.assign(stage, { complete: true, hash: receipt.transactionHash,
-    positionId: `${pool}-s-${minted[0].args.tokenId}` });
+  Object.assign(stage, {
+    complete: true,
+    hash: receipt.transactionHash,
+    positionId: `${pool}-s-${minted[0].args.tokenId}`,
+  });
   save();
   console.log(`Verified ${id}: ${receipt.transactionHash} ${stage.positionId}`);
 }

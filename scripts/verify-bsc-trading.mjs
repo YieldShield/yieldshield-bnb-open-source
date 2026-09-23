@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** Independent, read-only proof of the public trading extension; no signer is loaded. */
 import assert from "node:assert/strict";
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";

@@ -4,11 +4,33 @@ import { Card } from "@/components/ui";
 import rawProof from "@/data/bsc-testnet-proof.json";
 
 type Transaction = { action: string; label?: string; hash: string; blockNumber: string };
-const proof = rawProof as Omit<typeof rawProof, "walkthrough"> & {
+const proof = rawProof as Omit<typeof rawProof, "walkthrough" | "trading"> & {
   walkthrough: null | { scope: string; actor: string; completedAt: string; transactions: Transaction[] };
+  trading: {
+    exchange: string;
+    pair: string;
+    feeBps: number;
+    initialInventory: { tWBNB: string; TestUSDC: string };
+    operatorWalkthrough: null | {
+      scope: string;
+      actor: string;
+      completedAt: string;
+      positionId: string;
+      transactions: Transaction[];
+    };
+  };
 };
 const explorer = "https://testnet.bscscan.com";
-const keyContracts = ["Pool", "Factory", "Faucet", "TestWBNB", "TestUSDC", "BscScenarioOracle", "Timelock"];
+const keyContracts = [
+  "Pool",
+  "BscTestExchange",
+  "Factory",
+  "Faucet",
+  "TestWBNB",
+  "TestUSDC",
+  "BscScenarioOracle",
+  "Timelock",
+];
 
 export function TestnetTechnical() {
   return (
@@ -17,7 +39,7 @@ export function TestnetTechnical() {
         <Link to="/welcome" aria-label="YieldShield home">
           <Wordmark size={30} />
         </Link>
-        <Link to="/testnet" className="text-sm font-bold underline underline-offset-4">
+        <Link to="/trade" className="text-sm font-bold underline underline-offset-4">
           Try the demo ↗
         </Link>
       </header>
@@ -26,16 +48,16 @@ export function TestnetTechnical() {
       </p>
       <h1 className="mt-4 text-4xl font-extrabold tracking-tight md:text-5xl">A proof you can inspect.</h1>
       <p className="mt-5 max-w-[65ch] text-base leading-relaxed text-body">
-        One synthetic protection market on chain 97. These addresses and receipts identify the deployed software. The
-        demo uses free test assets and has internal testing, with no independent company audit.
+        One synthetic trading pair and protection market on chain 97. These addresses and receipts identify the deployed
+        software. The demo uses free test assets and has internal testing, with no independent company audit.
       </p>
       <div className="my-8 grid gap-4 sm:grid-cols-3">
         {[
           ["Deployment", `${proof.deploymentTransactions.length} confirmed transactions`],
           [
             "User flow",
-            proof.walkthrough
-              ? `${proof.walkthrough.transactions.length} operator test transactions`
+            proof.walkthrough && proof.trading.operatorWalkthrough
+              ? `${proof.walkthrough.transactions.length + proof.trading.operatorWalkthrough.transactions.length} operator test transactions`
               : "Public walkthrough in progress",
           ],
           ["Assets", "tWBNB / TestUSDC"],
@@ -63,6 +85,12 @@ export function TestnetTechnical() {
           The oracle computes a four-minute triangular cycle from 600 to 750, back to 600, down to 450 and back to 600
           TestUSDC per tWBNB. TestUSDC stays at the synthetic reference value. This formula does not observe a market or
           detect real depegs. The mainnet token reference page is a separate, read-only data source.
+        </p>
+        <p>
+          The separately funded exchange buys and sells tWBNB against TestUSDC at that synthetic price, with a 0.3%
+          trading fee. It started with 250 tWBNB and 250,000 TestUSDC, limits each trade to 25 tWBNB, and enforces the
+          reviewed payment or proceeds bound on chain. Buying a token does not protect it; a separate pool deposit
+          creates the protection receipt.
         </p>
         <p>
           Administration uses a two-day timelock controlled by one operator. The factory owns the pool and composite
@@ -123,6 +151,33 @@ export function TestnetTechnical() {
               </li>
             ))}
           </ol>
+        </section>
+      ) : null}
+      {proof.trading.operatorWalkthrough ? (
+        <section className="mt-10">
+          <h2 className="text-2xl font-bold">Trade-to-protection receipts</h2>
+          <p className="mt-3 text-sm leading-relaxed text-body">
+            The operator bought two test tWBNB, deposited one into the protection pool, and sold half a token. The six
+            transactions include spending approvals and use free test assets. This is internal integration proof, not
+            external adoption or an independent audit.
+          </p>
+          <ol className="mt-5 grid gap-3 text-sm sm:grid-cols-2">
+            {proof.trading.operatorWalkthrough.transactions.map((t) => (
+              <li key={t.hash}>
+                <a
+                  href={`${explorer}/tx/${t.hash}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-semibold text-brand-deep underline underline-offset-4"
+                >
+                  {t.action.replaceAll(":", " ")} ↗
+                </a>
+              </li>
+            ))}
+          </ol>
+          <p className="mt-4 break-all text-xs text-body">
+            Protection position: {proof.trading.operatorWalkthrough.positionId}
+          </p>
         </section>
       ) : null}
       <section className="my-10 border-t border-hairline pt-7 text-sm leading-relaxed text-body">

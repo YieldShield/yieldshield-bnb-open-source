@@ -209,6 +209,13 @@
       "artifact": "ERC1967Proxy",
       "runtimeCodehash": null,
       "creationTransaction": "0x06758902abb80f9933e5719f09d272ac57078ae510174497415d670b44c941ea"
+    },
+    {
+      "name": "BscTestExchange",
+      "address": "0x2DdF03a89A861028fA00A1282365A68A284f9386",
+      "artifact": "BscTestExchange",
+      "runtimeCodehash": "0x351cf4fb3ab8b54fff57a05c734f1de2e6a711d8a785bba8c0d6cea6632b2b8d",
+      "creationTransaction": "0x28d4723460620d8b827a23942842853286aecc69d00032e0ae2940c2e16b9510"
     }
   ],
   "sourceVerification": "pending",
@@ -427,8 +434,70 @@
       "action": "faucet:ownership",
       "hash": "0x2813baac688c00eee7c2d5f1ab4beabbbdfbf2321063e794e36b32ec457d872a",
       "blockNumber": "132664536"
+    },
+    {
+      "action": "trading:deploy:BscTestExchange",
+      "hash": "0x28d4723460620d8b827a23942842853286aecc69d00032e0ae2940c2e16b9510",
+      "blockNumber": "132670254"
+    },
+    {
+      "action": "trading:fund:tWBNB",
+      "hash": "0x104fab1ea7d6bcc54e4fbe2bb9a7c7d6a84928555981025a68ee372459063ba3",
+      "blockNumber": "132670270"
+    },
+    {
+      "action": "trading:fund:TestUSDC",
+      "hash": "0x74b57e822d484a065d058cf56f821b4a9b22e227f97069b04d65f2486681657d",
+      "blockNumber": "132670694"
     }
   ],
+  "trading": {
+    "exchange": "0x2DdF03a89A861028fA00A1282365A68A284f9386",
+    "pair": "tWBNB / TestUSDC",
+    "feeBps": 30,
+    "initialInventory": {
+      "tWBNB": "250",
+      "TestUSDC": "250000"
+    },
+    "operatorWalkthrough": {
+      "scope": "Operator BSC Testnet trade-to-protection walkthrough; valueless synthetic tokens",
+      "actor": "0x045f932e49fb395862794acEc3FCCc118BE2f27e",
+      "completedAt": "2026-09-23T07:41:35.434Z",
+      "positionId": "0x711c600188a4BEE06C35848280FB76FF2d91F7F3-s-2",
+      "transactions": [
+        {
+          "action": "approve:buy",
+          "hash": "0x168637a8ed641ddbbac165f62c332a9dd345229acf1abad4fa73db1ad876b263",
+          "blockNumber": "132671783"
+        },
+        {
+          "action": "buy:two",
+          "hash": "0xd026f6cb6bb047127cd6202842c33c5aa5da1325a57dc4baa48349a13ccd2278",
+          "blockNumber": "132671811"
+        },
+        {
+          "action": "approve:protect",
+          "hash": "0x18e7ead3bc571bdd9dca1fd53a08b2d92876997171d3e2d40d436ce25db5de24",
+          "blockNumber": "132671832"
+        },
+        {
+          "action": "protect:one",
+          "hash": "0x08f409c86109aa0d480a636bf069b1057cbf2211de59abc05f9e9d6aa9325a9b",
+          "blockNumber": "132671856"
+        },
+        {
+          "action": "approve:sell",
+          "hash": "0x2663b282815e798780cc85b39d7aa2cfb4e5ee12c6944a28426cfff267fd9772",
+          "blockNumber": "132671880"
+        },
+        {
+          "action": "sell:half",
+          "hash": "0x117d7eb0b4d5fc5cfb64cb930b1b075026ddffd63da672524ded6d346c41e0c5",
+          "blockNumber": "132671917"
+        }
+      ]
+    }
+  },
   "walkthrough": {
     "scope": "Public BSC Testnet operator walkthrough; not external users",
     "actor": "0x045f932e49fb395862794acEc3FCCc118BE2f27e",
@@ -505,7 +574,8 @@
   "limitations": [
     "Synthetic valueless assets; no real deposits or TVL",
     "Internal testing; no independent company audit",
-    "Operator walkthrough is not independent user adoption",
+    "Operator walkthroughs are not independent user adoption",
+    "Trading prices follow a synthetic four-minute scenario, not a real BNB feed",
     "Centralized operator behind a two-day timelock"
   ]
 }
