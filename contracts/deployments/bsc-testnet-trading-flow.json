@@ -1,0 +1,209 @@
+{
+  "schemaVersion": 1,
+  "scope": "Operator BSC Testnet trade-to-protection walkthrough; valueless synthetic tokens",
+  "chainId": 97,
+  "genesisHash": "0x6d3c66c5357ec91d5c43af47e234a939b22557cbb552dc45bebbceeed90fbe34",
+  "actor": "0x045f932e49fb395862794acEc3FCCc118BE2f27e",
+  "exchange": "0x2DdF03a89A861028fA00A1282365A68A284f9386",
+  "pool": "0x711c600188a4BEE06C35848280FB76FF2d91F7F3",
+  "status": "complete",
+  "stages": {
+    "approve:buy": {
+      "complete": true,
+      "token": "0x7Fc086DA704fC345f99817Afe0CBd3C649E3266C",
+      "spender": "0x2DdF03a89A861028fA00A1282365A68A284f9386",
+      "amount": "2000000000",
+      "hash": "0x168637a8ed641ddbbac165f62c332a9dd345229acf1abad4fa73db1ad876b263"
+    },
+    "buy:two": {
+      "side": "buy",
+      "amount": "2000000000000000000",
+      "limit": "1357059000",
+      "deadline": "1790149385",
+      "beforeAsset": "899754009900990099009900",
+      "beforeQuote": "8659650990099",
+      "to": "0x2DdF03a89A861028fA00A1282365A68A284f9386",
+      "data": "0x6322619000000000000000000000000005c674bbc8930a580fcc5924060807c6153fea6c00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000001bc16d674ec800000000000000000000000000000000000000000000000000000000000050e313b8000000000000000000000000000000000000000000000000000000006ab38309",
+      "complete": true,
+      "hash": "0xd026f6cb6bb047127cd6202842c33c5aa5da1325a57dc4baa48349a13ccd2278",
+      "settledQuote": "1273810000"
+    },
+    "approve:protect": {
+      "complete": true,
+      "token": "0x05c674Bbc8930a580fCc5924060807C6153FeA6C",
+      "spender": "0x711c600188a4BEE06C35848280FB76FF2d91F7F3",
+      "amount": "1000000000000000000",
+      "hash": "0x18e7ead3bc571bdd9dca1fd53a08b2d92876997171d3e2d40d436ce25db5de24"
+    },
+    "protect:one": {
+      "amount": "1000000000000000000",
+      "beforeAsset": "899756009900990099009900",
+      "to": "0x711c600188a4BEE06C35848280FB76FF2d91F7F3",
+      "data": "0x693b593f00000000000000000000000005c674bbc8930a580fcc5924060807c6153fea6c0000000000000000000000000000000000000000000000000de0b6b3a76400000000000000000000000000000000000000000000000000000dbd2fc137a30000",
+      "complete": true,
+      "hash": "0x08f409c86109aa0d480a636bf069b1057cbf2211de59abc05f9e9d6aa9325a9b",
+      "positionId": "0x711c600188a4BEE06C35848280FB76FF2d91F7F3-s-2"
+    },
+    "approve:sell": {
+      "complete": true,
+      "token": "0x05c674Bbc8930a580fCc5924060807C6153FeA6C",
+      "spender": "0x2DdF03a89A861028fA00A1282365A68A284f9386",
+      "amount": "500000000000000000",
+      "hash": "0x2663b282815e798780cc85b39d7aa2cfb4e5ee12c6944a28426cfff267fd9772"
+    },
+    "sell:half": {
+      "side": "sell",
+      "amount": "500000000000000000",
+      "limit": "329757750",
+      "deadline": "1790149434",
+      "beforeAsset": "899755009900990099009900",
+      "beforeQuote": "8658377180099",
+      "to": "0x2DdF03a89A861028fA00A1282365A68A284f9386",
+      "data": "0x6322619000000000000000000000000005c674bbc8930a580fcc5924060807c6153fea6c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006f05b59d3b200000000000000000000000000000000000000000000000000000000000013a7b436000000000000000000000000000000000000000000000000000000006ab3833a",
+      "complete": true,
+      "hash": "0x117d7eb0b4d5fc5cfb64cb930b1b075026ddffd63da672524ded6d346c41e0c5",
+      "settledQuote": "372628750"
+    }
+  },
+  "transactions": {
+    "approve:buy": {
+      "intentHash": "0643e4f575141af5506e513f3976c7022f2df9b9acfde0b16cc84d53f4c12fbd",
+      "request": {
+        "chainId": 97,
+        "type": "legacy",
+        "nonce": 57,
+        "to": "0x7Fc086DA704fC345f99817Afe0CBd3C649E3266C",
+        "data": "0x095ea7b30000000000000000000000002ddf03a89a861028fa00a1282365a68a284f93860000000000000000000000000000000000000000000000000000000077359400",
+        "value": "0",
+        "gas": "55550",
+        "gasPrice": "100000000"
+      },
+      "hash": "0x168637a8ed641ddbbac165f62c332a9dd345229acf1abad4fa73db1ad876b263",
+      "maximumCost": "5555000000000",
+      "status": "confirmed",
+      "receipt": {
+        "transactionHash": "0x168637a8ed641ddbbac165f62c332a9dd345229acf1abad4fa73db1ad876b263",
+        "blockHash": "0xe776c78081f94544238c66d6a72c22798c3235b040e858b7ad0f73268e92bfe7",
+        "blockNumber": "132671783",
+        "contractAddress": null,
+        "gasUsed": "45909"
+      }
+    },
+    "buy:two": {
+      "intentHash": "00c0ccff1624bba2a260a0058a0d0e655bd4bb22660087da79d576fa5cd1940a",
+      "request": {
+        "chainId": 97,
+        "type": "legacy",
+        "nonce": 58,
+        "to": "0x2DdF03a89A861028fA00A1282365A68A284f9386",
+        "data": "0x6322619000000000000000000000000005c674bbc8930a580fcc5924060807c6153fea6c00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000001bc16d674ec800000000000000000000000000000000000000000000000000000000000050e313b8000000000000000000000000000000000000000000000000000000006ab38309",
+        "value": "0",
+        "gas": "116390",
+        "gasPrice": "100000000"
+      },
+      "hash": "0xd026f6cb6bb047127cd6202842c33c5aa5da1325a57dc4baa48349a13ccd2278",
+      "maximumCost": "11639000000000",
+      "status": "confirmed",
+      "receipt": {
+        "transactionHash": "0xd026f6cb6bb047127cd6202842c33c5aa5da1325a57dc4baa48349a13ccd2278",
+        "blockHash": "0x41facdd33af26618ca6361223eb7d50ca622721df8cc8ca0da53c9342b3de552",
+        "blockNumber": "132671811",
+        "contractAddress": null,
+        "gasUsed": "91192"
+      }
+    },
+    "approve:protect": {
+      "intentHash": "b6092289bb5729aa1e7c6c9526899f3c9a53ae8a5724a9a0869a8f40042522d4",
+      "request": {
+        "chainId": 97,
+        "type": "legacy",
+        "nonce": 59,
+        "to": "0x05c674Bbc8930a580fCc5924060807C6153FeA6C",
+        "data": "0x095ea7b3000000000000000000000000711c600188a4bee06c35848280fb76ff2d91f7f30000000000000000000000000000000000000000000000000de0b6b3a7640000",
+        "value": "0",
+        "gas": "55607",
+        "gasPrice": "100000000"
+      },
+      "hash": "0x18e7ead3bc571bdd9dca1fd53a08b2d92876997171d3e2d40d436ce25db5de24",
+      "maximumCost": "5560700000000",
+      "status": "confirmed",
+      "receipt": {
+        "transactionHash": "0x18e7ead3bc571bdd9dca1fd53a08b2d92876997171d3e2d40d436ce25db5de24",
+        "blockHash": "0xae279de3cafaf1bcd8af654147f6f2a254190b2933fc9cd5558e1526e79e1d39",
+        "blockNumber": "132671832",
+        "contractAddress": null,
+        "gasUsed": "45957"
+      }
+    },
+    "protect:one": {
+      "intentHash": "9fd92bc41d2ca2bea82126b0d3047630e581213b30869343dfc0e7693372410f",
+      "request": {
+        "chainId": 97,
+        "type": "legacy",
+        "nonce": 60,
+        "to": "0x711c600188a4BEE06C35848280FB76FF2d91F7F3",
+        "data": "0x693b593f00000000000000000000000005c674bbc8930a580fcc5924060807c6153fea6c0000000000000000000000000000000000000000000000000de0b6b3a76400000000000000000000000000000000000000000000000000000dbd2fc137a30000",
+        "value": "0",
+        "gas": "656187",
+        "gasPrice": "100000000"
+      },
+      "hash": "0x08f409c86109aa0d480a636bf069b1057cbf2211de59abc05f9e9d6aa9325a9b",
+      "maximumCost": "65618700000000",
+      "status": "confirmed",
+      "receipt": {
+        "transactionHash": "0x08f409c86109aa0d480a636bf069b1057cbf2211de59abc05f9e9d6aa9325a9b",
+        "blockHash": "0x87355e7909f7a18bda6461f70d9cf56dcec1c747b2febc497450a23b18907945",
+        "blockNumber": "132671856",
+        "contractAddress": null,
+        "gasUsed": "520098"
+      }
+    },
+    "approve:sell": {
+      "intentHash": "76179d89a0520ce4663162b0e64085a0e3d71c7f4bc9eda6f029f8b5e9551b6a",
+      "request": {
+        "chainId": 97,
+        "type": "legacy",
+        "nonce": 61,
+        "to": "0x05c674Bbc8930a580fCc5924060807C6153FeA6C",
+        "data": "0x095ea7b30000000000000000000000002ddf03a89a861028fa00a1282365a68a284f938600000000000000000000000000000000000000000000000006f05b59d3b20000",
+        "value": "0",
+        "gas": "55593",
+        "gasPrice": "100000000"
+      },
+      "hash": "0x2663b282815e798780cc85b39d7aa2cfb4e5ee12c6944a28426cfff267fd9772",
+      "maximumCost": "5559300000000",
+      "status": "confirmed",
+      "receipt": {
+        "transactionHash": "0x2663b282815e798780cc85b39d7aa2cfb4e5ee12c6944a28426cfff267fd9772",
+        "blockHash": "0x124b588205a9aaa0a333013c8519ca4fc5d3d1314c105926d473bfdd58145841",
+        "blockNumber": "132671880",
+        "contractAddress": null,
+        "gasUsed": "45945"
+      }
+    },
+    "sell:half": {
+      "intentHash": "fcb7f1bb0aaf972f98910a32cc026f7aa4b8cc424e4b06645cc69625c8e17929",
+      "request": {
+        "chainId": 97,
+        "type": "legacy",
+        "nonce": 62,
+        "to": "0x2DdF03a89A861028fA00A1282365A68A284f9386",
+        "data": "0x6322619000000000000000000000000005c674bbc8930a580fcc5924060807c6153fea6c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006f05b59d3b200000000000000000000000000000000000000000000000000000000000013a7b436000000000000000000000000000000000000000000000000000000006ab3833a",
+        "value": "0",
+        "gas": "115733",
+        "gasPrice": "100000000"
+      },
+      "hash": "0x117d7eb0b4d5fc5cfb64cb930b1b075026ddffd63da672524ded6d346c41e0c5",
+      "maximumCost": "11573300000000",
+      "status": "confirmed",
+      "receipt": {
+        "transactionHash": "0x117d7eb0b4d5fc5cfb64cb930b1b075026ddffd63da672524ded6d346c41e0c5",
+        "blockHash": "0xba8e1d53cb32ce56bf767296e120f57869d745e8071622d9cab22167d9f56808",
+        "blockNumber": "132671917",
+        "contractAddress": null,
+        "gasUsed": "86604"
+      }
+    }
+  },
+  "completedAt": "2026-09-23T07:41:35.434Z"
+}
