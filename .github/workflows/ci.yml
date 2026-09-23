@@ -1,4 +1,4 @@
-name: BNB preview checks
+name: BNB testnet checks
 on:
   push:
     branches: [main]
@@ -42,4 +42,7 @@ jobs:
       - name: Inherited stock oracle and relay regressions
         working-directory: contracts
         run: forge test --match-path 'test/Base*.t.sol' --extra-output storageLayout
+      - name: BSC synthetic protection and chain guards
+        working-directory: contracts
+        run: forge test --match-path 'test/Bsc*.t.sol' --extra-output storageLayout
       - run: node scripts/verify-base-modules.mjs

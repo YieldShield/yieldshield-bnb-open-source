@@ -29,3 +29,6 @@ contracts/deployments/base-sepolia-plan.json
 
 contracts/.bsc-testnet-deployment.lock
 contracts/deployments/bsc-testnet-plan.json
+
+# Local review copies of compiler inputs; publication requires explicit approval.
+artifacts/bsc-source-review/

@@ -24,7 +24,10 @@
     "dev": "npm run dev -w web",
     "start:api": "node services/bnb-api.mjs",
     "test:base": "node --test services/base-market-data.test.mjs scripts/deploy-base-sepolia.test.mjs scripts/base-receipts.test.mjs && vitest run packages/adapter-evm/test/security.test.ts",
-    "test:bnb": "node --test services/bnb-market-data.test.mjs && vitest run packages/adapter-evm/test/security.test.ts"
+    "test:bnb": "node --test services/bnb-market-data.test.mjs scripts/bsc-deployment.test.mjs scripts/publish-bsc-deployment.test.mjs && vitest run packages/adapter-evm/test/security.test.ts packages/adapter-evm/test/faucet.test.ts",
+    "prepare:bsc": "node scripts/deploy-bsc-testnet.mjs --prepare",
+    "deploy:bsc": "node scripts/deploy-bsc-testnet.mjs --broadcast",
+    "verify:bsc": "node scripts/publish-bsc-deployment.mjs --check"
   },
   "dependencies": {
     "@solana-program/token": "^0.14.0",
