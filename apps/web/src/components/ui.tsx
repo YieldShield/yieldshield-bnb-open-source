@@ -9,15 +9,27 @@ export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
 }
 
 // --- Buttons ----------------------------------------------------------------
-type Variant = "ink" | "green" | "indigo" | "secondary" | "ghost";
+type Variant = "primary" | "ink" | "green" | "indigo" | "secondary" | "ghost";
 
 const VARIANTS: Record<Variant, string> = {
+  primary: "bg-brand text-ink hover:bg-brand-hover",
   ink: "bg-ink text-white hover:bg-ink/90",
   green: "bg-green text-white hover:bg-green-bright",
   indigo: "bg-indigo text-white hover:bg-indigo-accent",
   secondary: "bg-subtle-2 text-ink hover:bg-hairline",
   ghost: "bg-transparent text-body hover:bg-subtle-2",
 };
+
+/** Keep link and button actions visually identical. */
+export function buttonStyles({ variant = "ink", full, className }: { variant?: Variant; full?: boolean; className?: string } = {}) {
+  return cn(
+    "inline-flex min-h-[52px] min-w-0 max-w-full items-center justify-center gap-2 rounded-input px-5 py-3 text-center text-[15px] font-bold transition-colors",
+    "disabled:cursor-not-allowed disabled:bg-disabled disabled:text-white/80 disabled:hover:bg-disabled",
+    full && "w-full",
+    VARIANTS[variant],
+    className,
+  );
+}
 
 export function Button({
   variant = "ink",
@@ -27,13 +39,7 @@ export function Button({
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; full?: boolean }) {
   return (
     <button
-      className={cn(
-        "inline-flex h-[52px] items-center justify-center gap-2 rounded-input px-5 text-[15px] font-bold transition-colors",
-        "disabled:cursor-not-allowed disabled:bg-disabled disabled:text-white/80 disabled:hover:bg-disabled",
-        full && "w-full",
-        VARIANTS[variant],
-        className,
-      )}
+      className={buttonStyles({ variant, full, className })}
       {...props}
     />
   );
@@ -119,7 +125,7 @@ export function Bar({ pct, tone = "green" }: { pct: number; tone?: "green" | "in
 }
 
 // --- Asset glyph ------------------------------------------------------------
-export function AssetGlyph({ glyph, label, size = 40 }: { glyph: PoolGlyph; label: string; size?: number }) {
+export function AssetGlyph({ glyph, label, size = 40 }: { glyph: PoolGlyph; label: string; symbol?: string; size?: number }) {
   const styles = {
     usdc: "bg-usdc-bg text-usdc-fg",
     jitosol: "bg-jitosol-bg text-jitosol-fg",

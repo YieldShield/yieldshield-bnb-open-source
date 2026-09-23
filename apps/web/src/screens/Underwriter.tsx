@@ -34,7 +34,7 @@ export function Underwriter() {
 
   return (
     <div className="animate-fade-up">
-      <button onClick={() => navigate("/")} className="mb-5 flex items-center gap-1.5 text-[14px] text-body">
+      <button onClick={() => navigate("/positions")} className="mb-5 flex items-center gap-1.5 text-[14px] text-body">
         <ArrowLeft className="h-4.5 w-4.5" /> Home
       </button>
       <UnderwriterPosition p={position} refresh={refresh} />

@@ -17,7 +17,8 @@ export function LegalLinks() {
       className="flex flex-wrap justify-center gap-x-5 gap-y-3 text-[12px] text-body"
     >
       <Link to="/welcome">Home</Link>
-      <Link to="/markets">Tokens</Link>
+      <Link to="/trade">Trade</Link>
+      <Link to="/markets">Get protection</Link>
       <Link to="/testnet">Testnet demo</Link>
       <Link to="/legal">Imprint</Link>
       <Link to="/terms">Terms</Link>
@@ -33,9 +34,9 @@ export function DeploymentStatus() {
       role="status"
       className="my-4 rounded-input border border-brand/20 bg-brand-tint p-3.5 text-[13px] leading-relaxed text-brand-deep"
     >
-      BSC testnet protection is not live yet. Explore token prices and scenarios in{" "}
-      <Link to="/markets" className="font-bold underline">
-        Markets
+      BSC testnet transactions are not live yet. Explore token prices and scenarios in{" "}
+      <Link to="/learn/scenarios" className="font-bold underline">
+        the scenario explorer
       </Link>
       .
     </p>

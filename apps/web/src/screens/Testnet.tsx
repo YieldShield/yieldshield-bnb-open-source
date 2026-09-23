@@ -13,13 +13,13 @@ const steps = [
   ],
   [
     "02",
-    "Protect a token position",
-    "Deposit tWBNB into the demo pool. Review its collateral and gain-sharing terms, approve the amount, and confirm your deposit.",
+    "Trade tWBNB",
+    "Buy or sell tWBNB with TestUSDC. Review the synthetic quote, your chosen price tolerance, and the exact payment or proceeds limit.",
   ],
   [
     "03",
-    "Try both ways out",
-    "Withdraw in tWBNB, or wait at least one minute and choose a TestUSDC payout when the demo price is below your entry. The payout depends on available collateral.",
+    "Protect and manage",
+    "Deposit tWBNB into the demo pool. Withdraw in tWBNB, or wait at least one minute and choose a TestUSDC payout when the demo price is below entry and collateral is available.",
   ],
   [
     "04",
@@ -35,8 +35,8 @@ export function Testnet() {
         <Link to="/welcome" aria-label="YieldShield home">
           <Wordmark size={30} />
         </Link>
-        <Link to="/markets" className="text-[13px] font-bold underline underline-offset-4">
-          Live token references ↗
+        <Link to="/trade" className="text-[13px] font-bold underline underline-offset-4">
+          Trade test tokens ↗
         </Link>
       </header>
       <div className="mb-10 mt-14 grid gap-8 md:grid-cols-[1.2fr_1fr] md:items-end">
@@ -50,7 +50,7 @@ export function Testnet() {
             <span className="brand-underline">Keep it testnet.</span>
           </h1>
           <p className="mt-6 max-w-[48ch] text-[17px] leading-relaxed text-body">
-            One token market. Free demo assets. Follow a position from its first deposit to its final withdrawal.
+            One token market. Free demo assets. Trade tWBNB, protect a position, and follow it to withdrawal.
           </p>
         </div>
         <Card className="border-brand/30 bg-brand-tint">
@@ -74,7 +74,7 @@ export function Testnet() {
             The testnet contracts and local protection flow are implemented. Wallet transactions will open here after
             the public deployment and its verification are complete.
           </p>
-          <Link to="/markets" className="mt-4 inline-flex font-bold text-brand-deep underline underline-offset-4">
+          <Link to="/learn/scenarios" className="mt-4 inline-flex font-bold text-brand-deep underline underline-offset-4">
             Explore prices and scenarios now ↗
           </Link>
         </Card>
@@ -153,10 +153,10 @@ function LiveDemo() {
         </div>
         {ready && (
           <Link
-            to={connected ? "/account" : "/connect"}
+            to={connected ? "/trade" : "/connect?next=%2Ftrade"}
             className="inline-flex min-h-12 items-center rounded-input bg-brand px-6 text-[14px] font-bold text-ink hover:bg-brand-hover"
           >
-            {connected ? "Get test tokens" : "Connect & try it"} ↗
+            {connected ? "Trade test tokens" : "Connect & try it"} ↗
           </Link>
         )}
       </div>

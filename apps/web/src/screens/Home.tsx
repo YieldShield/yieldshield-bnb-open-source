@@ -52,11 +52,15 @@ function HomeFunded({ shield, protector }: { shield: ShieldVM[]; protector: Prot
             historical performance data is available.
           </p>
 
+          <button onClick={() => navigate("/trade")} className="mt-4 min-h-11 text-[14px] font-bold text-brand-deep underline underline-offset-4">
+            Trade tWBNB with TestUSDC →
+          </button>
+
           <div className="mt-3 grid grid-cols-3 gap-2">
             <QuickAction
               icon={<PlusIcon className="h-5 w-5" />}
-              label="Deposit test tokens"
-              onClick={() => navigate("/deposit")}
+              label="Get protection"
+              onClick={() => navigate("/markets")}
             />
             <QuickAction
               icon={<SwapIcon className="h-5 w-5" />}
@@ -67,7 +71,7 @@ function HomeFunded({ shield, protector }: { shield: ShieldVM[]; protector: Prot
             <QuickAction
               icon={<ShieldIcon className="h-5 w-5" />}
               label="Provide"
-              onClick={() => navigate("/protect")}
+              onClick={() => navigate("/provide")}
             />
           </div>
         </Card>
@@ -78,7 +82,7 @@ function HomeFunded({ shield, protector }: { shield: ShieldVM[]; protector: Prot
             <EmptyPrompt
               tone="green"
               text="Open a test-token position. Protection can fail."
-              onClick={() => navigate("/explore")}
+              onClick={() => navigate("/markets")}
             />
           ) : (
             shield.map((p) => <ShieldRow key={p.id} p={p} onClick={() => navigate(`/position/${p.id}`)} />)
@@ -91,7 +95,7 @@ function HomeFunded({ shield, protector }: { shield: ShieldVM[]; protector: Prot
             <EmptyPrompt
               tone="indigo"
               text="Back test positions. Your collateral can be fully lost."
-              onClick={() => navigate("/protect")}
+              onClick={() => navigate("/provide")}
             />
           ) : (
             protector.map((p) => <ProtectorRow key={p.id} p={p} onClick={() => navigate(`/underwriter/${p.id}`)} />)
@@ -114,7 +118,7 @@ function HomeFunded({ shield, protector }: { shield: ShieldVM[]; protector: Prot
           </p>
         </Card>
         <button
-          onClick={() => navigate("/protect")}
+          onClick={() => navigate("/provide")}
           className="rounded-card bg-gradient-to-br from-indigo to-indigo-accent p-5 text-left text-white"
         >
           <div className="text-[15px] font-extrabold">Provide protection</div>
@@ -263,16 +267,16 @@ function HomeEmpty() {
           token backing, insurance or a guaranteed return.
         </p>
         <div className="mt-5 rounded-card bg-green-tint-2 p-5 text-[14px] leading-relaxed text-green-dark">
-          Get test tokens from Account, choose a pool, then try a shield or backing position. Every transaction uses BSC
+          Get test tokens, trade tWBNB, then choose a protection or backing position. Every transaction uses BSC
           Testnet test assets. The contracts are unaudited and can fail.
         </div>
       </Card>
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
-        <Button variant="ink" full onClick={() => navigate("/explore")}>
-          Explore test pools
+        <Button variant="ink" full onClick={() => navigate("/trade")}>
+          Trade test tokens
         </Button>
-        <Button variant="secondary" full onClick={() => navigate("/account")}>
-          Get test tokens
+        <Button variant="secondary" full onClick={() => navigate("/markets")}>
+          Get protection
         </Button>
       </div>
     </div>

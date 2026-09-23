@@ -25,7 +25,7 @@ export function Activate() {
         <SuccessCard title="Test-token exit confirmed.">
           Check the confirmed receipt and your wallet for the exact amount received.
         </SuccessCard>
-        <Button variant="ink" full className="mt-5" onClick={() => navigate("/")}>
+        <Button variant="ink" full className="mt-5" onClick={() => navigate("/positions")}>
           Done
         </Button>
       </>

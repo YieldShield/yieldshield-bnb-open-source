@@ -1,5 +1,5 @@
-import { useNavigate } from "react-router-dom";
-import { AssetGlyph, Card, Pill } from "@/components/ui";
+import { Link, useNavigate } from "react-router-dom";
+import { AssetGlyph, Card, Pill, buttonStyles } from "@/components/ui";
 import { Row } from "@/components/Expander";
 import { TestFaucet } from "@/components/TestFaucet";
 import { cn } from "@/lib/cn";
@@ -42,6 +42,11 @@ export function Account() {
       >
         + Connect another wallet
       </button>
+      <div className="mt-6 flex flex-wrap gap-2">
+        <Link to="/trade" className={buttonStyles({ variant: "primary" })}>Trade</Link>
+        <Link to="/markets" className={buttonStyles({ variant: "secondary" })}>Get protection</Link>
+        <Link to="/positions" className={buttonStyles({ variant: "secondary" })}>My positions</Link>
+      </div>
 
       {/* Your YieldShield tokens ------------------------------------------------ */}
       <div className="section-label mb-2.5 mt-7">Your tokens</div>
@@ -71,7 +76,7 @@ export function Account() {
         <Row label="Audit status" value="Unaudited early alpha" />
         <Row label="Custody" value="Assets held by smart contracts" />
         <Row label="Oracles" value={chain.oracleLabel} />
-        <Row label="Administration" value="Operator-controlled alpha" />
+        <Row label="Administration" value="Operator actions behind a two-day timelock" />
       </Card>
       <p className="mt-3 px-1 text-[13px] leading-relaxed text-muted">
         Contracts, pricing and the interface can fail. Protection and returns are not guaranteed. Contact

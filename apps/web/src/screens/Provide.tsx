@@ -81,7 +81,7 @@ export function Provide() {
               View position
             </Button>
           )}
-          <Button variant="secondary" full onClick={() => navigate("/")}>
+          <Button variant="secondary" full onClick={() => navigate("/positions")}>
             Done
           </Button>
         </div>

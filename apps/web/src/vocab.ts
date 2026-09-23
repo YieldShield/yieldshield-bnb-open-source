@@ -7,7 +7,7 @@
  */
 export const VOCAB = {
   appName: "YieldShield",
-  tagline: "Stock risk, made visible.",
+  tagline: "Token risk, made visible.",
 
   // Sides of the pool
   saver: "Test protection",
@@ -37,7 +37,7 @@ export const VOCAB = {
 
   // Safety / chain
   pricesHealthy: "Opening prices available",
-  pausedForSafety: "New positions paused — check market hours and oracle status",
+  pausedForSafety: "New positions paused — check the oracle and pool status",
   pausedShort: "New positions paused",
   unavailable: "Temporarily unavailable",
   governed: "Alpha governance controls apply",

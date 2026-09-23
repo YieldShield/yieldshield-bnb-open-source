@@ -29,8 +29,8 @@ export function PoolDetail() {
 
   return (
     <div className="animate-fade-up">
-      <button onClick={() => navigate("/explore")} className="mb-5 flex items-center gap-1.5 text-[14px] text-body">
-        <ArrowLeft className="h-4.5 w-4.5" /> Explore
+      <button onClick={() => navigate("/markets")} className="mb-5 flex items-center gap-1.5 text-[14px] text-body">
+        <ArrowLeft className="h-4.5 w-4.5" /> Get protection
       </button>
 
       {pool.paused ? (
@@ -58,14 +58,14 @@ function ActiveDetail({ pool, onSave }: { pool: PoolView; onSave: () => void }) 
     <>
       <div className="flex items-center justify-between">
         <div>
-          <div className="section-label mb-1">Save &amp; Protect</div>
+          <div className="section-label mb-1">Get protection</div>
           <h1 className="text-[24px] font-extrabold tracking-tight2">{preset.asset} test-token pool</h1>
         </div>
         <ChainBadge />
       </div>
 
       <button
-        onClick={() => navigate("/protect")}
+        onClick={() => navigate("/provide")}
         className="mt-1 flex items-center gap-1 text-[13px] font-semibold text-indigo"
       >
         Try backing this pool <ChevronRight className="h-4 w-4" />

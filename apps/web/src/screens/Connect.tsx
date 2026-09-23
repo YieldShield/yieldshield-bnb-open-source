@@ -1,6 +1,6 @@
 import { DeploymentStatus } from "@/components/AlphaNotice";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Wordmark } from "@/components/Logo";
 import { ArrowLeft, ChevronRight } from "@/components/icons";
 import { Spinner } from "@/components/ui";
@@ -8,6 +8,7 @@ import { cn } from "@/lib/cn";
 import { chain, protocolDeployed } from "@/chain/adapter";
 import { friendlyError } from "@/chain/useSubmitTx";
 import { useWalletConnection } from "@/chain/wallet";
+import { safeNextPath } from "@/lib/navigation";
 
 type Brand = { match: string; name: string; sub: string; swatch: string };
 
@@ -27,6 +28,8 @@ const BRANDS: Brand[] =
 
 export function Connect() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const returnTo = safeNextPath(params.get("next"));
   const { connectors, connect, connecting } = useWalletConnection();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +41,7 @@ export function Connect() {
     setBusy(key);
     try {
       await connect(connectorId);
-      navigate("/");
+      navigate(returnTo, { replace: true });
     } catch (e) {
       setError(friendlyError(e));
     } finally {

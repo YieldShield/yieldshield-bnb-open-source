@@ -28,7 +28,7 @@ const pages: Record<string, { title: string; sections: { heading: string; body: 
       { heading: "Contact", body: email },
       {
         heading: "About this service",
-        body: "YieldShield on BNB Chain is an experimental software preview. It provides read-only token price references from BSC mainnet and illustrative protection scenarios. The synthetic token protection demo runs on BSC Testnet using verified deployment addresses. It does not offer trading, custody, insurance, guaranteed returns, or individual investment advice.",
+        body: "YieldShield on BNB Chain is an experimental software preview. It supports trading valueless synthetic tokens and testing protection positions on BSC Testnet using verified deployment addresses. A separate read-only page provides BSC mainnet price references and illustrative scenarios. It does not offer real-asset trading, insurance, guaranteed returns, or individual investment advice.",
       },
     ],
   },
@@ -51,7 +51,7 @@ const pages: Record<string, { title: string; sections: { heading: string; body: 
       },
       {
         heading: "Oracle and market risks",
-        body: "The protection demo uses a fixed four-minute synthetic price cycle between 75% and 125% of its reference price; it does not use real market prices. Mainnet reference pages separately use Chainlink feeds on BSC. BNB/USD represents the reference for WBNB; BTC/USD and ETH/USD do not separately price BTCB or Binance-Peg ETH peg and redemption risks. Prices are not swap quotes. Oracles, RPC providers and network observations can fail. Scenarios pause when source observations expire or the selected price exceeds five minutes.",
+        body: "The testnet trading and protection demo uses a fixed four-minute synthetic price cycle between 75% and 125% of its reference price; it does not use real market prices. Testnet trade quotes change rapidly and can expire before a wallet confirms. The separate mainnet scenario page uses Chainlink feeds on BSC; those references are not executable trade quotes. Oracles, RPC providers and network observations can fail.",
       },
       {
         heading: "Source trust and freshness",
@@ -81,11 +81,11 @@ const pages: Record<string, { title: string; sections: { heading: string; body: 
     sections: [
       {
         heading: "Provider and scope",
-        body: "The provider is Hawig Ventures UG (haftungsbeschränkt), at the address in the imprint. This free, experimental alpha is provided for evaluation and testing. Use is limited to adults who can lawfully access it. Trading and real-asset deposits are not offered.",
+        body: "The provider is Hawig Ventures UG (haftungsbeschränkt), at the address in the imprint. This free, experimental alpha is provided for evaluation and testing. Use is limited to adults who can lawfully access it. Real-asset trading and deposits are not offered.",
       },
       {
         heading: "Current release scope",
-        body: "Market information is read from BSC mainnet (56). Scenarios are calculated in the browser. The protection demo uses valueless tokens on BSC Testnet (97) and deterministic, synthetic prices. Wallet transactions open only after deployment verification; the Testnet page shows current availability.",
+        body: "Testnet trading and protection use valueless tokens on BSC Testnet (97) and deterministic, synthetic prices. The Testnet page shows current deployment evidence. Separate market information is read from BSC mainnet (56) for illustrative scenarios calculated in the browser.",
       },
       {
         heading: "Your wallet and instructions",
@@ -142,7 +142,7 @@ const pages: Record<string, { title: string; sections: { heading: string; body: 
       },
       {
         heading: "Wallet and public blockchain data",
-        body: "The current explorer does not require a wallet, and its market API does not take wallet addresses. Public contract queries are sent server-side to BSC RPC infrastructure. The wallet integration may discover installed wallets and restore a prior connection locally. When you connect, your public address is used to query test-token balances, faucet eligibility, positions and transaction history through BSC Testnet RPC providers. Your wallet controls any permissions you previously granted. Clear site data or revoke the connection through your wallet to remove stored connection state.",
+        body: "The separate mainnet scenario explorer does not require a wallet, and its market API does not take wallet addresses. Public reference queries are sent server-side to BSC RPC infrastructure. The wallet integration may discover installed wallets and restore a prior connection locally. When you connect, your public address is used to query test-token balances, faucet eligibility, trade readiness, positions and transaction history through BSC Testnet RPC providers. Your wallet controls any permissions you previously granted. Clear site data or revoke the connection through your wallet to remove stored connection state.",
       },
       {
         heading: "Public transactions cannot be deleted",

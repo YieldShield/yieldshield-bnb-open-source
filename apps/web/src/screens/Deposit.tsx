@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { fromBaseUnits, minReceived, toBaseUnits, type PositionId } from "@yieldshield/core";
 import { Expander, Row } from "@/components/Expander";
 import { AmountInput } from "@/components/AmountInput";
@@ -16,10 +16,12 @@ import { VOCAB } from "@/vocab";
 
 export function Deposit() {
   const [params] = useSearchParams();
-  const poolId = params.get("pool") ?? undefined;
+  const { data: pools } = usePools();
+  const requestedAsset = params.get("asset");
+  const poolId = params.get("pool") ?? pools.find((entry) => entry.shielded.symbol === requestedAsset)?.address;
   const { loading, error: loadError, pool } = usePool(poolId);
 
-  if (!poolId) return <PickPool />;
+  if (!poolId) return <PickPool requestedAsset={requestedAsset} />;
   if (loading) return <div className="h-72 animate-pulse rounded-card bg-subtle" />;
   if (loadError)
     return (
@@ -38,10 +40,11 @@ export function Deposit() {
   return <DepositFlow pool={pool} />;
 }
 
-function PickPool() {
+function PickPool({ requestedAsset }: { requestedAsset: string | null }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { data, loading, error } = usePools();
-  const open = data.filter((p) => !p.paused);
+  const open = data.filter((p) => !p.paused && (!requestedAsset || p.shielded.symbol === requestedAsset));
   if (loading) return <Card>Loading pools…</Card>;
   if (error)
     return (
@@ -52,10 +55,14 @@ function PickPool() {
   return (
     <div className="animate-fade-up">
       <h1 className="mb-4 text-[26px] font-extrabold tracking-tight2">Choose a pool</h1>
-      {open.length === 0 && <Card>No pools are currently available for deposits.</Card>}
+      {open.length === 0 && <Card>No {requestedAsset ?? "test-token"} pools are currently available for deposits.</Card>}
       <div className="grid gap-3.5 md:grid-cols-2">
         {open.map((p) => (
-          <div key={p.address} onClick={() => navigate(`/deposit?pool=${p.address}`)}>
+          <div key={p.address} onClick={() => {
+            const next = new URLSearchParams(location.search);
+            next.set("pool", p.address);
+            navigate(`${location.pathname}?${next.toString()}`);
+          }}>
             <PoolCard pool={p} />
           </div>
         ))}
@@ -66,11 +73,12 @@ function PickPool() {
 
 function DepositFlow({ pool }: { pool: PoolView }) {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const { shielded, preset, stats } = pool;
   const tx = useSubmitTx();
 
   const [step, setStep] = useState<"amount" | "review" | "success">("amount");
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState(params.get("asset") === pool.shielded.symbol ? params.get("amount") ?? "" : "");
   const [slippageBps, setSlippageBps] = useState(50);
   const [createdPosition, setCreatedPosition] = useState<PositionId | null>(null);
   const { balance, loading: balanceLoading } = useTokenBalance(shielded.token);
@@ -135,7 +143,7 @@ function DepositFlow({ pool }: { pool: PoolView }) {
               View position
             </Button>
           )}
-          <Button variant="secondary" full onClick={() => navigate("/")}>
+          <Button variant="secondary" full onClick={() => navigate("/positions")}>
             Done
           </Button>
         </div>
@@ -190,7 +198,7 @@ function DepositFlow({ pool }: { pool: PoolView }) {
             <Row label="Backer share of gains" value={formatBps(stats.premiumRateBp)} />
             <Row label="Pool fee on gains" value={formatBps(stats.poolFeeBp)} />
             <Row label="Protocol fee on gains" value={formatBps(stats.protocolFeeBp)} />
-            <Row label="Network fee" value="Shown in your wallet · test ETH" tone="muted" />
+            <Row label="Network fee" value="Shown in your wallet · test BNB" tone="muted" />
           </Card>
 
           <div className="mt-3.5 rounded-card bg-green-tint-2 p-4 text-[13.5px] leading-relaxed text-green-dark">
