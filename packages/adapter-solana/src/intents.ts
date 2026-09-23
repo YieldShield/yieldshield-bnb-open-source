@@ -158,6 +158,9 @@ export async function buildIntent(rpc: SolanaRpc, owner: TransactionSigner, inte
       return { instructions, created: { poolId: pool } };
     }
 
+    case "demoTrade":
+      throw new Error("Demo trading is available only on BSC Testnet.");
+
     case "faucetDrip":
       // Solana test-token drips go through the operator-run HTTP faucet service (the mint
       // authority can't live in the browser) — see the app's useFaucet seam.
