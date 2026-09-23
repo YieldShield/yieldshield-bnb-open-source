@@ -35,7 +35,7 @@
     "walkthrough:bsc:trading": "node scripts/bsc-trading-flow.mjs --broadcast"
   },
   "dependencies": {
-    "@solana-program/token": "^0.14.0",
+    "@solana-program/token": "^0.16.1",
     "@solana-program/token-2022": "^0.7.0",
     "@solana/kit": "^6.10.0",
     "viem": "^2.55.0"
