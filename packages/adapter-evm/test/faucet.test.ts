@@ -9,7 +9,7 @@ const hash = "0x" + "11".repeat(32),
   now = 1_800_000_000;
 function fixture() {
   const state = {
-    chainId: 84532,
+    chainId: 97,
     code: "0x6000",
     inventory: [token],
     enabled: true,
@@ -76,14 +76,14 @@ beforeEach(() => {
   vi.setSystemTime(now * 1000);
 });
 afterEach(() => vi.useRealTimers());
-describe("Base Sepolia test-token eligibility", () => {
+describe("BSC Testnet test-token eligibility", () => {
   it("reads the published target at one canonical block and limits status lifetime", async () => {
     const f = fixture();
     const status = await f.read([token]);
     expect(status).toMatchObject({
       address: faucet,
       recipient,
-      chainId: 84532,
+      chainId: 97,
       ready: true,
       configured: true,
       nativeBalance: 1n,
@@ -97,7 +97,7 @@ describe("Base Sepolia test-token eligibility", () => {
   it("rejects the wrong chain before inspecting inventory", async () => {
     const f = fixture();
     f.state.chainId = 8453;
-    await expect(f.read()).rejects.toThrow("Base Sepolia");
+    await expect(f.read()).rejects.toThrow("BSC Testnet");
     expect(f.calls).toHaveLength(0);
   });
   it("distinguishes an unconfigured dispenser", async () => {

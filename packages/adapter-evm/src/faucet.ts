@@ -27,7 +27,7 @@ function requireState(condition: unknown, message: string): asserts condition {
 }
 const nowSeconds = () => Math.floor(Date.now() / 1000);
 
-/** Reads the independently published Base Sepolia faucet. Never accepts a target from a status response. */
+/** Reads the independently published BSC Testnet faucet. Never accepts a target from a status response. */
 export async function readFaucetStatus(
   client: PublicClient,
   faucetAddress: Address,
@@ -37,7 +37,7 @@ export async function readFaucetStatus(
   const address = getAddress(faucetAddress),
     owner = getAddress(recipient);
   requireState(address !== zeroAddress && owner !== zeroAddress, "Test-token dispenser or wallet is not configured.");
-  requireState((await client.getChainId()) === 84532, "Test tokens require Base Sepolia.");
+  requireState((await client.getChainId()) === 97, "Test tokens require BSC Testnet.");
   const block = await client.getBlock({ blockTag: "latest" });
   requireState(
     typeof block.number === "bigint" &&
@@ -62,7 +62,7 @@ export async function readFaucetStatus(
     client.readContract({ address, abi: tokenFaucetAbi, functionName: "getAllTokens", blockNumber }),
   ]);
   requireState(code && code !== "0x", "The configured test-token dispenser has no contract.");
-  requireState(typeof nativeBalance === "bigint" && nativeBalance >= 0n, "Test ETH balance is unavailable.");
+  requireState(typeof nativeBalance === "bigint" && nativeBalance >= 0n, "Test BNB balance is unavailable.");
   requireState(Array.isArray(inventory) && inventory.length <= 64, "Test-token inventory is invalid.");
   const tokens = inventory.map((token) => getAddress(token));
   requireState(
@@ -137,7 +137,7 @@ export async function readFaucetStatus(
   return {
     address,
     recipient: owner,
-    chainId: 84532,
+    chainId: 97,
     blockNumber,
     blockHash: block.hash!,
     evaluatedAt,

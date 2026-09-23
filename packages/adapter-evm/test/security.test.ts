@@ -113,7 +113,7 @@ function rawRpc(overrides: Record<string, any> = {}) {
         blockHash: canonicalBlockHash,
         blockNumber: "0xa",
         transactionIndex: "0x0",
-        chainId: "0x14a34",
+        chainId: "0x61",
         ...overrides.transaction,
       };
     if (method === "eth_getBlockByNumber")
@@ -186,7 +186,7 @@ function clientFor(overrides: Record<string, any> = {}) {
   return {
     request: rawRpc(),
     getBlockNumber: vi.fn(async () => 10n),
-    getChainId: vi.fn(async () => 84532),
+    getChainId: vi.fn(async () => 97),
     getBlock: vi.fn(async () => ({ number: 10n, hash: canonicalBlockHash, timestamp: 1000n })),
     readContract: vi.fn(async (call) => {
       const result = value(call);
@@ -294,8 +294,8 @@ describe("wallet session and receipt safety", () => {
   let connector: any;
   beforeEach(() => {
     vi.clearAllMocks();
-    connector = { uid: "wallet-1", getAccounts: vi.fn(async () => [owner]), getChainId: vi.fn(async () => 84532) };
-    current = { status: "connected", address: owner, chainId: 84532, connector };
+    connector = { uid: "wallet-1", getAccounts: vi.fn(async () => [owner]), getChainId: vi.fn(async () => 97) };
+    current = { status: "connected", address: owner, chainId: 97, connector };
     vi.mocked(getAccount).mockImplementation(() => current);
     vi.mocked(writeContract).mockResolvedValue(txHash as any);
     vi.mocked(waitForTransactionReceipt).mockResolvedValue({
@@ -305,14 +305,14 @@ describe("wallet session and receipt safety", () => {
     } as any);
   });
   const config = {} as any;
-  const adapter = (client: any) => ({ chain: { id: 84532 }, addresses: { factory }, publicClient: client }) as any;
+  const adapter = (client: any) => ({ chain: { id: 97 }, addresses: { factory }, publicClient: client }) as any;
   it("rejects a live wallet on a different chain", async () => {
     connector.getChainId.mockResolvedValue(8453);
-    await expect(assertWalletSession(config, owner, 84532, connector.uid)).rejects.toThrow("Wrong network");
+    await expect(assertWalletSession(config, owner, 97, connector.uid)).rejects.toThrow("Wrong network");
   });
   it("rejects an account switch even before framework state catches up", async () => {
     connector.getAccounts.mockResolvedValue([other]);
-    await expect(assertWalletSession(config, owner, 84532, connector.uid)).rejects.toThrow("account changed");
+    await expect(assertWalletSession(config, owner, 97, connector.uid)).rejects.toThrow("account changed");
   });
   it("stops after approval if the account changes while it confirms", async () => {
     vi.mocked(waitForTransactionReceipt).mockImplementation(async () => {
@@ -626,7 +626,7 @@ describe("canonical wallet transaction evidence", () => {
   const verify = (overrides: Record<string, any> = {}) => {
     const client = clientFor();
     client.request = rawRpc({ step: canonicalStep, ...overrides });
-    return readCanonicalStepReceipt(client, txHash as any, owner, canonicalStep as any, 84532);
+    return readCanonicalStepReceipt(client, txHash as any, owner, canonicalStep as any, 97);
   };
   it("uses raw sealed evidence and returns only the canonical receipt logs", async () => {
     const receipt = await verify();
@@ -1022,11 +1022,11 @@ describe("test-token transaction preflight", () => {
       ).rejects.toThrow("No test tokens");
     },
   );
-  it("requires native test ETH for the wallet transaction", async () => {
+  it("requires native test BNB for the wallet transaction", async () => {
     const client = faucetClient();
     client.getBalance.mockResolvedValue(0n);
     await expect(planIntent(client, owner, { factory, faucet: other }, { kind: "faucetDrip" })).rejects.toThrow(
-      "test ETH",
+      "test BNB",
     );
   });
   it("requires a positive dispense event for the exact faucet and recipient", async () => {

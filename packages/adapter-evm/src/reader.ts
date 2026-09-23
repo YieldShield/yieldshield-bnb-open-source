@@ -797,7 +797,7 @@ export function createReader(client: PublicClient, deps: EvmReaderDeps): ChainRe
               "unknown",
             );
           else if (position.withdrawableNet === 0n)
-            position.sameAssetExit = unavailable("no-output", "No positive stock withdrawal amount is available.");
+            position.sameAssetExit = unavailable("no-output", "No positive token withdrawal amount is available.");
           else {
             try {
               await client.simulateContract({

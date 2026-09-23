@@ -388,7 +388,7 @@ export async function planIntent(
           recipient.toLowerCase() === owner.toLowerCase()
             ? status.nativeBalance
             : await client.getBalance({ address: owner });
-        if (senderBalance <= 0n) throw new Error("Add Base Sepolia test ETH to pay the transaction fee.");
+        if (senderBalance <= 0n) throw new Error("Add BSC Testnet test BNB to pay the transaction fee.");
       };
       await beforeStep();
       // dripAll skips tokens still on cooldown; an empty successful call is not a claim.

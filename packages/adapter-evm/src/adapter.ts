@@ -44,7 +44,12 @@ export function createEvmAdapter(config: EvmAdapterConfig): EvmAdapter {
     network: config.chain.testnet ? "testnet" : "mainnet",
     explorerTxUrl: (tx) => (explorer ? `${explorer}/tx/${tx}` : tx),
     protocolId: factory ?? zeroAddress,
-    oracleLabel: config.chain.id === 84532 ? "Relayed Chainlink · alpha" : "Chainlink",
+    oracleLabel:
+      config.chain.id === 97
+        ? "Synthetic demo prices"
+        : config.chain.id === 84532
+          ? "Relayed Chainlink · alpha"
+          : "Chainlink",
     capabilities: {
       faucet: !!faucet,
       needsTokenApprovals: true,
