@@ -3,6 +3,8 @@ src = 'contracts'
 out = 'out'
 libs = ['lib', 'node_modules']
 solc_version = "0.8.35"
+# Pin a BSC-supported instruction set instead of following the compiler default.
+evm_version = "cancun"
 # OpenZeppelin 5.6.1 still exposes identifiers such as `error` and `at`
 # that Solc 0.8.35 warns may become keywords in a future compiler release.
 # Keep this scoped to warning 6335 so other compiler diagnostics remain visible.
