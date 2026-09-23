@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { protocolDeployed } from "@/chain/adapter";
 import { Wordmark } from "@/components/Logo";
 
 export function Welcome() {
@@ -76,9 +77,11 @@ export function Welcome() {
               ))}
             </div>
             <div className="mt-7 border-t border-hairline pt-5 text-[12px] leading-relaxed text-body">
-              A working risk explorer. Protection deposits are not live yet.{" "}
-              <Link to="/connect" className="font-bold text-ink underline underline-offset-2">
-                View testnet status
+              {protocolDeployed
+                ? "Try the complete protection flow with free test tokens."
+                : "A working risk explorer. The testnet protection demo is being prepared."}{" "}
+              <Link to="/testnet" className="font-bold text-ink underline underline-offset-2">
+                Explore the testnet demo
               </Link>
             </div>
           </div>

@@ -5,7 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { minReceived } from "@yieldshield/core";
 import { Row } from "@/components/Expander";
 import { ShieldIcon } from "@/components/icons";
-import { PendingOverlay, SuccessCard } from "@/components/TxFeedback";
+import { TransactionError, PendingOverlay, SuccessCard } from "@/components/TxFeedback";
 import { Button, Card } from "@/components/ui";
 import { formatDate, formatToken } from "@/lib/format";
 import { useSubmitTx } from "@/chain/useSubmitTx";
@@ -96,7 +96,9 @@ function ActivatePanel({ p, onClose, onDone }: { p: ShieldVM; onClose: () => voi
   return (
     <div className="md:fixed md:inset-0 md:z-40 md:flex md:items-center md:justify-center md:bg-green/15 md:p-4 md:backdrop-blur-sm">
       <div className="animate-fade-up rounded-hero bg-green-tint-2 p-6 md:w-full md:max-w-[440px] md:p-8 md:shadow-modal">
-        {tx.pending && <PendingOverlay label="Confirming backing-token exit…" />}
+        {tx.pending && (
+          <PendingOverlay step={tx.step} txId={tx.txId} phase={tx.phase} label="Confirming backing-token exit…" />
+        )}
 
         <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-pill bg-green-tint text-green-dark">
           <ShieldIcon className="h-7 w-7" />
@@ -142,7 +144,7 @@ function ActivatePanel({ p, onClose, onDone }: { p: ShieldVM; onClose: () => voi
         <button className="mt-2 text-[13px] font-semibold underline" onClick={() => void mutate()}>
           Refresh quote
         </button>
-        {tx.error && <p className="mt-4 text-[13px] font-medium text-amber-deep">{tx.error}</p>}
+        <TransactionError error={tx.error} txId={tx.txId} />
 
         <div className="mt-5 flex flex-col gap-3">
           <Button variant="green" full onClick={confirm} disabled={!canConfirm}>

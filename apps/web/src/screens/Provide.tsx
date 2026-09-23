@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { fromBaseUnits, minReceived, toBaseUnits, type PositionId } from "@yieldshield/core";
 import { AmountInput } from "@/components/AmountInput";
 import { Row } from "@/components/Expander";
-import { ArrowLeft, PlusIcon, ShieldIcon } from "@/components/icons";
-import { PendingOverlay, SuccessCard } from "@/components/TxFeedback";
+import { ArrowLeft, ShieldIcon } from "@/components/icons";
+import { TransactionError, PendingOverlay, SuccessCard } from "@/components/TxFeedback";
 import { AssetGlyph, Bar, Button, Card, ChainBadge } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatBps, formatDuration, formatToken } from "@/lib/format";
@@ -91,7 +91,7 @@ export function Provide() {
 
   return (
     <div className="animate-fade-up">
-      {tx.pending && <PendingOverlay label="Confirming…" />}
+      {tx.pending && <PendingOverlay step={tx.step} txId={tx.txId} phase={tx.phase} label="Confirming…" />}
       {loadError && (
         <Card>
           <p role="alert">Pool data is unavailable. Refresh before continuing.</p>
@@ -123,19 +123,6 @@ export function Provide() {
               <InfoTile title="Pool-specific notice" sub="Check before depositing" />
             </div>
           </div>
-
-          <button
-            onClick={() => navigate("/create-pool")}
-            className="mb-4 flex w-full items-center gap-3 rounded-card border border-dashed border-indigo/40 bg-indigo-tint-3 p-4 text-left transition-colors hover:bg-indigo-tint-2"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-pill bg-indigo text-white">
-              <PlusIcon className="h-5 w-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-[15px] font-bold text-indigo">Create a pool</div>
-              <div className="text-[12.5px] text-indigo/80">Pick a token pair from the seed set and set the terms</div>
-            </div>
-          </button>
 
           <div className="section-label mb-2.5">Pick a pool to back</div>
           {loading ? (
@@ -205,7 +192,7 @@ export function Provide() {
             {formatDuration(selected.stats.unlockDuration)} notice and sufficient unlocked liquidity. The alpha
             contracts and pricing can fail.
           </div>
-          {tx.error && <p className="mt-4 text-[13px] font-medium text-amber-deep">{tx.error}</p>}
+          <TransactionError error={tx.error} txId={tx.txId} />
           <div className="mt-5">
             <Button variant="indigo" full onClick={confirm} disabled={tx.pending || !canContinue}>
               Confirm

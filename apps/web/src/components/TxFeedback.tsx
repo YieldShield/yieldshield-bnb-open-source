@@ -22,9 +22,9 @@ export function PendingOverlay({
       aria-live="polite"
       className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-4 bg-canvas/95 px-6 text-center backdrop-blur-sm"
     >
-      <Spinner className="h-9 w-9 text-[#0052FF]" />
+      <Spinner className="h-9 w-9 text-brand-deep" />
       {step && (
-        <p className="text-[12px] font-bold uppercase tracking-wider text-[#0052FF]">
+        <p className="text-[12px] font-bold uppercase tracking-wider text-brand-deep">
           Step {step.index} of {step.total}
         </p>
       )}
@@ -32,14 +32,14 @@ export function PendingOverlay({
       <p className="max-w-[42ch] text-[14px] leading-relaxed text-body">
         {phase === "building"
           ? "We’re checking the action. Review the request when it appears in your wallet."
-          : "Waiting for the transaction to be confirmed on Base Sepolia. Don’t submit it again."}
+          : "Waiting for the transaction to be confirmed on BSC Testnet. Don’t submit it again."}
       </p>
       {txId && (
         <a
           href={chain.explorerTxUrl(txId)}
           target="_blank"
           rel="noreferrer"
-          className="text-[14px] font-bold text-[#0052FF] underline"
+          className="text-[14px] font-bold text-brand-deep underline"
         >
           View transaction progress ↗
         </a>

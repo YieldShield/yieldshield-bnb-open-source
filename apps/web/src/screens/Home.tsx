@@ -259,12 +259,12 @@ function HomeEmpty() {
         <div className="section-label">BSC Testnet · early alpha</div>
         <div className="mt-2 hero-num text-[38px] md:text-[46px]">Try a test position.</div>
         <p className="mt-4 text-[15px] leading-relaxed text-body">
-          Explore tokenized-stock protection with test tokens. The alpha simulates assets and payouts; it does not
-          provide stock ownership, insurance or a guaranteed return.
+          Explore token protection with test tokens. The alpha simulates assets and payouts; it does not provide real
+          token backing, insurance or a guaranteed return.
         </p>
         <div className="mt-5 rounded-card bg-green-tint-2 p-5 text-[14px] leading-relaxed text-green-dark">
-          Get test tokens from Account, choose a pool, then try a shield or backing position. Every transaction uses
-          BSC Testnet test assets. The contracts are unaudited and can fail.
+          Get test tokens from Account, choose a pool, then try a shield or backing position. Every transaction uses BSC
+          Testnet test assets. The contracts are unaudited and can fail.
         </div>
       </Card>
       <div className="mt-5 grid gap-3 sm:grid-cols-2">

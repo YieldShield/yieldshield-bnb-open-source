@@ -4,7 +4,7 @@ import { fromBaseUnits, minReceived, toBaseUnits, type PositionId } from "@yield
 import { Expander, Row } from "@/components/Expander";
 import { AmountInput } from "@/components/AmountInput";
 import { ArrowLeft } from "@/components/icons";
-import { PendingOverlay, SuccessCard } from "@/components/TxFeedback";
+import { TransactionError, PendingOverlay, SuccessCard } from "@/components/TxFeedback";
 import { Button, Card } from "@/components/ui";
 import { PoolCard } from "@/components/PoolCard";
 import { formatDate, formatBps, formatToken } from "@/lib/format";
@@ -145,7 +145,7 @@ function DepositFlow({ pool }: { pool: PoolView }) {
 
   return (
     <div className="animate-fade-up">
-      {tx.pending && <PendingOverlay label="Confirming your deposit…" />}
+      {tx.pending && <PendingOverlay step={tx.step} txId={tx.txId} phase={tx.phase} label="Confirming your deposit…" />}
 
       <button
         onClick={() => (step === "review" ? setStep("amount") : navigate(-1))}
@@ -223,7 +223,7 @@ function DepositFlow({ pool }: { pool: PoolView }) {
             </Expander>
           </div>
 
-          {tx.error && <p className="mt-4 text-[13px] font-medium text-amber-deep">{tx.error}</p>}
+          <TransactionError error={tx.error} txId={tx.txId} />
 
           <div className="mt-5">
             <Button variant="ink" full onClick={confirm} disabled={tx.pending || !canContinue}>

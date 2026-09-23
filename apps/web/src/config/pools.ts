@@ -11,7 +11,7 @@ export type PoolPreset = {
 export const POOL_PRESETS: readonly PoolPreset[] = [];
 export function presetFor(symbol: string, assetName?: string): PoolPreset {
   const names: Record<string, string> = {
-    tWBNB: "Test Wrapped BNB",
+    tWBNB: "Test BNB token",
     tBTCB: "Test Bitcoin",
     tETH: "Test Ethereum",
     tCAKE: "Test PancakeSwap",

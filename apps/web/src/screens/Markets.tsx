@@ -59,7 +59,7 @@ export function Markets() {
         <Link to="/welcome" aria-label="YieldShield home">
           <Wordmark size={32} />
         </Link>
-        <Link to="/connect" className="rounded-input bg-ink px-4 py-3 text-[13px] font-bold text-white">
+        <Link to="/testnet" className="rounded-input bg-ink px-4 py-3 text-[13px] font-bold text-white">
           Testnet status ↗
         </Link>
       </header>
@@ -361,7 +361,7 @@ export function Markets() {
                 </Card>
                 <p className="px-1 text-[12px] leading-relaxed text-body">
                   No wallet or deposit is needed.{" "}
-                  <Link to="/connect" className="font-semibold underline underline-offset-2">
+                  <Link to="/testnet" className="font-semibold underline underline-offset-2">
                     BSC testnet status ↗
                   </Link>
                 </p>

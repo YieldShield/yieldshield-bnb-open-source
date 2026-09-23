@@ -1,43 +1,19 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AssetGlyph, Button, Card, Pill } from "@/components/ui";
+import { AssetGlyph, Card, Pill } from "@/components/ui";
 import { Row } from "@/components/Expander";
-import { GiftIcon } from "@/components/icons";
-import { useToast } from "@/components/Toast";
+import { TestFaucet } from "@/components/TestFaucet";
 import { cn } from "@/lib/cn";
 import { formatAmount } from "@/lib/format";
 import { presetFor } from "@/config/pools";
 import { chain } from "@/chain/adapter";
 import { shortAddress, useWalletConnection } from "@/chain/wallet";
 import { useWhitelistedBalances, type TokenBalance } from "@/data/balances";
-import { useFaucet } from "@/chain/faucet";
 
 export function Account() {
   const navigate = useNavigate();
   const { walletName, address, disconnect } = useWalletConnection();
 
-  const { balances, loading, error: balanceError, refresh } = useWhitelistedBalances();
-  const { toast } = useToast();
-  const faucet = useFaucet();
-  const [dripping, setDripping] = useState(false);
-
-  async function getTestTokens() {
-    if (!address) return;
-    setDripping(true);
-    try {
-      const res = await faucet.drip(address);
-      if (res.ok) {
-        toast({ kind: "success", message: "Test-token transaction confirmed. Refreshing your balances." });
-        refresh();
-        setTimeout(refresh, 2500);
-      } else toast({ kind: "error", message: res.error ?? "Faucet request failed." });
-    } catch {
-      toast({ kind: "error", message: "The faucet request could not be completed. Please try again." });
-    } finally {
-      setDripping(false);
-    }
-  }
-
+  const { balances, loading, error: balanceError } = useWhitelistedBalances();
   // Held tokens first (by amount), then the rest alphabetically — the full opted-in set stays visible.
   const sorted = [...balances].sort((a, b) => {
     if (a.amount > 0n !== b.amount > 0n) return a.amount > 0n ? -1 : 1;
@@ -70,31 +46,7 @@ export function Account() {
       {/* Your YieldShield tokens ------------------------------------------------ */}
       <div className="section-label mb-2.5 mt-7">Your tokens</div>
 
-      {faucet.enabled && (
-        <div className="mb-3 overflow-hidden rounded-hero bg-gradient-to-br from-green to-green-bright p-5 text-white">
-          <div className="flex items-start gap-3.5">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill bg-white/15">
-              <GiftIcon className="h-5.5 w-5.5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-[16px] font-extrabold tracking-tight2">Get test tokens</div>
-              <p className="mt-0.5 text-[13px] leading-relaxed text-white/85">
-                BSC Testnet test tokens let you try deposits and pools. They are simulated assets with no redeemable
-                monetary value.
-              </p>
-            </div>
-          </div>
-          <Button
-            variant="secondary"
-            full
-            className="mt-4 bg-white text-green-dark hover:bg-white/90"
-            disabled={dripping || !address}
-            onClick={getTestTokens}
-          >
-            {dripping ? "Sending…" : "Send me a basket"}
-          </Button>
-        </div>
-      )}
+      <TestFaucet />
 
       {balanceError && (
         <Card>

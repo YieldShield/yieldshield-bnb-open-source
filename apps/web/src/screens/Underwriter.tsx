@@ -4,7 +4,7 @@ import { fromBaseUnits, minReceived, toBaseUnits, type TxIntent } from "@yieldsh
 import { AmountInput } from "@/components/AmountInput";
 import { Row } from "@/components/Expander";
 import { ArrowLeft } from "@/components/icons";
-import { PendingOverlay } from "@/components/TxFeedback";
+import { TransactionError, PendingOverlay } from "@/components/TxFeedback";
 import { Bar, Button, Card, ChainBadge } from "@/components/ui";
 import { formatDuration, formatToken } from "@/lib/format";
 import { useSubmitTx } from "@/chain/useSubmitTx";
@@ -90,7 +90,7 @@ function UnderwriterPosition({ p, refresh }: { p: ProtectorVM; refresh: () => vo
 
   return (
     <>
-      {tx.pending && <PendingOverlay label="Confirming…" />}
+      {tx.pending && <PendingOverlay step={tx.step} txId={tx.txId} phase={tx.phase} label="Confirming…" />}
 
       <div className="flex items-center justify-between">
         <span className="text-[15px] font-bold text-body">Backing {preset.asset}</span>
@@ -126,7 +126,7 @@ function UnderwriterPosition({ p, refresh }: { p: ProtectorVM; refresh: () => vo
         <Row label="Backing active protection" value={formatToken(p.backingActive, dec, backing.symbol)} tone="muted" />
       </Card>
 
-      {tx.error && <p className="mt-4 text-[13px] font-medium text-amber-deep">{tx.error}</p>}
+      <TransactionError error={tx.error} txId={tx.txId} />
 
       {/* Withdrawal: two-step with notice */}
       {!p.isUnlocking ? (

@@ -4,7 +4,7 @@ import { fromBaseUnits, minReceived, toBaseUnits } from "@yieldshield/core";
 import { AmountInput } from "@/components/AmountInput";
 import { ArrowLeft } from "@/components/icons";
 import { Row } from "@/components/Expander";
-import { PendingOverlay, SuccessCard } from "@/components/TxFeedback";
+import { TransactionError, PendingOverlay, SuccessCard } from "@/components/TxFeedback";
 import { Bar, Button, Card, ChainBadge, Pill } from "@/components/ui";
 import { formatDate, formatToken, formatUsd8 } from "@/lib/format";
 import { useSubmitTx } from "@/chain/useSubmitTx";
@@ -103,7 +103,7 @@ function SaverPosition({ p, onDone }: { p: ShieldVM; onDone: () => void }) {
 
   return (
     <>
-      {tx.pending && <PendingOverlay label="Confirming withdrawal…" />}
+      {tx.pending && <PendingOverlay step={tx.step} txId={tx.txId} phase={tx.phase} label="Confirming withdrawal…" />}
 
       <div className="flex items-center justify-between">
         <span className="text-[15px] font-bold text-body">{preset?.asset ?? sym} savings</span>
@@ -139,7 +139,7 @@ function SaverPosition({ p, onDone }: { p: ShieldVM; onDone: () => void }) {
         </p>
       </Card>
 
-      {tx.error && <p className="mt-4 text-[13px] font-medium text-amber-deep">{tx.error}</p>}
+      <TransactionError error={tx.error} txId={tx.txId} />
 
       {withdrawing ? (
         <Card className="mt-5">

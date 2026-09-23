@@ -58,13 +58,13 @@ export function Connect() {
         </Link>
         <h1 className="mt-12 text-[32px] font-extrabold tracking-tight2">Test alpha not live yet</h1>
         <p className="mt-4 text-[16px] leading-relaxed text-body">
-          Explore token prices and model risk now. Wallet transactions will be available after contract deployment.
+          The testnet protection flow is being prepared. View the demo guide while deployment verification is completed.
         </p>
         <Link
-          to="/markets"
+          to="/testnet"
           className="mt-7 inline-flex min-h-12 items-center rounded-input bg-brand px-5 py-3 text-[15px] font-bold text-ink hover:bg-brand-hover"
         >
-          Explore tokens & scenarios
+          View the testnet guide
         </Link>
         <p className="mt-3 text-[13px] text-body">No wallet needed.</p>
         <p className="mt-8 rounded-input bg-amber-tint p-4 text-[13px] leading-relaxed text-amber-deep">

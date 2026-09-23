@@ -61,7 +61,6 @@ export function useSubmitTx() {
       } catch (e) {
         const message = friendlyError(e);
         setState((current) => ({ ...current, phase: "failed", error: message }));
-        toast({ kind: "error", message });
         return null;
       } finally {
         inFlight.current = false;

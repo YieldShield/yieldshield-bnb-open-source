@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import { protocolDeployed } from "@/chain/adapter";
 import { Wordmark } from "@/components/Logo";
 const email = (
   <a className="text-brand-deep underline" href="mailto:david@yieldshield.ai">
@@ -27,7 +28,7 @@ const pages: Record<string, { title: string; sections: { heading: string; body: 
       { heading: "Contact", body: email },
       {
         heading: "About this service",
-        body: "YieldShield on BNB Chain is an experimental software preview. It provides read-only token price references from BSC mainnet and illustrative protection scenarios. Protection deposits and wallet transactions are not enabled in this release. It does not offer trading, custody, insurance, guaranteed returns, or individual investment advice.",
+        body: "YieldShield on BNB Chain is an experimental software preview. It provides read-only token price references from BSC mainnet and illustrative protection scenarios. A synthetic token protection demo is prepared for BSC Testnet; wallet transactions are enabled only after the public contracts pass deployment verification. It does not offer trading, custody, insurance, guaranteed returns, or individual investment advice.",
       },
     ],
   },
@@ -35,8 +36,10 @@ const pages: Record<string, { title: string; sections: { heading: string; body: 
     title: "Early alpha. Significant risks.",
     sections: [
       {
-        heading: "No deposits in this preview",
-        body: "BSC testnet (chain 97) is the intended network for a future protection pilot. This release has no verified BSC pool deployment and does not enable deposits, approvals, withdrawals or faucet transactions. Do not send assets to addresses shown as token or oracle references.",
+        heading: "Testnet assets only",
+        body: protocolDeployed
+          ? "The protection demo runs on BSC Testnet (97). tWBNB and TestUSDC are fixed-supply, valueless demo tokens; tWBNB is not wrapped BNB. Testnet transactions use test BNB for gas. Never send real assets or confuse test addresses with mainnet references."
+          : "The synthetic protection demo is prepared for BSC Testnet (97). The public contracts have not yet passed deployment verification, so wallet transactions remain disabled. Do not send assets to token or oracle reference addresses.",
       },
       {
         heading: "Protection can fail",
@@ -48,7 +51,7 @@ const pages: Record<string, { title: string; sections: { heading: string; body: 
       },
       {
         heading: "Oracle and market risks",
-        body: "Mainnet references use Chainlink feeds on BSC. BNB/USD represents the reference for WBNB; BTC/USD and ETH/USD do not separately price BTCB or Binance-Peg ETH peg and redemption risks. Prices are not swap quotes. Oracles, RPC providers and network observations can fail. Scenarios pause when source observations expire or the selected price exceeds five minutes.",
+        body: "The protection demo uses a fixed four-minute synthetic price cycle between 75% and 125% of its reference price; it does not use real market prices. Mainnet reference pages separately use Chainlink feeds on BSC. BNB/USD represents the reference for WBNB; BTC/USD and ETH/USD do not separately price BTCB or Binance-Peg ETH peg and redemption risks. Prices are not swap quotes. Oracles, RPC providers and network observations can fail. Scenarios pause when source observations expire or the selected price exceeds five minutes.",
       },
       {
         heading: "Source trust and freshness",
@@ -82,7 +85,7 @@ const pages: Record<string, { title: string; sections: { heading: string; body: 
       },
       {
         heading: "Current release scope",
-        body: "Market information is read from BSC mainnet (56). Scenarios are calculated in the browser. A future valueless protection pilot would use BSC testnet (97); it is not deployed or enabled by this preview.",
+        body: "Market information is read from BSC mainnet (56). Scenarios are calculated in the browser. The protection demo uses valueless tokens on BSC Testnet (97) and deterministic, synthetic prices. Wallet transactions open only after deployment verification; the Testnet page shows current availability.",
       },
       {
         heading: "Your wallet and instructions",
@@ -114,7 +117,7 @@ const pages: Record<string, { title: string; sections: { heading: string; body: 
         heading: "Contact and version",
         body: (
           <>
-            Questions: {email}. Version: 8 September 2026. Material changes to the alpha may require updated
+            Questions: {email}. Version: 23 September 2026. Material changes to the alpha may require updated
             disclosures.
           </>
         ),
@@ -139,11 +142,11 @@ const pages: Record<string, { title: string; sections: { heading: string; body: 
       },
       {
         heading: "Wallet and public blockchain data",
-        body: "The current explorer does not require a wallet, and its market API does not take wallet addresses. Public contract queries are sent server-side to BSC RPC infrastructure. The inherited wallet integration may discover installed wallets or restore a prior connection locally; transaction screens remain unavailable. Your wallet controls any permissions you previously granted. Clear site data or revoke the connection through your wallet to remove stored connection state.",
+        body: "The current explorer does not require a wallet, and its market API does not take wallet addresses. Public contract queries are sent server-side to BSC RPC infrastructure. The wallet integration may discover installed wallets and restore a prior connection locally. When you connect, your public address is used to query test-token balances, faucet eligibility, positions and transaction history through BSC Testnet RPC providers. Your wallet controls any permissions you previously granted. Clear site data or revoke the connection through your wallet to remove stored connection state.",
       },
       {
         heading: "Public transactions cannot be deleted",
-        body: "This preview does not submit transactions. Any future signed BSC testnet transaction can publicly record wallet addresses and interactions. Blockchain records are outside our control and cannot be erased by deleting browser data or contacting the operator.",
+        body: "Signed BSC Testnet transactions publicly record wallet addresses and interactions when the demo is enabled. Blockchain records are outside our control and cannot be erased by deleting browser data or contacting the operator.",
       },
       {
         heading: "Other recipients and transfers",
@@ -171,7 +174,7 @@ const pages: Record<string, { title: string; sections: { heading: string; body: 
       },
       {
         heading: "Version",
-        body: "8 September 2026. This notice describes the current alpha and will be updated if its data processing changes.",
+        body: "23 September 2026. This notice describes the current alpha and will be updated if its data processing changes.",
       },
     ],
   },
