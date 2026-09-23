@@ -26,3 +26,6 @@ contracts/.base-sepolia-deployment.lock
 contracts/deployments/base-sepolia-plan.json
 .vercel
 .env*
+
+contracts/.bsc-testnet-deployment.lock
+contracts/deployments/bsc-testnet-plan.json
