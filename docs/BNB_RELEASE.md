@@ -13,6 +13,12 @@ The testnet protocol and complete operator walkthrough are deployed and confirme
 
 The walkthrough used the funded deployment operator, not an independent customer. Actual public block timestamps enforced both delays; local rehearsal had separately advanced only Anvil time. Public confirmation finished at 2026-09-23T06:58:12.757Z.
 
+## Hosted release and CI status
+
+Vercel production deployment `dpl_4xDY9eaTfEeaGUxhiu8Y4xEvqZVi` is Ready for application commit `c52ff26578118cc29381243adaa1c9656a7175d5`, with `bnb.yieldshield.ai` assigned. Public HTTPS checks returned 200 for the guide, technical reference, proof JSON and market API. The JSON contains 29 contract addresses, 43 deployment transactions and 11 walkthrough transactions; the market API remains read-only chain 56.
+
+[GitHub workflow 35829394824](https://github.com/YieldShield/yieldshield-bnb/actions/runs/35829394824) could not start either job: GitHub reported failed recent account payments or a spending limit requiring attention. No CI steps ran. This is separate from the passing local checks listed below. Restore GitHub Actions billing/allowance and rerun the workflow; do not describe remote CI as passed.
+
 ## Public walkthrough receipts
 
 | Step | BSC Testnet receipt |
