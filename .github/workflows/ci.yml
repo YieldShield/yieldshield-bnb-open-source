@@ -37,6 +37,7 @@ jobs:
       - run: npm ci
       - run: npm ci --prefix contracts --ignore-scripts
       - run: npm audit --prefix contracts --omit=dev --audit-level=moderate
+      - run: npm run test:scripts --prefix contracts
       - name: Module and deployment lifecycle regressions
         working-directory: contracts
         run: forge test --match-path 'test/base-modules/*.t.sol' --extra-output storageLayout
