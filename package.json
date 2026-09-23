@@ -2,6 +2,7 @@
   "name": "yieldshield-bnb",
   "private": true,
   "version": "0.1.0",
+  "license": "MIT",
   "description": "YieldShield on BNB Chain: BSC Testnet trading and protection with read-only mainnet token scenarios.",
   "workspaces": [
     "packages/*",

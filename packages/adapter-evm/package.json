@@ -1,6 +1,7 @@
 {
   "name": "@yieldshield/adapter-evm",
   "version": "0.1.0",
+  "license": "MIT",
   "description": "EVM implementation of the @yieldshield/core chain port: reads via viem multicall against the SplitRiskPool contracts, tx intents to approve+call sequences, and the wagmi wallet/submit React surface.",
   "type": "module",
   "main": "./dist/index.js",

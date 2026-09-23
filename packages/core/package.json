@@ -1,6 +1,7 @@
 {
   "name": "@yieldshield/core",
   "version": "0.1.0",
+  "license": "MIT",
   "description": "Chain-agnostic middleware contract for YieldShield frontends: view models, the chain-port interface (reads + tx intents), and pure money helpers. No chain dependencies.",
   "type": "module",
   "main": "./dist/index.js",

@@ -1,6 +1,7 @@
 {
   "name": "@yieldshield/adapter-solana",
   "version": "0.1.0",
+  "license": "MIT",
   "description": "Solana implementation of the @yieldshield/core chain port: reads via @yieldshield/sdk, tx intents to unsigned instructions, and the wallet/submit React surface (framework-kit).",
   "type": "module",
   "main": "./dist/index.js",

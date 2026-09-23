@@ -67,3 +67,7 @@ The BNB port reuses the Base modular architecture and selected upstream reward-a
 GitHub repository visibility and publishing compiler source bundles to an explorer are separate actions. Source matching establishes correspondence with deployed bytecode, not contract safety. Check the current repository visibility and applicable licenses before describing the code as publicly reusable.
 
 [Oracle review and trust assumptions](docs/BNB_ORACLE_REVIEW.md) describes the read-only mainnet path. The new synthetic path and its limits are documented in the runbook and public technical reference.
+
+## License
+
+YieldShield-authored source is available under the [MIT License](LICENSE). Three oracle files carry `GPL-2.0-or-later` identifiers, and inherited Scaffold-ETH source retains its original MIT attribution. The [third-party notices](THIRD_PARTY_NOTICES.md) identify these exceptions and the pinned dependency sources. Licensing source code does not imply that the testnet demo has undergone an independent security audit.

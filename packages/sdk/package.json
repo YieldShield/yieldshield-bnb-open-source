@@ -1,6 +1,7 @@
 {
   "name": "@yieldshield/sdk",
   "version": "0.1.0",
+  "license": "MIT",
   "description": "Framework-agnostic, headless on-chain SDK for the YieldShield split-risk protocol. The only layer that talks to chain.",
   "type": "module",
   "main": "./dist/index.js",
