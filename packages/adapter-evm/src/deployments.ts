@@ -1,19 +1,11 @@
+// Generated after public BSC Testnet receipts, runtimes, routing and ownership verification.
 import type { Address } from "viem";
-
-/** Protocol entry-point addresses per chain (from smart-contracts/deployments/<chainId>.json). */
-export type EvmDeployment = {
-  deploymentBlock?: bigint;
-  factory: Address;
-  compositeOracle: Address;
-  /** On-chain demo-asset faucet (ConfigurableTokenFaucet), testnets only. */
-  faucet?: Address;
-};
-
+export type EvmDeployment = { factory: Address; compositeOracle: Address; faucet?: Address; deploymentBlock?: bigint };
 export const DEPLOYMENTS: Record<number, EvmDeployment> = {
-  // Robinhood Chain testnet — smart-contracts/deployments/46630.json (redeployed 2026-07-10).
-  46630: {
-    factory: "0x067E0566c8242D57e1aF9FfecD18150C84F98E92",
-    compositeOracle: "0x67A89f76Ae9a89866a0E62785d7999efE1c5E592",
-    faucet: "0x6c4DdBC132C8e0aee4869334e449d664c40a147C",
+  97: {
+    factory: "0xCFCe35b3Ea72AA7C48Fe743Be3DC38b7720d95ce",
+    compositeOracle: "0x81Cc4822F5872770D2a493FA1DA87E919644F0E0",
+    faucet: "0x6546077Fd9F92064F553a0518a9A0090aCDF74E1",
+    deploymentBlock: 132663653n,
   },
 };
