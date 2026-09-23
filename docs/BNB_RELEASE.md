@@ -1,6 +1,6 @@
 # BSC Testnet release — 23 September 2026
 
-The testnet protocol, synthetic trading exchange and integrated operator walkthrough are deployed and confirmed. This supersedes the read-only September 8 contract status below.
+The testnet protocol, synthetic trading exchange and integrated operator walkthrough are deployed and confirmed. This supersedes the read-only September 8 contract status below. Sections labelled “prior” or “historical” below describe the product at that earlier date, not its current capabilities.
 
 ## Trading and protection integration
 
@@ -24,7 +24,7 @@ Local release checks passed: the full production build, 19 BSC-specific contract
 - Deployment: 43 canonical transactions; compiled code, constructor data, router bindings, proxy storage, ownership and timelock roles independently checked before enabling the registry.
 - Walkthrough: 11 canonical transactions using the web planner and wallet receipt checks. Both shield positions and the walkthrough backing position were closed. The separate seeded backing position remains.
 - Free test assets only; synthetic prices; chain 97. There is no mainnet protection deployment or independent company audit.
-- Source publication remains pending explicit authorization for Sourcify's public archival terms. Bytecode checks are complete; the private GitHub repository has not been made public.
+- At the time of this protection-only snapshot, GitHub remained private. Explorer source submission to Sourcify requires separate acceptance of its public archival terms; bytecode checks alone are not source publication.
 
 The walkthrough used the funded deployment operator, not an independent customer. Actual public block timestamps enforced both delays; local rehearsal had separately advanced only Anvil time. Public confirmation finished at 2026-09-23T06:58:12.757Z.
 
@@ -58,9 +58,9 @@ See the [internal review](BNB_SECURITY_REVIEW_2026-09-23.md), [runbook](BSC_TEST
 
 ---
 
-# BNB preview and grant evidence
+# Historical BNB preview and grant evidence
 
-Date: 2026-09-08
+Date: 2026-09-08. The status and suggested application wording in this section were superseded by the deployed protection pool and exchange described above.
 
 ## Delivered
 
