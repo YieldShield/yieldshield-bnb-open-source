@@ -2,7 +2,7 @@
   "name": "yieldshield-bnb",
   "private": true,
   "version": "0.1.0",
-  "description": "YieldShield on BNB Chain: live token references and interactive protection scenarios.",
+  "description": "YieldShield on BNB Chain: BSC Testnet trading and protection with read-only mainnet token scenarios.",
   "workspaces": [
     "packages/*",
     "apps/*"

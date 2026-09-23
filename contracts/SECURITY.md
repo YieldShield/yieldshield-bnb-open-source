@@ -1,3 +1,7 @@
+# Historical protocol security notes
+
+This file came from the broader YieldShield contracts workspace. Some components and trust assumptions below are not part of the BSC Testnet deployment. For the current BNB repository reporting channel and supported scope, see [the root security policy](../SECURITY.md).
+
 # Security Policy
 
 YieldShield is a smart-contract protocol. Please treat suspected vulnerabilities

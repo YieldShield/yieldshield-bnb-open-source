@@ -10,34 +10,34 @@ The public deployment is chain 97, canonical genesis `0x6d3c66c5357ec91d5c43af47
 
 ## Findings addressed
 
-| Area | Finding / consequence | Resolution and evidence |
-| --- | --- | --- |
-| Reward conservation | Inherited reward dust could be allocated twice; historical fractions could enter new/reset protector debt. | Ported the two Base fixes; conservation, late-entry and partial-exit regressions pass. Do not treat upstream severity labels as a new independent assessment. |
-| Chain-specific demo timing | Simply shortening general pool delays could affect real assets or corrupt storage. | Chain-97-only wrapper authenticates synthetic token runtimes, pins original initializer codehash and changes only two verified timing slots. Both initialization paths are compared against the original initializer in tests. |
-| Token and oracle identity | A token symbol alone cannot establish a safe test asset. | Fixed-supply chain-97 test tokens; oracle validates token runtime and decimal choices. Public checks bind token addresses, supplies, decimals, oracle routes and constructor inputs. |
-| Deployment confirmation | Public RPC confirmation helpers can return receipts while a latest-block endpoint still lags. | Save exact signed intent/hash before submission, require ten canonical sealed confirmations and transaction inclusion, and recheck receipts. Resume after lag reuses the exact hash; ambiguous consumed nonces stop execution. |
-| Manifest trust | A manifest claiming completion cannot alone justify enabling wallet actions. | Publication checks actual receipt blocks, sender/calldata/value, compiled code, constructor inputs, immutable routing, proxy slots, ownership and timelock roles before writing the frontend registry. Local or incomplete manifests are rejected. |
-| Imported wallet behavior | Base chain assumptions, optimistic faucet availability and transaction feedback could mislead BSC users. | Restrict to 97; validate live inventory/cooldown/balances and action eligibility; display approval/action stages and canonical explorer receipts; adapt labels and token scales. |
-| Custom pool UI | The generic creation form exposed timings that the short demo initializer would override. | Removed that entry point and redirect its old route to the bounded one-pool walkthrough. |
-| Product claims | Synthetic prices, seeded balances and operator activity could be mistaken for market data, TVL or customers. | Separate mainnet references, label synthetic nonredeemable tokens and centralized controls, and publish operator activity as internal test evidence. |
+| Area                       | Finding / consequence                                                                                        | Resolution and evidence                                                                                                                                                                                                                            |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Reward conservation        | Inherited reward dust could be allocated twice; historical fractions could enter new/reset protector debt.   | Ported the two Base fixes; conservation, late-entry and partial-exit regressions pass. Do not treat upstream severity labels as a new independent assessment.                                                                                      |
+| Chain-specific demo timing | Simply shortening general pool delays could affect real assets or corrupt storage.                           | Chain-97-only wrapper authenticates synthetic token runtimes, pins original initializer codehash and changes only two verified timing slots. Both initialization paths are compared against the original initializer in tests.                     |
+| Token and oracle identity  | A token symbol alone cannot establish a safe test asset.                                                     | Fixed-supply chain-97 test tokens; oracle validates token runtime and decimal choices. Public checks bind token addresses, supplies, decimals, oracle routes and constructor inputs.                                                               |
+| Deployment confirmation    | Public RPC confirmation helpers can return receipts while a latest-block endpoint still lags.                | Save exact signed intent/hash before submission, require ten canonical sealed confirmations and transaction inclusion, and recheck receipts. Resume after lag reuses the exact hash; ambiguous consumed nonces stop execution.                     |
+| Manifest trust             | A manifest claiming completion cannot alone justify enabling wallet actions.                                 | Publication checks actual receipt blocks, sender/calldata/value, compiled code, constructor inputs, immutable routing, proxy slots, ownership and timelock roles before writing the frontend registry. Local or incomplete manifests are rejected. |
+| Imported wallet behavior   | Base chain assumptions, optimistic faucet availability and transaction feedback could mislead BSC users.     | Restrict to 97; validate live inventory/cooldown/balances and action eligibility; display approval/action stages and canonical explorer receipts; adapt labels and token scales.                                                                   |
+| Custom pool UI             | The generic creation form exposed timings that the short demo initializer would override.                    | Removed that entry point and redirect its old route to the bounded one-pool walkthrough.                                                                                                                                                           |
+| Product claims             | Synthetic prices, seeded balances and operator activity could be mistaken for market data, TVL or customers. | Separate mainnet references, label synthetic nonredeemable tokens and centralized controls, and publish operator activity as internal test evidence.                                                                                               |
 
 ## Verification completed
 
-| Check | Result |
-| --- | --- |
-| BSC synthetic protection, oracle, chain/token guards | 11 tests passed; oracle fuzz test runs 256 cases |
-| Modular contract regression suites | 225 tests passed |
-| Inherited Base oracle/relay regressions | 41 tests passed |
-| Wallet and faucet regressions | 134 tests passed |
-| BNB API, deployment and publication guards | 51 Node tests passed |
-| Web tests | 15 passed |
-| Storage layout and selector compatibility | Exact original layout; 111 pool and 104 factory selectors preserved |
-| Runtime/initcode limits | All 15 routers/modules within bounds; largest runtime 21,045 bytes |
-| Production dependency scan | npm audit reported zero vulnerabilities at check time |
-| Local lifecycle | 43-step deployment plus 11 wallet-planned canonical transactions; both exit modes and collateral unlock/exit |
-| Public deployment | 43 canonical transactions, runtime/binding/ownership checks and active-pool/funded-faucet adapter read passed |
-| Public lifecycle | 11 canonical transactions; faucet, backing, both protected-position exit modes, real-time unlock and backing withdrawal passed |
-| Interface | Production build, scoped lint and desktop/mobile guide inspection passed; final public release checks recorded in release evidence |
+| Check                                                | Result                                                                                                                                                                  |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| BSC synthetic protection, oracle, chain/token guards | 11 tests passed; oracle fuzz test runs 256 cases                                                                                                                        |
+| Modular contract regression suites                   | 225 tests passed                                                                                                                                                        |
+| Inherited Base oracle/relay regressions              | 41 tests passed                                                                                                                                                         |
+| Wallet and faucet regressions                        | 134 tests passed                                                                                                                                                        |
+| BNB API, deployment and publication guards           | 51 Node tests passed                                                                                                                                                    |
+| Web tests                                            | 15 passed                                                                                                                                                               |
+| Storage layout and selector compatibility            | Exact original layout; 111 pool and 104 factory selectors preserved                                                                                                     |
+| Runtime/initcode limits                              | All 15 routers/modules within bounds; largest runtime 21,045 bytes                                                                                                      |
+| Production dependency scan                           | Root npm audit reported zero vulnerabilities at the original review time; contracts dependencies were rescanned and remediated in the public-release preparation commit |
+| Local lifecycle                                      | 43-step deployment plus 11 wallet-planned canonical transactions; both exit modes and collateral unlock/exit                                                            |
+| Public deployment                                    | 43 canonical transactions, runtime/binding/ownership checks and active-pool/funded-faucet adapter read passed                                                           |
+| Public lifecycle                                     | 11 canonical transactions; faucet, backing, both protected-position exit modes, real-time unlock and backing withdrawal passed                                          |
+| Interface                                            | Production build, scoped lint and desktop/mobile guide inspection passed; final public release checks recorded in release evidence                                      |
 
 These are scoped checks, not proof of absence of defects. Some suites share underlying behaviors; do not sum their counts as independent security guarantees. The dependency result is point-in-time and excludes development dependencies. Local time advancement and public testnet waits must remain clearly distinguished.
 
@@ -51,9 +51,13 @@ The public walkthrough journal separately records its status and receipts. Only 
 - The dedicated operator controls administration through a two-day timelock. This is centralized, and administrative/oracle changes remain part of the trust model.
 - Public RPCs and the hosted website are availability dependencies. The app must expose unavailable data rather than promise immediate execution. Explorer availability is separate from receipt validity.
 - The core contracts have substantial inherited complexity. Selected regressions and internal review do not establish production readiness. Real-asset acceptance would need a new, explicitly scoped readiness decision; it is outside this application proof.
-- Source verification establishes correspondence with bytecode; it is not an audit. The BNB repository is private until separately authorized, and third-party licence/release obligations still need review before an open-source grant commitment.
+- Source verification establishes correspondence with bytecode; it is not an audit. Repository visibility, explorer source publication and third-party licence obligations are separate decisions.
 - Smart-account/gasless wallet compatibility, independent browser-wallet signing and external adoption are not established by the operator script.
 
 ## Next checks before the grant submission
 
 Retain the completed public walkthrough receipts, verify the corresponding website evidence, try the demo with an ordinary independently controlled wallet, resolve source-access/licence scope and record actual user feedback. Submit a truthful internal-review summary and prospective scope; do not claim an independent company audit or mainnet launch.
+
+## Follow-up after trading integration
+
+The later [release record](BNB_RELEASE.md) covers the separate BSC Testnet exchange and integrated trade/protect/sell operator walkthrough. Its local checks increased to 19 BSC-specific contract tests, 150 EVM adapter tests and 18 web tests. These are additional internal checks, not an independent audit or ordinary user-wallet evidence. On 23 September 2026, the contracts dependency lockfile was updated for reported `axios` and `toml` advisories; a fresh production dependency scan reported zero vulnerabilities. Hosted GitHub Actions remained blocked by account billing/spending-limit settings, so a remote CI pass is still outstanding.

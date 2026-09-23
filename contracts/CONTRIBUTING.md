@@ -1,57 +1,15 @@
-# Contributing
+# Contributing to YieldShield smart contracts
 
-Thanks for helping improve YieldShield smart contracts.
+Start with the repository-wide [contributing guide](../CONTRIBUTING.md) and [security policy](../SECURITY.md). The BNB deployment uses valueless synthetic assets on BSC Testnet; inherited Base, Robinhood and other-chain contracts are not BNB deployment evidence.
 
-## Development Setup
-
-```sh
-git clone --recurse-submodules https://github.com/YieldShield/smart-contracts.git
-cd smart-contracts
-npm ci
-cp .env.example .env
-```
-
-Install Foundry `v1.5.1` or use the version in `.foundry-version`.
-
-## Before Opening a Pull Request
-
-Run the checks that CI runs:
+For contract logic changes, run the relevant Foundry suites, format checks and size checks:
 
 ```sh
-make lint
-npm audit --omit=dev --audit-level=high
+forge fmt --check
 forge build --offline
-forge test --offline
-```
-
-For contract logic changes, also consider:
-
-```sh
+forge test --match-path 'test/Bsc*.t.sol'
+forge test --match-path 'test/base-modules/*.t.sol'
 node scripts-js/checkContractSizes.js
-make slither
-make aderyn
 ```
 
-## Pull Request Guidelines
-
-- Keep changes scoped and reviewable.
-- Include tests for behavior changes.
-- Update docs when changing deployment, security, or integration behavior.
-- Do not commit local `.env`, `cache/`, `out/`, coverage reports, or local
-  development broadcasts.
-- Explain security-sensitive changes clearly in the PR description.
-- Do not disclose suspected vulnerabilities in public issues or PRs. Follow
-  `SECURITY.md` instead.
-
-## Submodules
-
-This repository uses Git submodules for Foundry dependencies. After pulling or
-switching branches, run:
-
-```sh
-git submodule sync --recursive
-git submodule update --init --recursive
-```
-
-If a PR intentionally changes dependency revisions, include the reason and
-security impact in the PR description.
+The [CI workflow](../.github/workflows/ci.yml) also runs inherited oracle/relay regressions and contracts tooling tests. For security-sensitive logic, consider `make slither` and `make aderyn`, and describe the reviewed findings in the pull request. Do not commit local environment files, keystores, generated build output or private broadcast plans.

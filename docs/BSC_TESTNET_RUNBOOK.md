@@ -95,7 +95,7 @@ Local deployment/evidence are saved under ignored `artifacts/local`. The flow us
 
 The onchain deployment manifest records addresses, exact transaction requests, canonical receipts and runtime hashes. Source publication is a separate action. `node scripts/prepare-bsc-source-bundle.mjs` prepares only compiler-listed Solidity files and settings under ignored `artifacts/bsc-source-review`. Publishing that bundle to Sourcify requires authorization for public archival under its submission licence. Source matching proves a relationship between source and bytecode; it is not a security audit.
 
-The repository remains private unless separately authorized. Grant reviewers can use the public demo, architecture description and explorer evidence; give them repository access or approve the intended code release before claiming the BNB implementation is publicly reusable.
+Repository visibility and explorer source verification are separate release decisions. Check the current GitHub visibility and license before claiming the implementation is publicly reusable. Grant reviewers can use the public demo, architecture description and explorer evidence regardless of repository visibility.
 
 ## User support
 

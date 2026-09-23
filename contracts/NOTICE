@@ -1,15 +1,13 @@
 YieldShield Smart Contracts
 
-Unless otherwise noted by an SPDX license identifier in an individual source
-file, the project-authored files in this repository are licensed under the MIT
-License. See LICENSE.
+Project-authored files in this contracts workspace use the MIT license in LICENSE unless an individual source file declares a different SPDX license. Upstream notices below remain in force for source that was retained or adapted.
 
-The following files include or depend on code derived from Uniswap v3-core and
-are licensed under GPL-2.0-or-later, as declared by their SPDX identifiers:
+The following oracle files are marked GPL-2.0-or-later. FullMath.sol and TickMath.sol are derived from Uniswap v3-core; UniswapV3TWAPFeed.sol includes or depends on that code. See ../licenses/GPL-2.0-or-later.txt and the file-level SPDX identifiers and upstream references.
 
 - contracts/oracles/UniswapV3TWAPFeed.sol
 - contracts/oracles/libraries/FullMath.sol
 - contracts/oracles/libraries/TickMath.sol
 
-Foundry dependencies under lib/ are Git submodules and retain their own
-upstream licenses and notices.
+The Foundry workspace retains and adapts Scaffold-ETH 2 tooling originally distributed under the MIT license, Copyright (c) 2023 BuidlGuidl. Preserve the original notice at ../licenses/BUIDLGUIDL-MIT.txt when redistributing substantial portions. Inherited paths include Makefile, script/Deploy.s.sol, script/DeployHelpers.s.sol, script/VerifyAll.s.sol and the retained scripts-js account/deployment/ABI helpers.
+
+Dependencies under lib/ are pinned Git submodules and retain their own upstream licenses and notices. See ../THIRD_PARTY_NOTICES.md for repository-wide provenance.
