@@ -9,7 +9,7 @@ A BSC Testnet trading and token-protection demo using valueless test tokens and 
 - Claim free test tokens: https://bnb.yieldshield.ai/test-tokens
 - Operator: Hawig Ventures UG (haftungsbeschränkt), Germany
 - Contact: david@yieldshield.ai
-- Source: https://github.com/YieldShield/yieldshield-bnb
+- Source: [this repository](.)
 - Release and grant evidence: [BNB release notes](docs/BNB_RELEASE.md)
 - Try the testnet: https://bnb.yieldshield.ai/testnet
 - Contract reference: https://bnb.yieldshield.ai/testnet/technical

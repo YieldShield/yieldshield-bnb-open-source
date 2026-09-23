@@ -1,5 +1,7 @@
 # BSC Testnet release — 23 September 2026
 
+This is a dated release record. Development commit IDs and GitHub Actions run IDs below refer to the original private repository; the public-source history uses new commit IDs after author-email cleanup. Onchain transaction and address links remain the deployment evidence.
+
 The testnet protocol, synthetic trading exchange and integrated operator walkthrough are deployed and confirmed. This supersedes the read-only September 8 contract status below. Sections labelled “prior” or “historical” below describe the product at that earlier date, not its current capabilities.
 
 ## Trading and protection integration
@@ -13,7 +15,7 @@ The testnet protocol, synthetic trading exchange and integrated operator walkthr
 
 Production deployment `dpl_9R1rcP1r4QRoX9bJrxkgCB3WDJsA` is Ready for commit `4fccdcb9c78df33beac1eaeec637e4aa717c6bda` and assigned to `bnb.yieldshield.ai`. Public HTTPS returned 200 for `/welcome`, `/trade`, `/markets`, `/test-tokens`, `/how-it-works`, `/learn/scenarios`, `/testnet/technical`, the 30-contract proof JSON and the existing BSC market API. The proof JSON includes 46 deployment/funding and 17 operator walkthrough receipts. A browser wallet session by an independent user remains untested; the onchain flow was exercised by the dedicated operator wallet.
 
-Local release checks passed: the full production build, 19 BSC-specific contract tests (including 256 fuzz runs in each applicable case), 51 BNB service/deployment tests, 150 EVM adapter tests and 18 web tests. Scoped lint and formatting passed. Repository-wide `npm run lint` includes vendored `contracts/lib` code and a pre-existing generator issue; it is not a clean gate. [GitHub workflow 35833478677](https://github.com/YieldShield/yieldshield-bnb/actions/runs/35833478677) started no jobs: GitHub reported failed account payments or a spending limit. Hosted CI must be restored separately; no remote test pass is claimed.
+Local release checks passed: the full production build, 19 BSC-specific contract tests (including 256 fuzz runs in each applicable case), 51 BNB service/deployment tests, 150 EVM adapter tests and 18 web tests. Scoped lint and formatting passed. Repository-wide `npm run lint` includes vendored `contracts/lib` code and a pre-existing generator issue; it is not a clean gate. Original private-repository workflow 35833478677 started no jobs: GitHub reported failed account payments or a spending limit. Hosted CI must be restored separately; no remote test pass is claimed.
 
 ### Prior protection-only release
 
@@ -32,7 +34,7 @@ The walkthrough used the funded deployment operator, not an independent customer
 
 Vercel production deployment `dpl_4xDY9eaTfEeaGUxhiu8Y4xEvqZVi` is Ready for application commit `c52ff26578118cc29381243adaa1c9656a7175d5`, with `bnb.yieldshield.ai` assigned. Public HTTPS checks returned 200 for the guide, technical reference, proof JSON and market API. The JSON contains 29 contract addresses, 43 deployment transactions and 11 walkthrough transactions; the market API remains read-only chain 56.
 
-[GitHub workflow 35829394824](https://github.com/YieldShield/yieldshield-bnb/actions/runs/35829394824) could not start either job: GitHub reported failed recent account payments or a spending limit requiring attention. No CI steps ran. This is separate from the passing local checks listed below. Restore GitHub Actions billing/allowance and rerun the workflow; do not describe remote CI as passed.
+Original private-repository workflow 35829394824 could not start either job: GitHub reported failed recent account payments or a spending limit requiring attention. No CI steps ran. This is separate from the passing local checks listed below. Restore GitHub Actions billing/allowance and rerun the workflow; do not describe remote CI as passed.
 
 ## Public walkthrough receipts
 
@@ -80,9 +82,9 @@ Desktop and 390-pixel mobile checks covered navigation, token selection, quantit
 
 Published at https://bnb.yieldshield.ai with the explorer at https://bnb.yieldshield.ai/markets.
 
-Production application commit: 69d42e3d1cdb2ef289ed814b086306c058b14e9d. Deployment: https://yieldshield-f4qyqm3g8-noc2-6281s-projects.vercel.app. Vercel project: yieldshield-bnb (prj_8BS9I2rfw7mZrHpwjJGbojsQZi1I), team HawigUG. GitHub main is connected for future deployments.
+Production application commit: 69d42e3d1cdb2ef289ed814b086306c058b14e9d. Deployment: https://yieldshield-f4qyqm3g8-noc2-6281s-projects.vercel.app. Vercel project: yieldshield-bnb (prj_8BS9I2rfw7mZrHpwjJGbojsQZi1I), team HawigUG. The original private repository's main branch was connected for future deployments.
 
-The production build, 15 web tests, 6 BNB service tests, 44 EVM security tests, ESLint, and production dependency audit passed locally. The inherited Base service/deployment suite passed 84 tests. GitHub application and inherited contract checks passed for the release configuration at 1df7502: https://github.com/YieldShield/yieldshield-bnb/actions/runs/34212540204.
+The production build, 15 web tests, 6 BNB service tests, 44 EVM security tests, ESLint, and production dependency audit passed locally. The inherited Base service/deployment suite passed 84 tests. Application and inherited contract checks passed in original private-repository workflow 34212540204 for the dated release configuration.
 
 Public HTTPS checks confirmed GET /api/markets returns 200 with all four fresh references, POST /api/markets returns 405 with no-store, and the removed /api/drip route returns 404. Direct /markets, /connect and /privacy requests returned 200. A production observation at BSC block 120666263 contained all four available references. The live browser showed no warnings or errors during navigation and scenario checks. Mobile width checks found no horizontal overflow at 390 pixels.
 
