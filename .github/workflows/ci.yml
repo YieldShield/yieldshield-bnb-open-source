@@ -36,6 +36,7 @@ jobs:
       - uses: foundry-rs/foundry-toolchain@v1
       - run: npm ci
       - run: npm ci --prefix contracts --ignore-scripts
+      - run: npm audit --prefix contracts --omit=dev --audit-level=moderate
       - name: Module and deployment lifecycle regressions
         working-directory: contracts
         run: forge test --match-path 'test/base-modules/*.t.sol' --extra-output storageLayout
