@@ -1,3 +1,42 @@
+# BSC Testnet release — 23 September 2026
+
+The testnet protocol and complete operator walkthrough are deployed and confirmed. This supersedes the read-only September 8 contract status below.
+
+- Demo: https://bnb.yieldshield.ai/testnet
+- Technical reference and evidence: https://bnb.yieldshield.ai/testnet/technical
+- Machine-readable addresses and receipts: https://bnb.yieldshield.ai/bsc-testnet-proof.json
+- Pool: [0x711c600188a4BEE06C35848280FB76FF2d91F7F3](https://testnet.bscscan.com/address/0x711c600188a4BEE06C35848280FB76FF2d91F7F3)
+- Deployment: 43 canonical transactions; compiled code, constructor data, router bindings, proxy storage, ownership and timelock roles independently checked before enabling the registry.
+- Walkthrough: 11 canonical transactions using the web planner and wallet receipt checks. Both shield positions and the walkthrough backing position were closed. The separate seeded backing position remains.
+- Free test assets only; synthetic prices; chain 97. There is no mainnet protection deployment or independent company audit.
+- Source publication remains pending explicit authorization for Sourcify's public archival terms. Bytecode checks are complete; the private GitHub repository has not been made public.
+
+The walkthrough used the funded deployment operator, not an independent customer. Actual public block timestamps enforced both delays; local rehearsal had separately advanced only Anvil time. Public confirmation finished at 2026-09-23T06:58:12.757Z.
+
+## Public walkthrough receipts
+
+| Step | BSC Testnet receipt |
+| --- | --- |
+| faucet:0 | [0xd38630c6ff…](https://testnet.bscscan.com/tx/0xd38630c6ffdfc87324b28bc9f9ea0f40b712cff5f699f8ab42b4447d17d226c2) |
+| backing:0 | [0xb1451b02cb…](https://testnet.bscscan.com/tx/0xb1451b02cb50cc29e27e1361571304aff606e66976cfd1ae95b66bdc70acfab7) |
+| backing:1 | [0x0266d22612…](https://testnet.bscscan.com/tx/0x0266d22612d9d73627cfd78d437a8f1de551e710601618f95a31da61ed9ae65e) |
+| shield-normal:0 | [0x677fe097cc…](https://testnet.bscscan.com/tx/0x677fe097cc0697c9b7503382d1286ede8df3a78be4492b8e9ea061c4de1dcbc1) |
+| shield-normal:1 | [0x3237894a3c…](https://testnet.bscscan.com/tx/0x3237894a3cecd8045a5c792fe02cd2ce2a61c023529d5f815b4ae8c8ed4e4492) |
+| withdraw-normal:0 | [0x7e789d8d57…](https://testnet.bscscan.com/tx/0x7e789d8d5718d4e58e582350afa3095fe5898805f5e508bb1611fcc86a61e83d) |
+| shield-protected:0 | [0xbd7f60b690…](https://testnet.bscscan.com/tx/0xbd7f60b690417e90ae60d5bad25aad0d403a9b5e41bd6f91e07a053cbe88870c) |
+| shield-protected:1 | [0xae464dd702…](https://testnet.bscscan.com/tx/0xae464dd702bca4fbabd9d51f0c1248ff9557eb68250f9eac2cf63f52b4a90ee5) |
+| withdraw-protected:0 | [0xf76c486f28…](https://testnet.bscscan.com/tx/0xf76c486f28a98b1016f04ff1d738fd2414ccd9bc1429edc16b3601bcc78e0683) |
+| unlock:0 | [0xce5389a425…](https://testnet.bscscan.com/tx/0xce5389a425da8d56f8aa50dc7e6a62a926826ee8a32315f0841a35decae8f4de) |
+| withdraw-backing:0 | [0xc176c02559…](https://testnet.bscscan.com/tx/0xc176c02559b965b1bed1bf9736ac94ef21dbe1a4a424e54810c15410e55d4da4) |
+
+## Release verification
+
+Local checks passed: 11 BSC contract tests, 225 modular-contract regressions, 41 inherited oracle/relay regressions, 134 wallet/faucet tests, 51 BNB API/deployment/publication tests, 15 web tests, build, scoped lint and production dependency audit (zero reported vulnerabilities). Public pool/faucet reads passed through the website adapter. Desktop/mobile checks covered the guide, contract reference and wallet connection entry point. Browser wallet signing by an independent user remains a recommended follow-up; the operator script is not presented as that evidence.
+
+See the [internal review](BNB_SECURITY_REVIEW_2026-09-23.md), [runbook](BSC_TESTNET_RUNBOOK.md) and [revised application draft](BNB_GRANT_APPLICATION_2026-09-23.md). Budget, team/history answers and source-release scope require applicant confirmation before submission. No grant application was submitted.
+
+---
+
 # BNB preview and grant evidence
 
 Date: 2026-09-08

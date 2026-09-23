@@ -237,7 +237,7 @@ try {
   journal.completedAt = new Date().toISOString();
   save();
   console.log(
-    `Public flow complete: ${Object.keys(journal.transactions).length} canonical transactions, all positions closed.`,
+    `Public flow complete: ${Object.keys(journal.transactions).length} canonical transactions, all walkthrough positions closed.`,
   );
 } finally {
   release();

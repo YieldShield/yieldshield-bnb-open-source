@@ -36,6 +36,7 @@ The public deployment is chain 97, canonical genesis `0x6d3c66c5357ec91d5c43af47
 | Production dependency scan | npm audit reported zero vulnerabilities at check time |
 | Local lifecycle | 43-step deployment plus 11 wallet-planned canonical transactions; both exit modes and collateral unlock/exit |
 | Public deployment | 43 canonical transactions, runtime/binding/ownership checks and active-pool/funded-faucet adapter read passed |
+| Public lifecycle | 11 canonical transactions; faucet, backing, both protected-position exit modes, real-time unlock and backing withdrawal passed |
 | Interface | Production build, scoped lint and desktop/mobile guide inspection passed; final public release checks recorded in release evidence |
 
 These are scoped checks, not proof of absence of defects. Some suites share underlying behaviors; do not sum their counts as independent security guarantees. The dependency result is point-in-time and excludes development dependencies. Local time advancement and public testnet waits must remain clearly distinguished.
@@ -55,4 +56,4 @@ The public walkthrough journal separately records its status and receipts. Only 
 
 ## Next checks before the grant submission
 
-Finish and retain the public walkthrough receipts, publish the corresponding website evidence, try the demo with an ordinary independently controlled wallet, resolve source-access/licence scope and record actual user feedback. Submit a truthful internal-review summary and prospective scope; do not claim an independent company audit or mainnet launch.
+Retain the completed public walkthrough receipts, verify the corresponding website evidence, try the demo with an ordinary independently controlled wallet, resolve source-access/licence scope and record actual user feedback. Submit a truthful internal-review summary and prospective scope; do not claim an independent company audit or mainnet launch.

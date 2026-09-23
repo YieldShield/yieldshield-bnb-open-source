@@ -429,7 +429,79 @@
       "blockNumber": "132664536"
     }
   ],
-  "walkthrough": null,
+  "walkthrough": {
+    "scope": "Public BSC Testnet operator walkthrough; not external users",
+    "actor": "0x045f932e49fb395862794acEc3FCCc118BE2f27e",
+    "completedAt": "2026-09-23T06:58:12.757Z",
+    "transactions": [
+      {
+        "action": "faucet:0",
+        "label": "Get test tokens",
+        "hash": "0xd38630c6ffdfc87324b28bc9f9ea0f40b712cff5f699f8ab42b4447d17d226c2",
+        "blockNumber": "132664903"
+      },
+      {
+        "action": "backing:0",
+        "label": "Approve spending",
+        "hash": "0xb1451b02cb50cc29e27e1361571304aff606e66976cfd1ae95b66bdc70acfab7",
+        "blockNumber": "132664928"
+      },
+      {
+        "action": "backing:1",
+        "label": "Confirm deposit",
+        "hash": "0x0266d22612d9d73627cfd78d437a8f1de551e710601618f95a31da61ed9ae65e",
+        "blockNumber": "132664952"
+      },
+      {
+        "action": "shield-normal:0",
+        "label": "Approve spending",
+        "hash": "0x677fe097cc0697c9b7503382d1286ede8df3a78be4492b8e9ea061c4de1dcbc1",
+        "blockNumber": "132664991"
+      },
+      {
+        "action": "shield-normal:1",
+        "label": "Confirm deposit",
+        "hash": "0x3237894a3cecd8045a5c792fe02cd2ce2a61c023529d5f815b4ae8c8ed4e4492",
+        "blockNumber": "132665029"
+      },
+      {
+        "action": "withdraw-normal:0",
+        "label": "Confirm withdrawal",
+        "hash": "0x7e789d8d5718d4e58e582350afa3095fe5898805f5e508bb1611fcc86a61e83d",
+        "blockNumber": "132665050"
+      },
+      {
+        "action": "shield-protected:0",
+        "label": "Approve spending",
+        "hash": "0xbd7f60b690417e90ae60d5bad25aad0d403a9b5e41bd6f91e07a053cbe88870c",
+        "blockNumber": "132665408"
+      },
+      {
+        "action": "shield-protected:1",
+        "label": "Confirm deposit",
+        "hash": "0xae464dd702bca4fbabd9d51f0c1248ff9557eb68250f9eac2cf63f52b4a90ee5",
+        "blockNumber": "132665432"
+      },
+      {
+        "action": "withdraw-protected:0",
+        "label": "Activate protection",
+        "hash": "0xf76c486f28a98b1016f04ff1d738fd2414ccd9bc1429edc16b3601bcc78e0683",
+        "blockNumber": "132665801"
+      },
+      {
+        "action": "unlock:0",
+        "label": "Start notice",
+        "hash": "0xce5389a425da8d56f8aa50dc7e6a62a926826ee8a32315f0841a35decae8f4de",
+        "blockNumber": "132665822"
+      },
+      {
+        "action": "withdraw-backing:0",
+        "label": "Confirm withdrawal",
+        "hash": "0xc176c02559b965b1bed1bf9736ac94ef21dbe1a4a424e54810c15410e55d4da4",
+        "blockNumber": "132666120"
+      }
+    ]
+  },
   "limitations": [
     "Synthetic valueless assets; no real deposits or TVL",
     "Internal testing; no independent company audit",
