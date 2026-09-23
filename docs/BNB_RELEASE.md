@@ -1,6 +1,17 @@
 # BSC Testnet release — 23 September 2026
 
-The testnet protocol and complete operator walkthrough are deployed and confirmed. This supersedes the read-only September 8 contract status below.
+The testnet protocol, synthetic trading exchange and integrated operator walkthrough are deployed and confirmed. This supersedes the read-only September 8 contract status below.
+
+## Trading and protection integration
+
+- Product entry: https://bnb.yieldshield.ai/welcome; trading at `/trade`, protection markets at `/markets`, free assets at `/test-tokens`, and positions at `/positions`.
+- Trading exchange: [0x2DdF03a89A861028fA00A1282365A68A284f9386](https://testnet.bscscan.com/address/0x2DdF03a89A861028fA00A1282365A68A284f9386), bound to the original synthetic oracle and tWBNB/TestUSDC pair. The existing pool was not redeployed or reconfigured.
+- Trading extension: three canonical receipts for deployment and initial inventory of 250 tWBNB plus 250,000 TestUSDC. Fee 0.3%, trade cap 25 tWBNB, explicit payment/proceeds bound and deadline.
+- Integrated walkthrough: six canonical operator transactions. [Buy 2 tWBNB](https://testnet.bscscan.com/tx/0xd026f6cb6bb047127cd6202842c33c5aa5da1325a57dc4baa48349a13ccd2278), [protect 1 tWBNB](https://testnet.bscscan.com/tx/0x08f409c86109aa0d480a636bf069b1057cbf2211de59abc05f9e9d6aa9325a9b) in the existing pool, and [sell 0.5 tWBNB](https://testnet.bscscan.com/tx/0x117d7eb0b4d5fc5cfb64cb930b1b075026ddffd63da672524ded6d346c41e0c5). The other three receipts are spending approvals. The protection deposit minted a receipt position; this is operator integration evidence, not independent customer activity.
+- Proof JSON now records 30 contract addresses, 46 deployment/funding receipts, 11 prior protection walkthrough receipts and 6 integrated trading walkthrough receipts. Internal runtime/receipt checks passed; source publication and an independent company audit remain separate and pending.
+- The public testnet demo uses valueless synthetic tokens and a four-minute scenario price. It does not trade real BNB or accept real assets. A human wallet may need to refresh a quote if the synthetic price moves outside its chosen bound during signing.
+
+### Prior protection-only release
 
 - Demo: https://bnb.yieldshield.ai/testnet
 - Technical reference and evidence: https://bnb.yieldshield.ai/testnet/technical
@@ -21,19 +32,19 @@ Vercel production deployment `dpl_4xDY9eaTfEeaGUxhiu8Y4xEvqZVi` is Ready for app
 
 ## Public walkthrough receipts
 
-| Step | BSC Testnet receipt |
-| --- | --- |
-| faucet:0 | [0xd38630c6ff…](https://testnet.bscscan.com/tx/0xd38630c6ffdfc87324b28bc9f9ea0f40b712cff5f699f8ab42b4447d17d226c2) |
-| backing:0 | [0xb1451b02cb…](https://testnet.bscscan.com/tx/0xb1451b02cb50cc29e27e1361571304aff606e66976cfd1ae95b66bdc70acfab7) |
-| backing:1 | [0x0266d22612…](https://testnet.bscscan.com/tx/0x0266d22612d9d73627cfd78d437a8f1de551e710601618f95a31da61ed9ae65e) |
-| shield-normal:0 | [0x677fe097cc…](https://testnet.bscscan.com/tx/0x677fe097cc0697c9b7503382d1286ede8df3a78be4492b8e9ea061c4de1dcbc1) |
-| shield-normal:1 | [0x3237894a3c…](https://testnet.bscscan.com/tx/0x3237894a3cecd8045a5c792fe02cd2ce2a61c023529d5f815b4ae8c8ed4e4492) |
-| withdraw-normal:0 | [0x7e789d8d57…](https://testnet.bscscan.com/tx/0x7e789d8d5718d4e58e582350afa3095fe5898805f5e508bb1611fcc86a61e83d) |
-| shield-protected:0 | [0xbd7f60b690…](https://testnet.bscscan.com/tx/0xbd7f60b690417e90ae60d5bad25aad0d403a9b5e41bd6f91e07a053cbe88870c) |
-| shield-protected:1 | [0xae464dd702…](https://testnet.bscscan.com/tx/0xae464dd702bca4fbabd9d51f0c1248ff9557eb68250f9eac2cf63f52b4a90ee5) |
+| Step                 | BSC Testnet receipt                                                                                                |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| faucet:0             | [0xd38630c6ff…](https://testnet.bscscan.com/tx/0xd38630c6ffdfc87324b28bc9f9ea0f40b712cff5f699f8ab42b4447d17d226c2) |
+| backing:0            | [0xb1451b02cb…](https://testnet.bscscan.com/tx/0xb1451b02cb50cc29e27e1361571304aff606e66976cfd1ae95b66bdc70acfab7) |
+| backing:1            | [0x0266d22612…](https://testnet.bscscan.com/tx/0x0266d22612d9d73627cfd78d437a8f1de551e710601618f95a31da61ed9ae65e) |
+| shield-normal:0      | [0x677fe097cc…](https://testnet.bscscan.com/tx/0x677fe097cc0697c9b7503382d1286ede8df3a78be4492b8e9ea061c4de1dcbc1) |
+| shield-normal:1      | [0x3237894a3c…](https://testnet.bscscan.com/tx/0x3237894a3cecd8045a5c792fe02cd2ce2a61c023529d5f815b4ae8c8ed4e4492) |
+| withdraw-normal:0    | [0x7e789d8d57…](https://testnet.bscscan.com/tx/0x7e789d8d5718d4e58e582350afa3095fe5898805f5e508bb1611fcc86a61e83d) |
+| shield-protected:0   | [0xbd7f60b690…](https://testnet.bscscan.com/tx/0xbd7f60b690417e90ae60d5bad25aad0d403a9b5e41bd6f91e07a053cbe88870c) |
+| shield-protected:1   | [0xae464dd702…](https://testnet.bscscan.com/tx/0xae464dd702bca4fbabd9d51f0c1248ff9557eb68250f9eac2cf63f52b4a90ee5) |
 | withdraw-protected:0 | [0xf76c486f28…](https://testnet.bscscan.com/tx/0xf76c486f28a98b1016f04ff1d738fd2414ccd9bc1429edc16b3601bcc78e0683) |
-| unlock:0 | [0xce5389a425…](https://testnet.bscscan.com/tx/0xce5389a425da8d56f8aa50dc7e6a62a926826ee8a32315f0841a35decae8f4de) |
-| withdraw-backing:0 | [0xc176c02559…](https://testnet.bscscan.com/tx/0xc176c02559b965b1bed1bf9736ac94ef21dbe1a4a424e54810c15410e55d4da4) |
+| unlock:0             | [0xce5389a425…](https://testnet.bscscan.com/tx/0xce5389a425da8d56f8aa50dc7e6a62a926826ee8a32315f0841a35decae8f4de) |
+| withdraw-backing:0   | [0xc176c02559…](https://testnet.bscscan.com/tx/0xc176c02559b965b1bed1bf9736ac94ef21dbe1a4a424e54810c15410e55d4da4) |
 
 ## Release verification
 

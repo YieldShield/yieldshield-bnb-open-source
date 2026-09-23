@@ -2,6 +2,8 @@
 
 Prepared 23 September 2026. Plan only: no new contracts, governance operations or product changes were executed for this document. Continue on BSC Testnet (97), consistent with the existing testnet decision and Base reference. Keep the BNB yellow design and token focus.
 
+Implementation update, later the same day: the first tWBNB/TestUSDC trading-and-protection journey is deployed and its operator buy → protect → sell walkthrough passed on public BSC Testnet. The original continuously changing scenario oracle was retained; the interface uses explicit 2–20% bounds and re-quotes after approvals. No governance feed change, additional token markets, vaults or mainnet trading was delivered. See [BNB_RELEASE.md](BNB_RELEASE.md) for the actual release evidence and remaining limits.
+
 ## Outcome
 
 Make the main BNB experience a usable product with **Trade, Get protection, My positions, Provide collateral and Account**, following the current Base application. A visitor should be able to discover actual supported pools, obtain test tokens, buy an asset, protect some or all of it, inspect their position, choose an eligible exit and sell tokens remaining in their wallet. Scenario exploration becomes a supporting learning tool.
@@ -19,18 +21,18 @@ Compared live Base `/welcome`, `/trade` and `/markets` with BNB `/welcome`, and 
 - BNB has no Trade screen, exchange deployment, trade reader, quote configuration or `demoTrade` transaction intent.
 - Base includes stocks, crypto and vault shares. BNB should reproduce the relevant workflows using tokens; vault support is a separate extension described below.
 
-| Capability | Current BNB | Planned result |
-| --- | --- | --- |
-| Main entry | Risk explorer / scenarios | Direct Trade and Get protection entry points |
-| Navigation before connection | Product screens mostly behind wallet gate | Browse assets, quotes and pool terms before connecting |
-| Buy / sell | Missing | TestUSDC ↔ supported demo token, with onchain settlement |
-| Get protection | Existing one-pool flow, hard to find | Asset cards, capacity/terms and a clear deposit journey |
-| Purchased holdings | No integrated trading journey | Wallet holdings clearly separated from deposited positions |
-| Manage / exit positions | Existing screens | Unified positions page with eligible actions, fees and receipt links |
-| Provide backing | Existing flow under ambiguous “Provide protection” | Explicit “Provide collateral” with gain share and loss exposure |
-| Test-token setup | Faucet on Account | Dedicated setup page that returns users to their intended action |
-| Scenarios | Main product | Secondary `/learn/scenarios` tool |
-| Vault shares | Unsupported by BSC demo initializer | Later, separately tested deployment extension |
+| Capability                   | Current BNB                                        | Planned result                                                       |
+| ---------------------------- | -------------------------------------------------- | -------------------------------------------------------------------- |
+| Main entry                   | Risk explorer / scenarios                          | Direct Trade and Get protection entry points                         |
+| Navigation before connection | Product screens mostly behind wallet gate          | Browse assets, quotes and pool terms before connecting               |
+| Buy / sell                   | Missing                                            | TestUSDC ↔ supported demo token, with onchain settlement             |
+| Get protection               | Existing one-pool flow, hard to find               | Asset cards, capacity/terms and a clear deposit journey              |
+| Purchased holdings           | No integrated trading journey                      | Wallet holdings clearly separated from deposited positions           |
+| Manage / exit positions      | Existing screens                                   | Unified positions page with eligible actions, fees and receipt links |
+| Provide backing              | Existing flow under ambiguous “Provide protection” | Explicit “Provide collateral” with gain share and loss exposure      |
+| Test-token setup             | Faucet on Account                                  | Dedicated setup page that returns users to their intended action     |
+| Scenarios                    | Main product                                       | Secondary `/learn/scenarios` tool                                    |
+| Vault shares                 | Unsupported by BSC demo initializer                | Later, separately tested deployment extension                        |
 
 ## First release: complete tWBNB / TestUSDC product
 

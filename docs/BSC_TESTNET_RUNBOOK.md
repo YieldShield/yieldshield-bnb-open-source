@@ -50,6 +50,24 @@ After public verification, `node scripts/bsc-public-flow.mjs --broadcast` uses t
 
 The walkthrough has its own 0.01 test BNB maximum gas reservation and a 1 gwei gas-price cap. It records transaction intentions before sending. Never run deployment and walkthrough concurrently with the same operator.
 
+## Trading extension and integrated walkthrough
+
+The original pool and oracle remain deployed. A standalone `BscTestExchange` trades only the existing valueless tWBNB/TestUSDC pair on chain 97. It started with 250 tWBNB and 250,000 TestUSDC transferred from the operator. A trade is capped at 25 tWBNB and carries a 0.3% fee. The exchange has no owner, mint or withdrawal function; its inventory must be monitored and can be replenished by an ordinary token transfer. The public price follows the existing four-minute synthetic scenario, not real BNB.
+
+```sh
+npm run prepare:bsc:trading
+# Review contracts/deployments/bsc-testnet-trading-plan.json.
+npm run deploy:bsc:trading
+npm run verify:bsc:trading
+npm run walkthrough:bsc:trading
+node scripts/export-bsc-proof.mjs
+npm run build
+```
+
+The trading manifest records three confirmed transactions and the separate walkthrough manifest records six: approve TestUSDC, buy two tWBNB, approve the pool, protect one tWBNB, approve the exchange and sell half a tWBNB. Every step has an exact signed hash and canonical receipt. The walkthrough creates a shield receipt NFT and checks wallet balance changes. Both scripts use the same operator lock, validate chain/genesis and cap reserved test-BNB fees. Resume after RPC lag using the same manifest and transaction hashes. Do not clear a prepared entry or use a new nonce to bypass an uncertain transaction.
+
+The interface rechecks a quote after spending approval and before each wallet signature. The default tolerance is 5%; users can select 2%, 10% or 20%. This existing price cycle can move beyond the selected bound during wallet confirmation; a trade then fails or requests a new quote. Limits are never widened automatically. The exchange and pool are not an audited mainnet product.
+
 ## Local rehearsal
 
 Run Anvil on loopback, port 8597, chain 97, with its public development mnemonic. Set the deployment variables to a public Anvil account and the loopback RPC, then use:
@@ -81,6 +99,6 @@ The repository remains private unless separately authorized. Grant reviewers can
 
 ## User support
 
-Start at `/testnet`, connect a normal EVM wallet to BSC Testnet, obtain test BNB from the official BNB faucet and claim demo assets on Account. The app checks chain, balances, faucet inventory/cooldown, price availability, capacity and action eligibility before signing. Approval and action transactions have distinct status messages and explorer links. The wallet path validates two sealed confirmations; deployment tooling validates ten.
+Start at `/welcome`, open `/trade`, connect a normal EVM wallet to BSC Testnet, obtain test BNB from the official BNB faucet and claim demo assets on `/test-tokens`. Buy tWBNB, then use “Protect these tokens” to carry its amount into `/protection/new`; positions appear under `/positions`. The app checks chain, balances, faucet inventory/cooldown, price availability, capacity and action eligibility before signing. Approval and action transactions have distinct status messages and explorer links. The wallet path validates two sealed confirmations; deployment tooling validates ten.
 
-If an action is uncertain, inspect the displayed transaction hash before repeating it. Mainnet `/markets` data is read only and does not price the synthetic pool. Gasless or smart-account wallet compatibility has not been established by the operator walkthrough; wallets need test BNB for gas.
+If an action is uncertain, inspect the displayed transaction hash before repeating it. Mainnet reference data and scenarios are read only under `/learn/scenarios` and do not price the synthetic pool. Gasless or smart-account wallet compatibility has not been established by the operator walkthrough; wallets need test BNB for gas.
