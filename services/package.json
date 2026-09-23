@@ -12,6 +12,6 @@
     "test": "node --test base-market-data.test.mjs"
   },
   "dependencies": {
-    "viem": "2.55.0"
+    "viem": "2.56.8"
   }
 }
