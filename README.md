@@ -8,6 +8,7 @@ A working token-risk preview with a yellow BNB design, live BNB Smart Chain pric
 - Contact: david@yieldshield.ai
 - Source: https://github.com/YieldShield/yieldshield-bnb
 - Release and grant evidence: [BNB release notes](docs/BNB_RELEASE.md)
+- Next steps: [Grant readiness and security plan — 23 September](docs/BNB_PREAPPLICATION_PLAN_2026-09-23.md)
 - Origin: [pinned Base baseline](BASELINE.md)
 
 ## What works
