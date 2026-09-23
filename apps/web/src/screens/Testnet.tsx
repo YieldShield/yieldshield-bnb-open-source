@@ -79,6 +79,12 @@ export function Testnet() {
           </Link>
         </Card>
       )}
+      <Link
+        to="/testnet/technical"
+        className="mb-6 inline-flex text-sm font-bold text-brand-deep underline underline-offset-4"
+      >
+        Contract reference and test evidence ↗
+      </Link>
       <div className="grid gap-4 md:grid-cols-2">
         {steps.map(([number, title, body]) => (
           <Card key={number} className="flex gap-5">

@@ -61,7 +61,13 @@ const proof = {
         completedAt: flow.completedAt,
         transactions: Object.entries(flow.transactions).map(([action, t]) => {
           assert.equal(t.status, "confirmed");
-          return { action, hash: t.hash, blockNumber: t.receipt.blockNumber };
+          const [stage, index] = action.split(":");
+          return {
+            action,
+            label: flow.stages[stage]?.steps[Number(index)]?.label ?? action,
+            hash: t.hash,
+            blockNumber: t.receipt.blockNumber,
+          };
         }),
       }
     : null,

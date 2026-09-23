@@ -31,6 +31,7 @@ npm run prepare:bsc
 npm run deploy:bsc
 npm run verify:bsc
 node scripts/publish-bsc-deployment.mjs --write
+node scripts/export-bsc-proof.mjs
 npm run build
 node scripts/smoke-bsc-testnet.mjs
 ```
@@ -45,7 +46,7 @@ Publication independently checks all receipts, sender/calldata/value, compiled r
 
 ## Public walkthrough
 
-After public verification, `node scripts/bsc-public-flow.mjs --broadcast` uses the same transaction planner and canonical wallet receipt verifier as the website. It claims the faucet, provides 1,000 TestUSDC backing, deposits and withdraws 1 tWBNB, opens another position and exercises protection, then unlocks and withdraws its backing position. It waits for actual public block timestamps. Its journal is `contracts/deployments/bsc-testnet-flow.json`; rerunning resumes existing actions. This is operator testing, not independent user adoption.
+After public verification, `node scripts/bsc-public-flow.mjs --broadcast` uses the same transaction planner and canonical wallet receipt verifier as the website. It claims the faucet, provides 1,000 TestUSDC backing, deposits and withdraws 1 tWBNB, opens another position and exercises protection, then unlocks and withdraws its backing position. It waits for actual public block timestamps. Its journal is `contracts/deployments/bsc-testnet-flow.json`; rerunning resumes existing actions. This is operator testing, not independent user adoption. After completion, run `node scripts/export-bsc-proof.mjs` and rebuild to include the walkthrough receipts on the public technical page.
 
 The walkthrough has its own 0.01 test BNB maximum gas reservation and a 1 gwei gas-price cap. It records transaction intentions before sending. Never run deployment and walkthrough concurrently with the same operator.
 

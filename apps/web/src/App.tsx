@@ -11,6 +11,7 @@ import { useWalletConnection } from "@/chain/wallet";
 const named = <T extends Record<string, unknown>>(loader: () => Promise<T>, key: keyof T) =>
   lazy(() => loader().then((m) => ({ default: m[key] as React.ComponentType })));
 
+const TestnetTechnical = named(() => import("@/screens/TestnetTechnical"), "TestnetTechnical");
 const Testnet = named(() => import("@/screens/Testnet"), "Testnet");
 const Markets = named(() => import("@/screens/Markets"), "Markets");
 const Legal = named(() => import("@/screens/Legal"), "Legal");
@@ -37,6 +38,7 @@ export default function App() {
       <AlphaNotice />
       <Suspense fallback={<Splash />}>
         <Routes>
+          <Route path="/testnet/technical" element={<TestnetTechnical />} />
           <Route path="/testnet" element={<Testnet />} />
           <Route path="/markets" element={<Markets />} />
           {["legal", "privacy", "terms", "risks"].map((path) => (

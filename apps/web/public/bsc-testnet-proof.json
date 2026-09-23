@@ -1,0 +1,439 @@
+{
+  "schemaVersion": 1,
+  "network": "BSC Testnet",
+  "chainId": 97,
+  "genesisHash": "0x6d3c66c5357ec91d5c43af47e234a939b22557cbb552dc45bebbceeed90fbe34",
+  "pool": "0x711c600188a4BEE06C35848280FB76FF2d91F7F3",
+  "operator": "0x045f932e49fb395862794acEc3FCCc118BE2f27e",
+  "deployedAt": "2026-09-23T06:46:51.712Z",
+  "contracts": [
+    {
+      "name": "Timelock",
+      "address": "0x3dA69f44A1069e4a5422a38740dd61FA4D56A084",
+      "artifact": "YSTimelockController",
+      "runtimeCodehash": "0xf8ebfd1b2875548d51b8babe1c97f27250dd72f58572966f720206ea516d0225",
+      "creationTransaction": "0xa0d9ee49b2487b1d56352d1f82f5cf0c59bdd55452c26f0d16b1a4a35c5e8d81"
+    },
+    {
+      "name": "BasePoolAdminModule",
+      "address": "0xD5bEFA7612552689741D51097A452AD723B0a438",
+      "artifact": "BasePoolAdminModule",
+      "runtimeCodehash": "0xade452029859c2bf0ed2e7d63496e7421ae304a56e422d57237753d8560ab9dd",
+      "creationTransaction": "0x447d4a9e9e3c7f97aa026ae806df8c524413dde482d25aedd2ff24c33eb316b9"
+    },
+    {
+      "name": "BasePoolDepositsModule",
+      "address": "0xaE224958D34E36288C1cbb2ff4B35c8664df51c8",
+      "artifact": "BasePoolDepositsModule",
+      "runtimeCodehash": "0x477319fd4592ae936c2dcfdd430ac829d9bfe95cfc8b5d72a4373c9a2730d7fe",
+      "creationTransaction": "0x8429e5e6f6d7d513dce66ce9dec165a668dcbf915e47dc5d9b18f1828a95ebe5"
+    },
+    {
+      "name": "BasePoolFeesModule",
+      "address": "0xb58299ED37d695cfB56D6957641acDeAff007483",
+      "artifact": "BasePoolFeesModule",
+      "runtimeCodehash": "0x36129049d1b1bccc3fc7e909767a62df9b02b7aee7001cff5c385f29b72415d2",
+      "creationTransaction": "0xe0664b6f75e47239639e07f2a9ac1c4901e03e751ed7cb5acca5e55aa634c987"
+    },
+    {
+      "name": "BasePoolInitializeModule",
+      "address": "0x0DbD40e631845Ec72b25a776f56CA98cCD47Dd35",
+      "artifact": "BasePoolInitializeModule",
+      "runtimeCodehash": "0xf6f0f3c30f228734773d4abe6704349d2ff4022d3e61d6d4d2d5f72956702712",
+      "creationTransaction": "0x41f9457786f794ec2bbfc88820bc92aaf1a4ab55035f894bd4a0c955e82fc871"
+    },
+    {
+      "name": "BscPoolInitializeModule",
+      "address": "0xd71599D2A13381ef2EA47D67a2eFbc4B1C3FD62a",
+      "artifact": "BscPoolInitializeModule",
+      "runtimeCodehash": "0x25eeaa971880613eb09fead7f5e9af1bd6cb7a17b737eeb7a8f886a4c49432cf",
+      "creationTransaction": "0xb99205db73e976d6751ff61f4cd929b3bbcd6ec6b2d891fc97081e43c4c21878"
+    },
+    {
+      "name": "BasePoolPartialExitModule",
+      "address": "0x08fe61e65179C15190F3442443E064dA818c948b",
+      "artifact": "BasePoolPartialExitModule",
+      "runtimeCodehash": "0x40ad2541fb53c4634cc24da259d13ef492cbcacb10da3da3173cd698a9ca6d16",
+      "creationTransaction": "0x3efe091296b82f91d5117fc4cc1a7fbe44a7bb8f622c789daf6feaf7cae373cd"
+    },
+    {
+      "name": "BasePoolProtectorModule",
+      "address": "0x1c6d24F80F07454eD1687960f5007F8F0c99b9Fa",
+      "artifact": "BasePoolProtectorModule",
+      "runtimeCodehash": "0xfa925fe868d221bd61bf2320ce4a644e4fbd63f739c476f24e1ed793228795ce",
+      "creationTransaction": "0x04e905422333dd6b9a63b999eec181591d4a1dcce03630d7450990c52eca9ca0"
+    },
+    {
+      "name": "BasePoolShieldExitModule",
+      "address": "0x959D8823dd61738eeD06e00625fBB3BdDe0c89E2",
+      "artifact": "BasePoolShieldExitModule",
+      "runtimeCodehash": "0x197b15bc0717c7d7d24709ff3a6b6b86c35353870a953fb75a0a963a0ebff436",
+      "creationTransaction": "0xd461657d657ae3716b53dd5b564619487c5f3f5f152b985bc5c48252a42173cf"
+    },
+    {
+      "name": "BasePoolViewsModule",
+      "address": "0x96262E617Cdbe645A779bFf4aD7069Ab10F1728B",
+      "artifact": "BasePoolViewsModule",
+      "runtimeCodehash": "0x46365d51e722bdde7bcc86930df974a1a91ca8b48f005db70f5d4dbf5da16c8d",
+      "creationTransaction": "0x06b8d99dd3a5f8f70dcf8614c534eb53b2982e1bafe8e0038daa247f30910888"
+    },
+    {
+      "name": "BasePoolRouter",
+      "address": "0xc9D72f328Beeab8806e3bb10Fbee8D8D1965e30d",
+      "artifact": "BasePoolRouter",
+      "runtimeCodehash": "0xf0140a83c8a4b8288f7b4cb5798b19e6f9ac39092e4e08408fc38e89eee85bfa",
+      "creationTransaction": "0x830cb1d5fd40aeb8c3155e3525e7fa0668385b505247d8d289072fa6117d4249"
+    },
+    {
+      "name": "TokenWhitelistLib",
+      "address": "0x71987633F93d24cc5DCD419992450efb2C1ACD77",
+      "artifact": "TokenWhitelistLib",
+      "runtimeCodehash": "0xc93a26a8c85cde19ceac15a0a4d4ba642713fc817ce5038ef8ec6526e204c8a1",
+      "creationTransaction": "0xd698bfc44643c1f2df04d329426edeed8ab2d42d65afce674a39e3b62db82bf8"
+    },
+    {
+      "name": "BaseFactoryAdminModule",
+      "address": "0x2f136B5107fe98A1627CAa8709CAf93E13AEEF2E",
+      "artifact": "BaseFactoryAdminModule",
+      "runtimeCodehash": "0x06ab3178945e76b3bd8da4dc66ed3f3928fd69dd4315b926422c20d57098d9cd",
+      "creationTransaction": "0x77cdbe684f88b27bf79315917cef18ad32908094bac00a03bcc75068370e608a"
+    },
+    {
+      "name": "PoolCreationLib",
+      "address": "0x15c21F51B57edEe8cFc53bE79e122Ec74C945171",
+      "artifact": "PoolCreationLib",
+      "runtimeCodehash": "0x53320c147b25560f1f69d34a19c2fb2c9378553dbfd9c700c17ebf6417a95c39",
+      "creationTransaction": "0xe4e975c6f1be79280ee683c16232d76be086823d107db5e0df57eebbecbdd78c"
+    },
+    {
+      "name": "PoolValidationLib",
+      "address": "0xE1dfcAA0deb85b74F7274627304C84c276FA67e1",
+      "artifact": "PoolValidationLib",
+      "runtimeCodehash": "0x00ccfe6eee30606a5d978fe036b890b5a6b8d0ac4f9b14d0838cf02237390246",
+      "creationTransaction": "0xa387c7fca0bcb099feeb9e497ea667ed1cbc07b6e0ffdfaaa297479d24cd1976"
+    },
+    {
+      "name": "BaseFactoryCreateModule",
+      "address": "0x2B9F0f71D70EC8D004e36c7BF7342937a7aF2C60",
+      "artifact": "BaseFactoryCreateModule",
+      "runtimeCodehash": "0xd43b683b607725ce3dbcba32ffd2d305db321d1549f34de202b0de3cb81e06c5",
+      "creationTransaction": "0x74c7b311ec3eb343426fcc781fa01df0e3cfc20463f0eddd31942a622c79aaba"
+    },
+    {
+      "name": "BaseFactoryLifecycleModule",
+      "address": "0x3349fAc0c13e28b4Bc6c70865eed2673FbfD35C3",
+      "artifact": "BaseFactoryLifecycleModule",
+      "runtimeCodehash": "0xc1143ae5b086e236c87d7db3823a81a2d5b3b7ea7958aaedff3d9dfc2547afd2",
+      "creationTransaction": "0x702d5431633b0099f4fde3a9273fcc1e27dc452bb29796b99a1fe3795d06ff3f"
+    },
+    {
+      "name": "BaseFactoryOracleModule",
+      "address": "0xbaA1c9AC1CC52266469BfBADd3f64c62bb1901c9",
+      "artifact": "BaseFactoryOracleModule",
+      "runtimeCodehash": "0xa43d98c357a57ee3dadeab31ace26e657ee0480ffd33bcd984b9dde5d19610ec",
+      "creationTransaction": "0x9253de73e2b217bec958e882800a1f59fdf571f8e4af7c3fac4f4a87fbb5f316"
+    },
+    {
+      "name": "BaseFactoryViewsModule",
+      "address": "0x3895f791bdf74cB50611bCE43703E096bae1C1Ff",
+      "artifact": "BaseFactoryViewsModule",
+      "runtimeCodehash": "0x67d4005e989a635b54cbc3067e0ddc193512be2499ecd61dbdee68e38b3bfc7b",
+      "creationTransaction": "0x65454d396e91aca0646a51503a4fa2ee367f02531ef4a2012815601e8f5ea616"
+    },
+    {
+      "name": "BaseFactoryRouter",
+      "address": "0xa0fB2663E2eeEC621a03ebe6d2442880236595FB",
+      "artifact": "BaseFactoryRouter",
+      "runtimeCodehash": "0xe89bb71d4dbd20b6356625bbfc77adabdbeb494d9c480c15597ef0e1f69fdab1",
+      "creationTransaction": "0x24c5546af89f23dfda8929bb1fd95da201aa5b4e86d289cd7e772ef4267a4eb7"
+    },
+    {
+      "name": "Factory",
+      "address": "0xCFCe35b3Ea72AA7C48Fe743Be3DC38b7720d95ce",
+      "artifact": "ERC1967Proxy",
+      "runtimeCodehash": "0x322850f0f79b33b56c8ad74c9673c97fad0dcb722fb136b3ef2b8a91e5a9686b",
+      "creationTransaction": "0x30a78b3b2145884883edae545300531206ed08f0dcfb955a0632af607a85fd6d"
+    },
+    {
+      "name": "CompositeOracle",
+      "address": "0x81Cc4822F5872770D2a493FA1DA87E919644F0E0",
+      "artifact": "CompositeOracle",
+      "runtimeCodehash": "0x5b8f4e1f84c0e9de90908af0af4975c0729c0f87a54b158655dcebc4bafaad9f",
+      "creationTransaction": "0xb0ae8e34793f511430e5bb64ca7f37e95007c173e186f33e43ce826807ae5c26"
+    },
+    {
+      "name": "TestWBNB",
+      "address": "0x05c674Bbc8930a580fCc5924060807C6153FeA6C",
+      "artifact": "BscTestToken",
+      "runtimeCodehash": "0x8523822ba9a59b8179dc4eee1a59ac8eca4846176d41712e0cc175f1a4f1b17e",
+      "creationTransaction": "0x6753342d107af1af1aeb4c6dec9096f956a71d498f0db52364259b6556e20f21"
+    },
+    {
+      "name": "TestUSDC",
+      "address": "0x7Fc086DA704fC345f99817Afe0CBd3C649E3266C",
+      "artifact": "BscTestToken",
+      "runtimeCodehash": "0x8523822ba9a59b8179dc4eee1a59ac8eca4846176d41712e0cc175f1a4f1b17e",
+      "creationTransaction": "0x20896cdd3dac17f795262685898edcebc2255f8b5ce84bdf75a57833cdcfadea"
+    },
+    {
+      "name": "BscScenarioOracle",
+      "address": "0x798667C8161Fb8a8cd0b8a8eb48Eacc82974bd4B",
+      "artifact": "BscScenarioOracle",
+      "runtimeCodehash": "0x4b05263c6c497842b1820b8992f43e63a930db980ca19c0738fa2bb771cc799f",
+      "creationTransaction": "0x9799231c25ad9215a12b8c9ced71b5b3c7aa168e496384abf6ad2b6a422304e6"
+    },
+    {
+      "name": "Faucet",
+      "address": "0x6546077Fd9F92064F553a0518a9A0090aCDF74E1",
+      "artifact": "ConfigurableTokenFaucet",
+      "runtimeCodehash": "0x2c77324429e4ef6f633b304ea5ba01b831bc047833e15ab8fa83c194c118a5c5",
+      "creationTransaction": "0x56f1378ab763f94c7e62db5eef63b51e6d90393ded2b2549450453ea613e6a14"
+    },
+    {
+      "name": "ShieldReceiptNFT",
+      "address": "0x0cb8D5d2ff348799A0650Be552D9045a8AC0B52d",
+      "artifact": "ShieldReceiptNFT",
+      "runtimeCodehash": "0x90c31f4b775bb8d0f633e93365947f64c6ba87f9956e82d6b636fc43724a914a",
+      "creationTransaction": "0x06758902abb80f9933e5719f09d272ac57078ae510174497415d670b44c941ea"
+    },
+    {
+      "name": "ProtectorReceiptNFT",
+      "address": "0x336c104A96520a7D98C1d0DFA8016BD6f0790AE5",
+      "artifact": "ProtectorReceiptNFT",
+      "runtimeCodehash": "0xb5f542c972f0816f4b313a69851f98fb7b04584aac6b509a47eb1272b74d4b4a",
+      "creationTransaction": "0x06758902abb80f9933e5719f09d272ac57078ae510174497415d670b44c941ea"
+    },
+    {
+      "name": "Pool",
+      "address": "0x711c600188a4BEE06C35848280FB76FF2d91F7F3",
+      "artifact": "ERC1967Proxy",
+      "runtimeCodehash": null,
+      "creationTransaction": "0x06758902abb80f9933e5719f09d272ac57078ae510174497415d670b44c941ea"
+    }
+  ],
+  "sourceVerification": "pending",
+  "deploymentTransactions": [
+    {
+      "action": "deploy:Timelock",
+      "hash": "0xa0d9ee49b2487b1d56352d1f82f5cf0c59bdd55452c26f0d16b1a4a35c5e8d81",
+      "blockNumber": "132662592"
+    },
+    {
+      "action": "timelock:renounce-admin",
+      "hash": "0x70d213202495efe2cbd735f3d7f8a69f99237655d01515cc6628467bb146b00a",
+      "blockNumber": "132662933"
+    },
+    {
+      "action": "deploy:BasePoolAdminModule",
+      "hash": "0x447d4a9e9e3c7f97aa026ae806df8c524413dde482d25aedd2ff24c33eb316b9",
+      "blockNumber": "132662969"
+    },
+    {
+      "action": "deploy:BasePoolDepositsModule",
+      "hash": "0x8429e5e6f6d7d513dce66ce9dec165a668dcbf915e47dc5d9b18f1828a95ebe5",
+      "blockNumber": "132662988"
+    },
+    {
+      "action": "deploy:BasePoolFeesModule",
+      "hash": "0xe0664b6f75e47239639e07f2a9ac1c4901e03e751ed7cb5acca5e55aa634c987",
+      "blockNumber": "132663025"
+    },
+    {
+      "action": "deploy:BasePoolInitializeModule",
+      "hash": "0x41f9457786f794ec2bbfc88820bc92aaf1a4ab55035f894bd4a0c955e82fc871",
+      "blockNumber": "132663044"
+    },
+    {
+      "action": "deploy:BscPoolInitializeModule",
+      "hash": "0xb99205db73e976d6751ff61f4cd929b3bbcd6ec6b2d891fc97081e43c4c21878",
+      "blockNumber": "132663062"
+    },
+    {
+      "action": "deploy:BasePoolPartialExitModule",
+      "hash": "0x3efe091296b82f91d5117fc4cc1a7fbe44a7bb8f622c789daf6feaf7cae373cd",
+      "blockNumber": "132663081"
+    },
+    {
+      "action": "deploy:BasePoolProtectorModule",
+      "hash": "0x04e905422333dd6b9a63b999eec181591d4a1dcce03630d7450990c52eca9ca0",
+      "blockNumber": "132663124"
+    },
+    {
+      "action": "deploy:BasePoolShieldExitModule",
+      "hash": "0xd461657d657ae3716b53dd5b564619487c5f3f5f152b985bc5c48252a42173cf",
+      "blockNumber": "132663143"
+    },
+    {
+      "action": "deploy:BasePoolViewsModule",
+      "hash": "0x06b8d99dd3a5f8f70dcf8614c534eb53b2982e1bafe8e0038daa247f30910888",
+      "blockNumber": "132663168"
+    },
+    {
+      "action": "deploy:BasePoolRouter",
+      "hash": "0x830cb1d5fd40aeb8c3155e3525e7fa0668385b505247d8d289072fa6117d4249",
+      "blockNumber": "132663212"
+    },
+    {
+      "action": "deploy:TokenWhitelistLib",
+      "hash": "0xd698bfc44643c1f2df04d329426edeed8ab2d42d65afce674a39e3b62db82bf8",
+      "blockNumber": "132663240"
+    },
+    {
+      "action": "deploy:BaseFactoryAdminModule",
+      "hash": "0x77cdbe684f88b27bf79315917cef18ad32908094bac00a03bcc75068370e608a",
+      "blockNumber": "132663290"
+    },
+    {
+      "action": "deploy:PoolCreationLib",
+      "hash": "0xe4e975c6f1be79280ee683c16232d76be086823d107db5e0df57eebbecbdd78c",
+      "blockNumber": "132663312"
+    },
+    {
+      "action": "deploy:PoolValidationLib",
+      "hash": "0xa387c7fca0bcb099feeb9e497ea667ed1cbc07b6e0ffdfaaa297479d24cd1976",
+      "blockNumber": "132663328"
+    },
+    {
+      "action": "deploy:BaseFactoryCreateModule",
+      "hash": "0x74c7b311ec3eb343426fcc781fa01df0e3cfc20463f0eddd31942a622c79aaba",
+      "blockNumber": "132663384"
+    },
+    {
+      "action": "deploy:BaseFactoryLifecycleModule",
+      "hash": "0x702d5431633b0099f4fde3a9273fcc1e27dc452bb29796b99a1fe3795d06ff3f",
+      "blockNumber": "132663402"
+    },
+    {
+      "action": "deploy:BaseFactoryOracleModule",
+      "hash": "0x9253de73e2b217bec958e882800a1f59fdf571f8e4af7c3fac4f4a87fbb5f316",
+      "blockNumber": "132663462"
+    },
+    {
+      "action": "deploy:BaseFactoryViewsModule",
+      "hash": "0x65454d396e91aca0646a51503a4fa2ee367f02531ef4a2012815601e8f5ea616",
+      "blockNumber": "132663528"
+    },
+    {
+      "action": "deploy:BaseFactoryRouter",
+      "hash": "0x24c5546af89f23dfda8929bb1fd95da201aa5b4e86d289cd7e772ef4267a4eb7",
+      "blockNumber": "132663589"
+    },
+    {
+      "action": "deploy:Factory",
+      "hash": "0x30a78b3b2145884883edae545300531206ed08f0dcfb955a0632af607a85fd6d",
+      "blockNumber": "132663653"
+    },
+    {
+      "action": "deploy:CompositeOracle",
+      "hash": "0xb0ae8e34793f511430e5bb64ca7f37e95007c173e186f33e43ce826807ae5c26",
+      "blockNumber": "132663673"
+    },
+    {
+      "action": "deploy:TestWBNB",
+      "hash": "0x6753342d107af1af1aeb4c6dec9096f956a71d498f0db52364259b6556e20f21",
+      "blockNumber": "132663690"
+    },
+    {
+      "action": "deploy:TestUSDC",
+      "hash": "0x20896cdd3dac17f795262685898edcebc2255f8b5ce84bdf75a57833cdcfadea",
+      "blockNumber": "132663709"
+    },
+    {
+      "action": "deploy:BscScenarioOracle",
+      "hash": "0x9799231c25ad9215a12b8c9ced71b5b3c7aa168e496384abf6ad2b6a422304e6",
+      "blockNumber": "132663780"
+    },
+    {
+      "action": "deploy:Faucet",
+      "hash": "0x56f1378ab763f94c7e62db5eef63b51e6d90393ded2b2549450453ea613e6a14",
+      "blockNumber": "132663798"
+    },
+    {
+      "action": "oracle:ownership",
+      "hash": "0x580c05849ab5ffb9594d151a31905fed033f72c49e1bdc6b6f49ce3e35e75ec7",
+      "blockNumber": "132663817"
+    },
+    {
+      "action": "factory:oracle",
+      "hash": "0x017ccc2be97bedd046817ce379d9e246bfd1d04aa33a6cc0e1e6b5a93ee931bc",
+      "blockNumber": "132663835"
+    },
+    {
+      "action": "factory:fees",
+      "hash": "0x1dd0682a367d8235a16923c61b22b71f6c5b16f1b12e721da5a0ec0ecdade28a",
+      "blockNumber": "132663909"
+    },
+    {
+      "action": "factory:token:tWBNB",
+      "hash": "0x8c05452f4221a693a3f9123764b693506c6cc8ebee7c77a479935d3bad97643b",
+      "blockNumber": "132663986"
+    },
+    {
+      "action": "factory:token:TestUSDC",
+      "hash": "0xa3c5c68b9e28cb8fd35bdde11d9e98cca076e579033982cf6404f9d9b030ed2f",
+      "blockNumber": "132664005"
+    },
+    {
+      "action": "factory:strict-backing",
+      "hash": "0x6eaba8bbdaa1720ace1124bf2c18fa918ee076aed502e4fc4f08b11630006033",
+      "blockNumber": "132664023"
+    },
+    {
+      "action": "factory:finalize",
+      "hash": "0xf1579b297538e1daf1d23302151c5a9a6bb44537b7c4082a2adad253264b6482",
+      "blockNumber": "132664104"
+    },
+    {
+      "action": "factory:ownership",
+      "hash": "0x12dab328a7c6db5b9dda3d3e3110703447af77bbbfc5b4db7f49f78e51e0225f",
+      "blockNumber": "132664185"
+    },
+    {
+      "action": "pool:approve-bond",
+      "hash": "0xb9d81697e16ab4fe7dba29fba196e5bce741c464e0d79f5e04c188f7f89f11f0",
+      "blockNumber": "132664266"
+    },
+    {
+      "action": "pool:create",
+      "hash": "0x06758902abb80f9933e5719f09d272ac57078ae510174497415d670b44c941ea",
+      "blockNumber": "132664285"
+    },
+    {
+      "action": "pool:approve-backing",
+      "hash": "0xb8e130077409b4098d7df8313bf8109de095376646d0f50ab8cd3e5c59196359",
+      "blockNumber": "132664303"
+    },
+    {
+      "action": "pool:seed-backing",
+      "hash": "0xb0bb44300739af58df0c8c0ae36fcd4e872064d853e065ec16cf00381703f319",
+      "blockNumber": "132664392"
+    },
+    {
+      "action": "faucet:configure",
+      "hash": "0xbb7488e962e4e5d0c80c61c40dc9e132ece965f14aa80204f246fd8aa93b630d",
+      "blockNumber": "132664475"
+    },
+    {
+      "action": "faucet:fund-tWBNB",
+      "hash": "0xca01d86dec6eb1e13138d657414aae51c8301a23b4c48c8a5d53e2aa4d728c3a",
+      "blockNumber": "132664493"
+    },
+    {
+      "action": "faucet:fund-TestUSDC",
+      "hash": "0x0b3d9408196137f30d1e330c8d3a9f4ef1251b9b27c786280fc4765a5d45704d",
+      "blockNumber": "132664512"
+    },
+    {
+      "action": "faucet:ownership",
+      "hash": "0x2813baac688c00eee7c2d5f1ab4beabbbdfbf2321063e794e36b32ec457d872a",
+      "blockNumber": "132664536"
+    }
+  ],
+  "walkthrough": null,
+  "limitations": [
+    "Synthetic valueless assets; no real deposits or TVL",
+    "Internal testing; no independent company audit",
+    "Operator walkthrough is not independent user adoption",
+    "Centralized operator behind a two-day timelock"
+  ]
+}

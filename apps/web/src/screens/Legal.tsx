@@ -28,7 +28,7 @@ const pages: Record<string, { title: string; sections: { heading: string; body: 
       { heading: "Contact", body: email },
       {
         heading: "About this service",
-        body: "YieldShield on BNB Chain is an experimental software preview. It provides read-only token price references from BSC mainnet and illustrative protection scenarios. A synthetic token protection demo is prepared for BSC Testnet; wallet transactions are enabled only after the public contracts pass deployment verification. It does not offer trading, custody, insurance, guaranteed returns, or individual investment advice.",
+        body: "YieldShield on BNB Chain is an experimental software preview. It provides read-only token price references from BSC mainnet and illustrative protection scenarios. The synthetic token protection demo runs on BSC Testnet using verified deployment addresses. It does not offer trading, custody, insurance, guaranteed returns, or individual investment advice.",
       },
     ],
   },
