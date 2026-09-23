@@ -54,7 +54,7 @@ Vercel production deployment `dpl_4xDY9eaTfEeaGUxhiu8Y4xEvqZVi` is Ready for app
 
 Local checks passed: 11 BSC contract tests, 225 modular-contract regressions, 41 inherited oracle/relay regressions, 134 wallet/faucet tests, 51 BNB API/deployment/publication tests, 15 web tests, build, scoped lint and production dependency audit (zero reported vulnerabilities). Public pool/faucet reads passed through the website adapter. Desktop/mobile checks covered the guide, contract reference and wallet connection entry point. Browser wallet signing by an independent user remains a recommended follow-up; the operator script is not presented as that evidence.
 
-See the [internal review](BNB_SECURITY_REVIEW_2026-09-23.md), [runbook](BSC_TESTNET_RUNBOOK.md) and [revised application draft](BNB_GRANT_APPLICATION_2026-09-23.md). Budget, team/history answers and source-release scope require applicant confirmation before submission. No grant application was submitted.
+See the [internal review](BNB_SECURITY_REVIEW_2026-09-23.md) and [runbook](BSC_TESTNET_RUNBOOK.md). Grant application planning is maintained separately from this source repository. No grant application was submitted as part of this release.
 
 ---
 
