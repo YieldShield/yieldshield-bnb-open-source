@@ -41,7 +41,42 @@ export type ChainInfo = {
 
 // --- Reads ---------------------------------------------------------------------
 
+/** A reviewed, valueless BSC Testnet venue. Prices are deterministic demo scenarios. */
+export type DemoMarket = {
+  chainId: 97;
+  exchange: string;
+  ready: boolean;
+  evaluatedAt: number;
+  validUntil: number;
+  feeBps: number;
+  maxStockAmount: bigint;
+  assets: Array<{
+    token: TokenId;
+    symbol: string;
+    name: string;
+    decimals: number;
+    priceUsd8: bigint;
+    maxAmount: bigint;
+  }>;
+  quoteToken: { token: TokenId; symbol: "TestUSDC"; decimals: 6 };
+};
+export type DemoTradeRequest = { asset: TokenId; side: "buy" | "sell"; amount: bigint; owner?: AccountId };
+export type DemoTradeQuote = DemoTradeRequest & {
+  chainId: 97;
+  exchange: string;
+  inputToken: TokenId;
+  outputToken: TokenId;
+  inputAmount: bigint;
+  outputAmount: bigint;
+  feeAmount: bigint;
+  priceUsd8: bigint;
+  quotedAt: number;
+  validUntil: number;
+};
+
 export interface ChainReader {
+  getDemoMarket?(): Promise<DemoMarket>;
+  getDemoTradeQuote?(request: DemoTradeRequest): Promise<DemoTradeQuote>;
   /** Every pool, fully assembled for display (stats + token metadata + oracle health). */
   loadPools(): Promise<PoolData[]>;
   /** All of an owner's positions, split by side. */
@@ -86,6 +121,7 @@ export type CreatePoolIntentParams = {
  * without re-fetching state the UI already holds.
  */
 export type TxIntent =
+  | { kind: "demoTrade"; asset: TokenId; side: "buy" | "sell"; amount: bigint; limit: bigint; deadline: bigint }
   | {
       kind: "depositShielded";
       pool: PoolId;

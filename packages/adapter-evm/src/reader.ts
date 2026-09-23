@@ -34,6 +34,7 @@ import { splitRiskPoolAbi } from "./abis/splitRiskPool.js";
 import { splitRiskPoolFactoryAbi } from "./abis/splitRiskPoolFactory.js";
 import { decodePositionId, encodePositionId } from "./positionId.js";
 import { readSnapshot, SNAPSHOT_VALIDITY_SECONDS } from "./snapshot.js";
+import { readDemoMarket, readDemoTradeQuote } from "./demo-trading.js";
 
 const BPS = 10_000n;
 const ratioBps = (num: bigint, den: bigint): bigint | null => (den > 0n ? (num * BPS) / den : null);
@@ -308,6 +309,8 @@ export function createReader(client: PublicClient, deps: EvmReaderDeps): ChainRe
   }
 
   return {
+    getDemoMarket: () => readDemoMarket(client),
+    getDemoTradeQuote: (request) => readDemoTradeQuote(client, request),
     async loadPools(): Promise<PoolData[]> {
       const snapshot = await readSnapshot(client, "Pool");
       const block = snapshot.block;

@@ -21,6 +21,8 @@ import { tokenFaucetAbi } from "./abis/tokenFaucet.js";
 import { decodePositionId, encodePositionId } from "./positionId.js";
 import { assertDepositPreflight } from "./preflight.js";
 import { readFaucetStatus } from "./faucet.js";
+import { demoExchangeAbi } from "./abis/demoExchange.js";
+import { assertDemoTrade } from "./demo-trading.js";
 
 export type EvmStep = {
   /** Short human label for progress UX ("Approve USDG", "Confirm deposit"). */
@@ -142,6 +144,58 @@ export async function planIntent(
   const pool = (address: Address) => ({ address, abi: splitRiskPoolAbi as Abi });
 
   switch (intent.kind) {
+    case "demoTrade": {
+      validAddress(intent.asset);
+      const beforeStep = async () => {
+        await assertDemoTrade(client, owner, intent);
+      };
+      const quote = await assertDemoTrade(client, owner, intent);
+      const buy = intent.side === "buy";
+      const approvals = await approvalStep(
+        client,
+        owner,
+        quote.inputToken as Address,
+        quote.exchange as Address,
+        buy ? intent.limit : intent.amount,
+      );
+      return {
+        beforeStep,
+        steps: [
+          ...approvals,
+          {
+            label: buy ? "Buy test token" : "Sell test token",
+            address: quote.exchange as Address,
+            abi: demoExchangeAbi,
+            functionName: "swap",
+            args: [quote.asset, buy, intent.amount, intent.limit, intent.deadline],
+          },
+        ],
+        extract: (receipt) => {
+          const trades = parseEventLogs({
+            abi: demoExchangeAbi,
+            logs: receipt.logs,
+            eventName: "Swapped",
+            strict: true,
+          }).filter((log) => log.address.toLowerCase() === quote.exchange.toLowerCase());
+          if (
+            trades.length !== 1 ||
+            !trades.some(
+              (log) =>
+                log.args.trader.toLowerCase() === owner.toLowerCase() &&
+                log.args.stock.toLowerCase() === quote.asset.toLowerCase() &&
+                log.args.buy === buy &&
+                log.args.stockAmount === intent.amount &&
+                log.args.usdcAmount > 0n &&
+                (buy ? log.args.usdcAmount <= intent.limit : log.args.usdcAmount >= intent.limit),
+            )
+          )
+            throw new Error(
+              "The sealed receipt does not confirm the reviewed test-token trade. Check wallet activity before retrying.",
+            );
+          return {};
+        },
+      };
+    }
     case "depositShielded": {
       const poolAddr = intent.pool as Address;
       const asset = intent.shieldedToken as Address;
