@@ -11,6 +11,10 @@ The testnet protocol, synthetic trading exchange and integrated operator walkthr
 - Proof JSON now records 30 contract addresses, 46 deployment/funding receipts, 11 prior protection walkthrough receipts and 6 integrated trading walkthrough receipts. Internal runtime/receipt checks passed; source publication and an independent company audit remain separate and pending.
 - The public testnet demo uses valueless synthetic tokens and a four-minute scenario price. It does not trade real BNB or accept real assets. A human wallet may need to refresh a quote if the synthetic price moves outside its chosen bound during signing.
 
+Production deployment `dpl_9R1rcP1r4QRoX9bJrxkgCB3WDJsA` is Ready for commit `4fccdcb9c78df33beac1eaeec637e4aa717c6bda` and assigned to `bnb.yieldshield.ai`. Public HTTPS returned 200 for `/welcome`, `/trade`, `/markets`, `/test-tokens`, `/how-it-works`, `/learn/scenarios`, `/testnet/technical`, the 30-contract proof JSON and the existing BSC market API. The proof JSON includes 46 deployment/funding and 17 operator walkthrough receipts. A browser wallet session by an independent user remains untested; the onchain flow was exercised by the dedicated operator wallet.
+
+Local release checks passed: the full production build, 19 BSC-specific contract tests (including 256 fuzz runs in each applicable case), 51 BNB service/deployment tests, 150 EVM adapter tests and 18 web tests. Scoped lint and formatting passed. Repository-wide `npm run lint` includes vendored `contracts/lib` code and a pre-existing generator issue; it is not a clean gate. [GitHub workflow 35833478677](https://github.com/YieldShield/yieldshield-bnb/actions/runs/35833478677) started no jobs: GitHub reported failed account payments or a spending limit. Hosted CI must be restored separately; no remote test pass is claimed.
+
 ### Prior protection-only release
 
 - Demo: https://bnb.yieldshield.ai/testnet
