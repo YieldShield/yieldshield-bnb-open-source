@@ -5,10 +5,11 @@ const { readFileSync } = require("node:fs");
 const { resolve } = require("node:path");
 
 const rootDir = resolve(__dirname, "..");
+const repositoryDir = resolve(rootDir, "..");
 
 function git(args) {
     return execFileSync("git", args, {
-        cwd: rootDir,
+        cwd: repositoryDir,
         encoding: "utf8",
         stdio: ["ignore", "pipe", "pipe"],
     }).trim();
@@ -28,11 +29,12 @@ function getSubmodulePaths() {
         .split("\n")
         .filter(Boolean)
         .map((line) => line.trim().split(/\s+/)[1])
-        .filter(Boolean);
+        .filter((path) => path?.startsWith("contracts/"))
+        .map((path) => path.slice("contracts/".length));
 }
 
 function getGitlinkRevision(submodulePath) {
-    const output = git(["ls-tree", "HEAD", submodulePath]);
+    const output = git(["ls-tree", "HEAD", `contracts/${submodulePath}`]);
     const match = output.match(/^160000 commit ([0-9a-f]{40})\t(.+)$/);
     if (!match) {
         throw new Error(`${submodulePath} is not a git submodule in HEAD`);
