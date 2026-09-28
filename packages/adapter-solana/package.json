@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@solana/client": "^1.7.0",
-    "@solana/kit": "^6.10.0",
+    "@solana/kit": "^8.3.0",
     "@solana/react-hooks": "^1.4.1",
     "@yieldshield/core": "*",
     "@yieldshield/sdk": "*"
