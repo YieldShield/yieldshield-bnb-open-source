@@ -27,7 +27,7 @@
     "@wagmi/core": "^3.6.5",
     "@yieldshield/core": "*",
     "viem": "^2.40.3",
-    "wagmi": "^3.1.0"
+    "wagmi": "^3.7.7"
   },
   "peerDependencies": {
     "react": "^18.3.1"
