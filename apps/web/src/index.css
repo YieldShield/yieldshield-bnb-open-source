@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@config "../tailwind.config.ts";
 
 @layer base {
   :root {
@@ -46,7 +45,9 @@
     @apply text-[12px] font-bold uppercase tracking-[0.4px] text-muted;
   }
   .hero-num {
-    @apply tnum font-extrabold tracking-hero;
+    @apply font-extrabold tracking-hero;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
   }
   .no-scrollbar::-webkit-scrollbar {
     display: none;
