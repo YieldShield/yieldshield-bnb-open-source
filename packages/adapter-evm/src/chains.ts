@@ -1,6 +1,16 @@
-import { base, baseSepolia, bsc, bscTestnet } from "viem/chains";
-export { base, baseSepolia, bsc, bscTestnet };
+import { base, baseSepolia, bsc, bscTestnet as viemBscTestnet } from "viem/chains";
+export { base, baseSepolia, bsc };
 import { defineChain } from "viem";
+
+// Current official BSC RPC list: https://docs.bnbchain.org/bnb-smart-chain/developers/json_rpc/json-rpc-endpoint/
+// Share this endpoint between application reads and wallet network-registration metadata.
+export const bscTestnet = defineChain({
+  ...viemBscTestnet,
+  rpcUrls: {
+    ...viemBscTestnet.rpcUrls,
+    default: { ...viemBscTestnet.rpcUrls.default, http: ["https://bsc-testnet-dataseed.bnbchain.org"] },
+  },
+});
 
 // Canonical Multicall3 — verified deployed on Robinhood testnet (eth_getCode returns bytecode).
 const multicall3 = { address: "0xcA11bde05977b3631167028862bE2a173976CA11" } as const;
