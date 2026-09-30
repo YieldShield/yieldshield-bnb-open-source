@@ -17,11 +17,18 @@ export type YieldProofData = {
   }[];
   transactions: Receipt[];
   walkthrough?: { status: string; scope: string; transactions: Receipt[] };
+  faucetWalkthrough?: {
+    status: string;
+    transactions: Receipt[];
+    tokens: { symbol: string }[];
+  };
 };
 const explorer = "https://testnet.bscscan.com";
 
 export function YieldProof({ proof }: { proof: YieldProofData }) {
   const walkthrough = proof.walkthrough?.status === "complete" ? proof.walkthrough : null;
+  const faucet = proof.faucetWalkthrough?.status === "complete" ? proof.faucetWalkthrough : null;
+  const faucetReceipt = faucet?.transactions[0];
   return (
     <section className="my-10">
       <p className="mb-3 text-xs font-bold uppercase tracking-wider text-brand-deep">Yield-asset extension</p>
@@ -110,6 +117,24 @@ export function YieldProof({ proof }: { proof: YieldProofData }) {
               ))}
             </ol>
           </details>
+        </div>
+      )}
+      {faucet && faucetReceipt && (
+        <div className="mt-7">
+          <h3 className="text-xl font-bold">Six-token dispenser checked</h3>
+          <p className="mt-3 text-sm leading-relaxed text-body">
+            One operator claim used the website’s transaction checks and delivered all six tokens:{" "}
+            {faucet.tokens.map((token) => token.symbol).join(", ")}. Every transfer and balance increase was checked
+            against its confirmed testnet block.
+          </p>
+          <a
+            href={`${explorer}/tx/${faucetReceipt.hash}`}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-2 inline-flex min-h-11 items-center text-sm font-bold text-brand-deep underline"
+          >
+            View the dispenser receipt ↗
+          </a>
         </div>
       )}
       <a

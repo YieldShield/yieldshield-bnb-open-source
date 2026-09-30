@@ -41,9 +41,10 @@ npm run build
 npm run test:bnb
 npm run test:web
 node scripts/bsc-yield-assets-flow.mjs --broadcast
+npm run walkthrough:bsc:yield:faucet
 ```
 
-The operator walkthrough exercises the published contracts directly; the website’s intent routing is separately checked against the deployed markets. Its receipts are internal integration evidence, not external adoption. An independent browser-wallet signing session and a real-asset launch are separate future work.
+The four-asset operator walkthrough exercises the published contracts directly; the website’s intent routing is separately checked against the deployed markets. The separate dispenser check uses the compiled website adapter’s intent planner, preflight and receipt checks, then independently verifies the six exact transfers and balance changes at the confirmed block. Both save resumable transaction journals and trimmed public evidence. Their receipts are internal integration evidence, not external adoption. An independent browser-wallet signing session and a real-asset launch are separate future work.
 
 ## Real-asset follow-up
 

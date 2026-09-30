@@ -715,5 +715,72 @@
         "blockNumber": "134060155"
       }
     ]
+  },
+  "faucetWalkthrough": {
+    "status": "complete",
+    "scope": "Internal operator claim through planIntent, beforeStep and extract; six synthetic tokens have no value.",
+    "actor": "0x045f932e49fb395862794acEc3FCCc118BE2f27e",
+    "faucet": "0x7C2f42466CA67cf5eB652952979b799532c8531C",
+    "verifiedAt": "2026-09-30T13:26:44.909Z",
+    "beforeBlockNumber": "134061862",
+    "receiptBlockNumber": "134061863",
+    "receiptBlockHash": "0x5d5e53b95b57abc3e5dd01631e31b3e55354ed7efe87a25bc745ddf630d98421",
+    "transactions": [
+      {
+        "id": "faucet:claim",
+        "hash": "0x97ecc11e30ce49132a0772701138ab16089422caab9f5a919354f5f36871824a",
+        "blockNumber": "134061863"
+      }
+    ],
+    "tokens": [
+      {
+        "symbol": "tWBNB",
+        "address": "0x05c674Bbc8930a580fCc5924060807C6153FeA6C",
+        "decimals": 18,
+        "amount": "5000000000000000000",
+        "beforeBalance": "889754509900990099009900",
+        "afterBalance": "889759509900990099009900"
+      },
+      {
+        "symbol": "TestUSDC",
+        "address": "0x7Fc086DA704fC345f99817Afe0CBd3C649E3266C",
+        "decimals": 6,
+        "amount": "10000000000",
+        "beforeBalance": "6753060557587",
+        "afterBalance": "6763060557587"
+      },
+      {
+        "symbol": "tSlisBNB",
+        "address": "0x1ee984B017e80214A314BFf1042c43456325Ce8A",
+        "decimals": 18,
+        "amount": "5000000000000000000",
+        "beforeBalance": "899000499996001266265680",
+        "afterBalance": "899005499996001266265680"
+      },
+      {
+        "symbol": "tWBETH",
+        "address": "0xB07598F9ACCE93C46B9BbB138d108D626621e4B9",
+        "decimals": 18,
+        "amount": "2000000000000000000",
+        "beforeBalance": "899000499997000693589605",
+        "afterBalance": "899002499997000693589605"
+      },
+      {
+        "symbol": "tsUSDe",
+        "address": "0x28e37F207671B98Bdf5AfFA3d8cACB1F93721962",
+        "decimals": 18,
+        "amount": "1000000000000000000000",
+        "beforeBalance": "8750499998000151483844060",
+        "afterBalance": "8751499998000151483844060"
+      },
+      {
+        "symbol": "tvUSDT",
+        "address": "0x40B73bA38F51C100d9dC6D33632B6aCa4E2989E1",
+        "decimals": 8,
+        "amount": "5000000000000",
+        "beforeBalance": "89000099999400099",
+        "afterBalance": "89005099999400099"
+      }
+    ]
   }
 }

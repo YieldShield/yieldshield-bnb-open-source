@@ -105,7 +105,7 @@ export function TestnetTechnical() {
         <h2 className="text-2xl font-bold">Contract reference</h2>
         <p className="mt-3 text-sm leading-relaxed text-body">
           Checked against canonical receipts, compiled runtimes, constructor arguments, module bindings, ownership and
-          timelock roles. Source publication:{" "}
+          timelock roles. Explorer source verification:{" "}
           {proof.sourceVerification === "exact_match"
             ? "exact source and runtime matches recorded on Sourcify."
             : "pending. Internal bytecode checks are complete."}
