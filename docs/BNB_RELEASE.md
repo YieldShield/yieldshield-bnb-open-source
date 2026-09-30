@@ -1,3 +1,24 @@
+# Pool creation — 30 September 2026
+
+The Base-style pool creation flow is now available at [Create a pool](https://bnb.yieldshield.ai/create-pool). It supports tWBNB, tSlisBNB, tWBETH, tsUSDe and tvUSDT with TestUSDC backing. Creators choose the backer gain share, creator fee and collateral ratio, review the required bond, create the pool and proceed directly to fund its exact address. Markets compares multiple pools per asset. The BNB yellow theme and existing token artwork are retained.
+
+The adapter verifies both deployed factories, their current implementations and supported asset pairs, reads live creation settings, and rechecks terms and balance before each signature. New pools are authenticated during discovery. Protocol-set values are displayed explicitly instead of silently ignoring unsupported form inputs. Both factories currently require 500 TestUSDC as a bond, separate from backing collateral.
+
+## Verification
+
+- **12 canonical BSC Testnet transactions** created two pools, deposited 1,000 TestUSDC backing into each and opened one protected position in each. These cover the original tWBNB factory and the yield factory’s eight-decimal tvUSDT asset. The operator was not a factory owner. No new contract implementation was required.
+- The walkthrough used the website adapter’s planner, preflight and receipt extraction. A separate read-only run verified exact calldata, canonical receipt identity, creator, token/fee/collateral terms, pool bytecode and parent factory, fixed timings, receipt-NFT ownership and exact amounts at the receipt blocks. Historical verification used an archive-capable BSC Testnet RPC; the default endpoint had pruned older state.
+- **212 adapter tests and 35 web tests passed**, including 45 new adapter checks and 16 new form/funding-link checks. Production build, lint, inherited regressions, dependency checks and contract checks passed in [GitHub Actions run 36728380553](https://github.com/YieldShield/yieldshield-bnb-open-source/actions/runs/36728380553).
+- The live browser displayed five selectable protected assets, rejected excessive percentage precision, calculated the custom 7% + 0.5% + 1% fee split, and retained the new pool’s exact address and 7% share in funding review. Both new pools appeared in asset comparisons. Mobile checks at 390 pixels found no horizontal overflow. No browser-wallet transaction was signed during this verification.
+
+[Usage guide and reproducible check](BSC_POOL_CREATION.md) · [Public proof](https://bnb.yieldshield.ai/bsc-pool-creation-proof.json) · [Operator transaction journal](../contracts/deployments/bsc-testnet-pool-creation-check.json)
+
+## Hosting
+
+Application source is public commit `7e52ff8daca1c78def9507b64d98a1c8120a8e0c`, synchronized to deployment commit `eb7a894`. Vercel deployment `dpl_5Myg9f47vnG8oJh3o21PaqbQoCUh` was verified Ready and assigned to `bnb.yieldshield.ai`. The following evidence/documentation commit also publishes the new proof JSON. These are internal testnet checks, not an independent audit or mainnet launch.
+
+---
+
 # Yield-asset extension — 30 September 2026
 
 Four researched references now have separate synthetic BSC Testnet markets: Lista slisBNB (`tSlisBNB`), Binance WBETH (`tWBETH`), Ethena sUSDe (`tsUSDe`) and Venus Core vUSDT (`tvUSDT`). The original `tWBNB` market remains available. Each new market supports TestUSDC trading, protected deposits and both withdrawal paths. The app includes locally hosted, attributed token artwork, category filters, mechanism explanations and asset-specific amounts. This is a testnet demonstration of the user flow, not an integration that stakes or acquires the real assets.

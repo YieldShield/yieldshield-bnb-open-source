@@ -1,0 +1,158 @@
+{
+  "schemaVersion": 1,
+  "chainId": 97,
+  "genesisHash": "0x6d3c66c5357ec91d5c43af47e234a939b22557cbb552dc45bebbceeed90fbe34",
+  "status": "complete",
+  "actor": "0x045f932e49fb395862794acEc3FCCc118BE2f27e",
+  "scope": "Internal operator walkthrough through adapter plans. Two synthetic test-token pools created, funded and used; not a third-party audit. Test tokens have no real value.",
+  "limitations": "Position ownership and exact deposit amounts are verified at each canonical receipt block. This does not promise current balances, availability, yield or safety.",
+  "maximumFeeBudgetWei": "20000000000000000",
+  "pools": [
+    {
+      "symbol": "tWBNB",
+      "factory": "0xCFCe35b3Ea72AA7C48Fe743Be3DC38b7720d95ce",
+      "parameters": {
+        "protocolFeeBp": 100,
+        "maxTvlUsd": "1000000000000000",
+        "minimumPoolTime": 60,
+        "unlockDuration": 120,
+        "shieldTransferLock": 86400,
+        "protectorTransferLock": 2419200,
+        "shieldedToken": "0x05c674Bbc8930a580fCc5924060807C6153FeA6C",
+        "backingToken": "0x7Fc086DA704fC345f99817Afe0CBd3C649E3266C",
+        "commissionRateBp": 700,
+        "poolFeeBp": 50,
+        "collateralRatioBp": 17500,
+        "creationBondAmount": "500000000"
+      },
+      "created": {
+        "poolId": "0x0a342360568A984662443D946855Af60a8763e72",
+        "transaction": "0xa5902a1953a51fe278ef42837fac5dfe8c96067e4b56a21c7424b0b40209def6",
+        "blockNumber": "134069405",
+        "blockHash": "0x3d3b40538ab9517e46a9f4ef44f1bac4aa45af4d75a8e9c1e2176edeb25fa85e"
+      },
+      "funding": {
+        "positionId": "0x0a342360568A984662443D946855Af60a8763e72-p-0",
+        "nft": "0x95C9778b2e3695EAF2D377dE7B8Cc93081b5da49",
+        "tokenId": "0",
+        "amount": "1000000000",
+        "transaction": "0x894b23dd5d864a153e51da1e7a6b3812ca33894a6bd19cd0c8976a5f6dad073e",
+        "blockNumber": "134069451",
+        "blockHash": "0xa3259b5ca44f1f64354ee2263eff8cfd96c4b49c9023a18da0dd1ab282e4ec61"
+      },
+      "protectedPosition": {
+        "positionId": "0x0a342360568A984662443D946855Af60a8763e72-s-0",
+        "nft": "0xf7E911Fe47969366D038b0f402AF1fF7233b50Ce",
+        "tokenId": "0",
+        "amount": "10000000000000000",
+        "transaction": "0x33d74ecd2438b160e2005b3e7dfbdd200a328af64683162ccfe348cb4971f646",
+        "blockNumber": "134069502",
+        "blockHash": "0x89e082c06a47354f7d5b38077b7db08d228262880e61194a6b0a557fa5cc5e27"
+      }
+    },
+    {
+      "symbol": "tvUSDT",
+      "factory": "0xE451957815949CE33c5C3aa1873138F38F20eC2C",
+      "parameters": {
+        "protocolFeeBp": 100,
+        "maxTvlUsd": "1000000000000000",
+        "minimumPoolTime": 60,
+        "unlockDuration": 120,
+        "shieldTransferLock": 86400,
+        "protectorTransferLock": 2419200,
+        "shieldedToken": "0x40B73bA38F51C100d9dC6D33632B6aCa4E2989E1",
+        "backingToken": "0x7Fc086DA704fC345f99817Afe0CBd3C649E3266C",
+        "commissionRateBp": 700,
+        "poolFeeBp": 50,
+        "collateralRatioBp": 17500,
+        "creationBondAmount": "500000000"
+      },
+      "created": {
+        "poolId": "0x6838795E1006Df0A01478fCFA5a4252CE3E68E1d",
+        "transaction": "0x2fd79aa5dec830ae0632466eff58df10d09b4375ea7c74d19d68eec7dabea32c",
+        "blockNumber": "134069570",
+        "blockHash": "0xc1806e489320b54cc394e9fb5fe4dcd2f9b6197347f53ab57b69731deecaeb70"
+      },
+      "funding": {
+        "positionId": "0x6838795E1006Df0A01478fCFA5a4252CE3E68E1d-p-0",
+        "nft": "0x31840188c5A58644D888bd3309D09e450cC2D3E2",
+        "tokenId": "0",
+        "amount": "1000000000",
+        "transaction": "0x51d77a02063423afb29b2bce2129cdb4596f394696f37667ccf3ee846055cc14",
+        "blockNumber": "134069621",
+        "blockHash": "0x98dbeac4e4204fb13696c0d0f57bf9d380b29af7bcaa3da26611e0f6470f045a"
+      },
+      "protectedPosition": {
+        "positionId": "0x6838795E1006Df0A01478fCFA5a4252CE3E68E1d-s-0",
+        "nft": "0xD11b95ffC16f83e5425489bFc4fCB02DC8286d8F",
+        "tokenId": "0",
+        "amount": "1000000000",
+        "transaction": "0x4e29e9b2258b6c6ef79fdb47013c2881013658c3c063dc22194404db081c99c6",
+        "blockNumber": "134069672",
+        "blockHash": "0xb35cb33cc6d3e142731bd583161a0701fb7487a05ae5a31814a394f8d5c73878"
+      }
+    }
+  ],
+  "transactions": [
+    {
+      "id": "tWBNB:create:0",
+      "hash": "0x66d8d2f4ed3a7e76dc90df0d79c588a65f70c435e393a92078931c89ec8b2fdf",
+      "explorerUrl": "https://testnet.bscscan.com/tx/0x66d8d2f4ed3a7e76dc90df0d79c588a65f70c435e393a92078931c89ec8b2fdf"
+    },
+    {
+      "id": "tWBNB:create:1",
+      "hash": "0xa5902a1953a51fe278ef42837fac5dfe8c96067e4b56a21c7424b0b40209def6",
+      "explorerUrl": "https://testnet.bscscan.com/tx/0xa5902a1953a51fe278ef42837fac5dfe8c96067e4b56a21c7424b0b40209def6"
+    },
+    {
+      "id": "tWBNB:fund:0",
+      "hash": "0xc1c8df015bf0cabe684caf3197c70bdb690e9c9acb79d4857cf7fa267764bf34",
+      "explorerUrl": "https://testnet.bscscan.com/tx/0xc1c8df015bf0cabe684caf3197c70bdb690e9c9acb79d4857cf7fa267764bf34"
+    },
+    {
+      "id": "tWBNB:fund:1",
+      "hash": "0x894b23dd5d864a153e51da1e7a6b3812ca33894a6bd19cd0c8976a5f6dad073e",
+      "explorerUrl": "https://testnet.bscscan.com/tx/0x894b23dd5d864a153e51da1e7a6b3812ca33894a6bd19cd0c8976a5f6dad073e"
+    },
+    {
+      "id": "tWBNB:protect:0",
+      "hash": "0x3b02e1195b790ccaee9605e9f414cb582c393f3bd4343f88aa22a53ed9c9fc0d",
+      "explorerUrl": "https://testnet.bscscan.com/tx/0x3b02e1195b790ccaee9605e9f414cb582c393f3bd4343f88aa22a53ed9c9fc0d"
+    },
+    {
+      "id": "tWBNB:protect:1",
+      "hash": "0x33d74ecd2438b160e2005b3e7dfbdd200a328af64683162ccfe348cb4971f646",
+      "explorerUrl": "https://testnet.bscscan.com/tx/0x33d74ecd2438b160e2005b3e7dfbdd200a328af64683162ccfe348cb4971f646"
+    },
+    {
+      "id": "tvUSDT:create:0",
+      "hash": "0x2f362a0a5ea5013fa3ef0ed04750af777419e993d54115438b6896f099d1d9ad",
+      "explorerUrl": "https://testnet.bscscan.com/tx/0x2f362a0a5ea5013fa3ef0ed04750af777419e993d54115438b6896f099d1d9ad"
+    },
+    {
+      "id": "tvUSDT:create:1",
+      "hash": "0x2fd79aa5dec830ae0632466eff58df10d09b4375ea7c74d19d68eec7dabea32c",
+      "explorerUrl": "https://testnet.bscscan.com/tx/0x2fd79aa5dec830ae0632466eff58df10d09b4375ea7c74d19d68eec7dabea32c"
+    },
+    {
+      "id": "tvUSDT:fund:0",
+      "hash": "0x0ae8e4e5f89cd46c754fd35b23ec250de530158e5fb8664f02f660f9033d64dc",
+      "explorerUrl": "https://testnet.bscscan.com/tx/0x0ae8e4e5f89cd46c754fd35b23ec250de530158e5fb8664f02f660f9033d64dc"
+    },
+    {
+      "id": "tvUSDT:fund:1",
+      "hash": "0x51d77a02063423afb29b2bce2129cdb4596f394696f37667ccf3ee846055cc14",
+      "explorerUrl": "https://testnet.bscscan.com/tx/0x51d77a02063423afb29b2bce2129cdb4596f394696f37667ccf3ee846055cc14"
+    },
+    {
+      "id": "tvUSDT:protect:0",
+      "hash": "0x5e788e9f4de5ba6c5730ddbc95c8fdb92a5e6647e60fef4c3b7ad1279c9357c0",
+      "explorerUrl": "https://testnet.bscscan.com/tx/0x5e788e9f4de5ba6c5730ddbc95c8fdb92a5e6647e60fef4c3b7ad1279c9357c0"
+    },
+    {
+      "id": "tvUSDT:protect:1",
+      "hash": "0x4e29e9b2258b6c6ef79fdb47013c2881013658c3c063dc22194404db081c99c6",
+      "explorerUrl": "https://testnet.bscscan.com/tx/0x4e29e9b2258b6c6ef79fdb47013c2881013658c3c063dc22194404db081c99c6"
+    }
+  ]
+}

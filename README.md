@@ -5,6 +5,7 @@ A BSC Testnet trading and token-protection demo for BNB staking, ETH staking, st
 - Website: https://bnb.yieldshield.ai
 - Trade test tokens: https://bnb.yieldshield.ai/trade
 - Get testnet protection: https://bnb.yieldshield.ai/markets
+- Create a testnet pool: https://bnb.yieldshield.ai/create-pool
 - Explore mainnet reference scenarios: https://bnb.yieldshield.ai/learn/scenarios
 - Claim free test tokens: https://bnb.yieldshield.ai/test-tokens
 - Operator: Hawig Ventures UG (haftungsbeschränkt), Germany
@@ -18,13 +19,15 @@ A BSC Testnet trading and token-protection demo for BNB staking, ETH staking, st
 
 ## What works
 
-On BSC Testnet (chain 97), connect an EVM wallet, claim free demo tokens, buy or sell tWBNB, tSlisBNB, tWBETH, tsUSDe and tvUSDT against TestUSDC, open a protected position, provide backing and view positions. The deployed exchanges and protection pools have been exercised together by a dedicated operator wallet. An independent user browser-wallet signing session has not yet been recorded. See the [release evidence](docs/BNB_RELEASE.md).
+On BSC Testnet (chain 97), connect an EVM wallet, claim free demo tokens, buy or sell tWBNB, tSlisBNB, tWBETH, tsUSDe and tvUSDT against TestUSDC, open a protected position, provide backing, create a pool and view positions. The deployed exchanges and protection pools have been exercised together by a dedicated operator wallet. An independent user browser-wallet signing session has not yet been recorded. See the [release evidence](docs/BNB_RELEASE.md).
+
+Pool creation supports all five protected assets with TestUSDC backing. Choose the backers’ gain share (1–50%), creator gain fee (0–20%) and collateral ratio (100–500%, subject to the current backing-token floor). The protocol gain fee is 1%. Both factories currently require a **500 TestUSDC creation bond**, held separately from pool backing. After creation, use **Fund this pool** to add collateral to that exact pool. New pools appear in Provide collateral and in the asset’s pool comparison on Markets. Factory identity, live settings, the required bond and wallet balance are checked before signing; the receipt must match the reviewed terms. See the [pool creation guide](docs/BSC_POOL_CREATION.md).
 
 Separately, explore WBNB, BTCB, Binance-Peg ETH and CAKE mainnet reference prices without a wallet at `/learn/scenarios`. Change token quantity, market movement and available collateral to compare modeled outcomes. These references do not price the synthetic testnet pool or serve as executable swap quotes.
 
 The reference-data API reads Chainlink feeds on BNB Smart Chain (chain 56). WBNB uses BNB/USD, BTCB uses BTC/USD and Binance-Peg ETH uses ETH/USD; those references do not measure wrapper or peg risk. The browser stops calculations when observations expire or the service fails.
 
-**Protection contracts are deployed on BSC Testnet (chain 97).** Five TestUSDC-backed protection pools support protected deposits and both withdrawal paths. The original tWBNB market retains its synthetic BNB price cycle; a separate four-asset oracle illustrates accelerated yield growth and downside shocks. A six-token dispenser supplies the test assets, and funded exchanges enforce per-asset trade limits and a reviewed payment/proceeds bound. All six tokens are fixed-supply and have no redeemable value. There is no real staking, protocol yield, redemption or acquisition in these demos. Mainnet references remain read only.
+**Protection contracts are deployed on BSC Testnet (chain 97).** Five seeded TestUSDC-backed protection pools support protected deposits and both withdrawal paths; users can create additional pools. The original tWBNB market retains its synthetic BNB price cycle; a separate four-asset oracle illustrates accelerated yield growth and downside shocks. A six-token dispenser supplies the test assets, and funded exchanges enforce per-asset trade limits and a reviewed payment/proceeds bound. All six tokens are fixed-supply and have no redeemable value. There is no real staking, protocol yield, redemption or acquisition in these demos. Mainnet references remain read only.
 
 The four new references are Lista slisBNB, Binance WBETH, Ethena sUSDe and Venus Core vUSDT. [Research and primary sources](docs/bnb-yield-assets.md) explain the selection, verified mainnet addresses, risks and alternatives. Local token logos include [provenance and third-party notices](apps/web/public/assets/tokens/ATTRIBUTION.md). The research catalog is display-only; wallet actions use the independently verified chain-97 registry.
 
