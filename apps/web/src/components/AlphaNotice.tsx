@@ -1,8 +1,28 @@
 import { protocolDeployed } from "@/chain/adapter";
+import { useLayoutEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 export function AlphaNotice() {
+  const noticeRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const notice = noticeRef.current;
+    if (!notice) return;
+    const updateHeight = () => {
+      document.documentElement.style.setProperty("--alpha-notice-height", `${notice.getBoundingClientRect().height}px`);
+    };
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(notice);
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty("--alpha-notice-height");
+    };
+  }, []);
+
   return (
-    <div className="border-b border-brand/20 bg-brand-tint px-4 py-2.5 text-center text-[12px] leading-relaxed text-brand-deep">
+    <div
+      ref={noticeRef}
+      className="sticky top-0 z-40 border-b border-brand/20 bg-brand-tint px-4 py-2.5 text-center text-[12px] leading-relaxed text-brand-deep"
+    >
       <strong>BNB Chain testnet prototype.</strong> Free demo tokens · Synthetic protection prices · No real deposits.{" "}
       <Link to="/risks" className="font-bold underline underline-offset-2">
         About the risks

@@ -26,8 +26,13 @@ export function Shell() {
       <Sidebar />
       <main className="mx-auto w-full max-w-[760px] flex-1 px-4 pb-28 pt-5 md:max-w-[920px] md:px-10 md:pb-12 md:pt-10">
         <div className="mb-7 flex items-center justify-between gap-3 md:hidden">
-          <Link to="/welcome" aria-label="YieldShield home"><Wordmark size={24} /></Link>
-          <Link to={address ? "/account" : "/connect?next=%2Ftrade"} className="rounded-input bg-ink px-3 py-2.5 text-[12px] font-bold text-white">
+          <Link to="/welcome" aria-label="YieldShield home">
+            <Wordmark size={24} />
+          </Link>
+          <Link
+            to={address ? "/account" : "/connect?next=%2Ftrade"}
+            className="rounded-input bg-ink px-3 py-2.5 text-[12px] font-bold text-white"
+          >
             {address ? shortAddress(address) : "Connect"}
           </Link>
         </div>
@@ -42,38 +47,51 @@ function Sidebar() {
   const navigate = useNavigate();
   const { walletName, address } = useWalletConnection();
   return (
-    <aside className="sticky top-0 hidden h-screen w-[248px] shrink-0 flex-col border-r border-hairline bg-surface px-5 py-6 md:flex">
-      <button onClick={() => navigate("/welcome")} className="mb-8 text-left">
-        <Wordmark />
-      </button>
-      <nav className="flex flex-col gap-1">
-        {NAV.map(({ to, label, Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 rounded-input px-3.5 py-2.5 text-[14.5px] font-semibold transition-colors",
-                isActive ? "bg-ink text-white" : "text-body hover:bg-subtle-2",
-              )
-            }
-          >
-            <Icon className="h-[21px] w-[21px]" />
-            {label}
-          </NavLink>
-        ))}
-      </nav>
+    <aside className="sticky top-[var(--alpha-notice-height,0px)] hidden h-[calc(100dvh-var(--alpha-notice-height,0px))] w-[248px] shrink-0 flex-col overflow-hidden border-r border-hairline bg-surface px-5 py-6 md:flex">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain pb-2">
+        <button onClick={() => navigate("/welcome")} className="mb-8 shrink-0 text-left">
+          <Wordmark />
+        </button>
+        <nav aria-label="Main navigation" className="flex shrink-0 flex-col gap-1">
+          {NAV.map(({ to, label, Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 rounded-input px-3.5 py-2.5 text-[14.5px] font-semibold transition-colors",
+                  isActive ? "bg-ink text-white" : "text-body hover:bg-subtle-2",
+                )
+              }
+            >
+              <Icon className="h-[21px] w-[21px]" />
+              {label}
+            </NavLink>
+          ))}
+        </nav>
 
-      <div className="mt-auto flex flex-col gap-3">
-        <Link to="/test-tokens" className="rounded-input bg-brand-tint px-3.5 py-3 text-[13px] font-bold text-brand-deep">
-          Get free test tokens ↗
-        </Link>
-        <Link to="/how-it-works" className="px-3.5 text-[13px] font-semibold text-body hover:text-ink">How it works</Link>
-        <Link to="/learn/scenarios" className="px-3.5 text-[13px] font-semibold text-body hover:text-ink">Explore mainnet scenarios</Link>
-        <Link to="/testnet" className="px-3.5 text-[13px] font-semibold text-body hover:text-ink">Testnet status</Link>
-        <HealthCard />
-        <LegalLinks />
+        <div className="mt-auto flex shrink-0 flex-col gap-3 pt-6">
+          <Link
+            to="/test-tokens"
+            className="rounded-input bg-brand-tint px-3.5 py-3 text-[13px] font-bold text-brand-deep"
+          >
+            Get free test tokens ↗
+          </Link>
+          <Link to="/how-it-works" className="px-3.5 text-[13px] font-semibold text-body hover:text-ink">
+            How it works
+          </Link>
+          <Link to="/learn/scenarios" className="px-3.5 text-[13px] font-semibold text-body hover:text-ink">
+            Explore mainnet scenarios
+          </Link>
+          <Link to="/testnet" className="px-3.5 text-[13px] font-semibold text-body hover:text-ink">
+            Testnet status
+          </Link>
+          <HealthCard />
+          <LegalLinks />
+        </div>
+      </div>
+      <div className="shrink-0 pt-3">
         <WalletChip
           onClick={() => navigate("/connect")}
           name={walletName ?? undefined}
@@ -112,7 +130,7 @@ function WalletChip({ name, address, onClick }: { name?: string; address?: strin
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-2.5 rounded-input border border-hairline px-3.5 py-2.5 text-left hover:bg-subtle-2"
+      className="flex w-full items-center gap-2.5 rounded-input border border-hairline px-3.5 py-2.5 text-left hover:bg-subtle-2"
     >
       <span className="h-7 w-7 rounded-pill bg-wallet-phantom" />
       <span className="min-w-0 flex-1">
