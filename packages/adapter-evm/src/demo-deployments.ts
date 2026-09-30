@@ -9,7 +9,26 @@ export type DemoDeployment = {
   oracleCodehash: Hash;
   quoteToken: Address;
   quoteTokenCodehash: Hash;
-  assets: readonly [{ token: Address; codehash: Hash; symbol: "tWBNB"; name: string; decimals: 18 }];
+  /** All assets in oracle enumeration order; independently verified after deployment. */
+  assets: readonly DemoAssetDeployment[];
+  model?: "price-cycle" | "accelerated-yield";
+  cycleSeconds?: bigint;
+  epoch?: bigint;
+  feeBps?: bigint;
+  maxStockAmount?: bigint;
+};
+
+export type DemoAssetDeployment = {
+  token: Address;
+  codehash: Hash;
+  symbol: string;
+  name: string;
+  decimals: number;
+  basePriceUsd8?: bigint;
+  maxAmount?: bigint;
+  /** Accelerated synthetic yield per cycle; never a live protocol APY. */
+  demoYieldBpsPerCycle?: bigint;
+  downsideBps?: bigint;
 };
 
 export const DEMO_DEPLOYMENTS: Readonly<Partial<Record<97, DemoDeployment>>> = {
@@ -32,3 +51,11 @@ export const DEMO_DEPLOYMENTS: Readonly<Partial<Record<97, DemoDeployment>>> = {
     ],
   },
 };
+
+/** Populated only after sealed receipt/runtime verification of the separate yield demo deployment. */
+export const YIELD_DEMO_DEPLOYMENTS: Readonly<Partial<Record<97, DemoDeployment>>> = {};
+
+export function demoDeploymentsFor(chainId: number): readonly DemoDeployment[] {
+  if (chainId !== 97) return [];
+  return [DEMO_DEPLOYMENTS[97], YIELD_DEMO_DEPLOYMENTS[97]].filter((item): item is DemoDeployment => !!item);
+}

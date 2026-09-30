@@ -8,6 +8,7 @@ export const demoExchangeAbi = parseAbi([
   "function quoteToken() view returns (address)",
   "function feeBps() view returns (uint256)",
   "function maxAssetAmount(address) view returns (uint256)",
+  "function assetScale(address) view returns (uint256)",
   "function maxStockAmount() view returns (uint256)",
   "function supportedStock(address) view returns (bool)",
   "event Swapped(address indexed trader, address indexed stock, bool buy, uint256 stockAmount, uint256 usdcAmount, uint256 feeAmount)",
@@ -21,4 +22,7 @@ export const demoOracleAbi = parseAbi([
   "function demoTokens(uint256) view returns (address)",
   "function cycleSeconds() view returns (uint64)",
   "function basePrice(address token) view returns (uint256)",
+  "function epoch() view returns (uint64)",
+  "function demoYieldBpsPerCycle(address token) view returns (uint256)",
+  "function downsideBps(address token) view returns (uint256)",
 ]);

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Address, PublicClient } from "viem";
+import { keccak256, type Address, type PublicClient } from "viem";
 import { readFaucetStatus } from "../src/faucet";
 const faucet = "0x0000000000000000000000000000000000000001" as Address,
   recipient = "0x0000000000000000000000000000000000000002" as Address;
@@ -161,4 +161,14 @@ describe("BSC Testnet test-token eligibility", () => {
     f.state.next = BigInt(now + 1);
     expect((await f.read()).ready).toBe(false);
   });
+});
+
+it("pins a newly published dispenser runtime as well as its exact token inventory", async () => {
+  const f = fixture();
+  await expect(readFaucetStatus(f.client, faucet, recipient, [token], keccak256("0x6000"))).resolves.toMatchObject({
+    ready: true,
+  });
+  await expect(readFaucetStatus(f.client, faucet, recipient, [token], keccak256("0x6001"))).rejects.toThrow(
+    "code differs",
+  );
 });

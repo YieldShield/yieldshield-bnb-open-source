@@ -6,7 +6,8 @@
 import { createPublicClient, http, zeroAddress, type Address, type Chain, type PublicClient } from "viem";
 import type { ChainAdapter, ChainInfo } from "@yieldshield/core";
 import { DEPLOYMENTS } from "./deployments.js";
-import { createReader } from "./reader.js";
+import { ADDITIONAL_DEPLOYMENTS, type EvmFaucetDeployment } from "./yield-deployments.js";
+import { createCombinedReader } from "./combined-reader.js";
 
 export type EvmAdapterConfig = {
   /** viem chain definition (see chains.ts for Robinhood mainnet/testnet). */
@@ -26,7 +27,13 @@ export type EvmAdapter = ChainAdapter & {
   chain: Chain;
   rpcUrl: string;
   publicClient: PublicClient;
-  addresses: { factory: Address; compositeOracle: Address; faucet?: Address };
+  addresses: {
+    factory: Address;
+    factories?: readonly Address[];
+    compositeOracle: Address;
+    faucet?: Address;
+    faucets?: readonly EvmFaucetDeployment[];
+  };
 };
 
 export function createEvmAdapter(config: EvmAdapterConfig): EvmAdapter {
@@ -34,8 +41,27 @@ export function createEvmAdapter(config: EvmAdapterConfig): EvmAdapter {
   const factory = config.factory ?? deployment?.factory;
   const compositeOracle = config.compositeOracle ?? deployment?.compositeOracle;
   const rpcUrl = config.rpcUrl ?? config.chain.rpcUrls.default.http[0]!;
-  const publicClient = createPublicClient({ chain: config.chain, transport: http(rpcUrl) });
+  const publicClient = createPublicClient({
+    chain: config.chain,
+    transport: http(rpcUrl),
+    // Aggregate public getters at their requested block. Account-specific simulations retain their caller.
+    batch: config.chain.id === 97 ? { multicall: true } : undefined,
+  });
   const faucet = config.faucetAddress === null ? undefined : (config.faucetAddress ?? deployment?.faucet);
+
+  // Explicit protocol overrides cannot acquire access to additional published deployments.
+  const additional = config.factory || config.compositeOracle ? [] : (ADDITIONAL_DEPLOYMENTS[config.chain.id] ?? []);
+  const protocols =
+    factory && compositeOracle
+      ? [{ factory, compositeOracle, deploymentBlock: deployment?.deploymentBlock }, ...additional]
+      : [];
+  const faucets: EvmFaucetDeployment[] =
+    config.faucetAddress === null
+      ? []
+      : [
+          ...(faucet ? [{ address: faucet, label: "Original test tokens" }] : []),
+          ...additional.flatMap((source) => (source.faucetProof ? [source.faucetProof] : [])),
+        ];
 
   const explorer = config.chain.blockExplorers?.default.url;
   const info: ChainInfo = {
@@ -60,7 +86,7 @@ export function createEvmAdapter(config: EvmAdapterConfig): EvmAdapter {
     info,
     reader:
       factory && compositeOracle
-        ? createReader(publicClient, { factory, compositeOracle, deploymentBlock: deployment?.deploymentBlock })
+        ? createCombinedReader(publicClient, protocols)
         : new Proxy({} as ChainAdapter["reader"], {
             get: () => async () => {
               throw new Error(
@@ -71,6 +97,12 @@ export function createEvmAdapter(config: EvmAdapterConfig): EvmAdapter {
     chain: config.chain,
     rpcUrl,
     publicClient,
-    addresses: { factory: factory ?? zeroAddress, compositeOracle: compositeOracle ?? zeroAddress, faucet },
+    addresses: {
+      factory: factory ?? zeroAddress,
+      factories: protocols.map((source) => source.factory),
+      compositeOracle: compositeOracle ?? zeroAddress,
+      faucet,
+      faucets,
+    },
   };
 }

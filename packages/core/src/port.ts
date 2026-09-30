@@ -57,6 +57,12 @@ export type DemoMarket = {
     decimals: number;
     priceUsd8: bigint;
     maxAmount: bigint;
+    /** A combined market can route each asset to a different reviewed venue. */
+    exchange?: string;
+    feeBps?: number;
+    demoYieldBpsPerCycle?: number;
+    demoCycleSeconds?: number;
+    demoModel?: "price-cycle" | "accelerated-yield";
   }>;
   quoteToken: { token: TokenId; symbol: "TestUSDC"; decimals: 6 };
 };
@@ -164,7 +170,7 @@ export type TxIntent =
   | { kind: "createPool"; params: CreatePoolIntentParams }
   /** Test-token drip from an ON-CHAIN faucet (testnets with one). Chains without an on-chain
    * faucet implement the faucet capability off-band instead (see FaucetApi). */
-  | { kind: "faucetDrip"; recipient?: AccountId };
+  | { kind: "faucetDrip"; recipient?: AccountId; faucet?: string };
 
 export type TxResult = {
   txId: TxId;
@@ -230,8 +236,9 @@ export type FaucetStatus = {
 export type FaucetApi = {
   enabled: boolean;
   address?: string;
-  status?: (recipient: AccountId) => Promise<FaucetStatus>;
-  drip: (recipient: AccountId) => Promise<FaucetResult>;
+  sources?: ReadonlyArray<{ address: string; label: string }>;
+  status?: (recipient: AccountId, faucet?: string) => Promise<FaucetStatus>;
+  drip: (recipient: AccountId, faucet?: string) => Promise<FaucetResult>;
 };
 
 // --- Wallet connection ----------------------------------------------------------------

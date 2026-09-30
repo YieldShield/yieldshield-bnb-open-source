@@ -3,7 +3,7 @@ import { encodeAbiParameters, encodeEventTopics, keccak256, type Address, type P
 import { demoExchangeAbi } from "../src/abis/demoExchange";
 import { readDemoMarket, readDemoTradeQuote, assertDemoTrade } from "../src/demo-trading";
 import { planIntent } from "../src/intents";
-import { DEMO_DEPLOYMENTS, type DemoDeployment } from "../src/demo-deployments";
+import { DEMO_DEPLOYMENTS, YIELD_DEMO_DEPLOYMENTS, type DemoDeployment } from "../src/demo-deployments";
 
 const address = (n: number) => ("0x" + n.toString(16).padStart(40, "0")) as Address;
 const now = 1_800_000_000;
@@ -31,7 +31,8 @@ const config: DemoDeployment = {
   ],
 };
 
-function fixture() {
+function fixture(configOverride: DemoDeployment = config) {
+  const config = configOverride;
   const state = {
     chain: 97,
     code: "valid",
@@ -49,6 +50,13 @@ function fixture() {
     wallet: 10n ** 24n,
     native: 1n,
     allowance: 0n,
+    wrongOrder: false,
+    wrongScale: false,
+    wrongYield: false,
+    wrongExchangeOracle: false,
+    prices: Object.fromEntries(
+      config.assets.map((asset) => [asset.token, asset.basePriceUsd8 ?? 600n * 10n ** 8n]),
+    ) as Record<string, bigint>,
   };
   const client = {
     getChainId: async () => state.chain,
@@ -67,39 +75,66 @@ function fixture() {
     getBalance: async () => state.native,
     readContract: async (o: { address: Address; functionName: string; args?: unknown[]; blockNumber?: bigint }) => {
       if (o.blockNumber !== undefined) expect(o.blockNumber).toBe(10n);
+      const asset =
+        config.assets.find(
+          (entry) =>
+            entry.token.toLowerCase() ===
+            (o.functionName === "decimals" ||
+            o.functionName === "symbol" ||
+            o.functionName === "name" ||
+            o.functionName === "isSyntheticDemo"
+              ? o.address
+              : String(o.args?.[0])
+            ).toLowerCase(),
+        ) ?? config.assets[0]!;
       switch (o.functionName) {
         case "oracle":
-          return config.oracle;
+          return state.wrongExchangeOracle ? address(99) : config.oracle;
         case "quoteToken":
           return config.quoteToken;
         case "feeBps":
           return state.fee;
         case "maxStockAmount":
+          return config.maxStockAmount ?? 25n * unit;
         case "maxAssetAmount":
-          return 25n * unit;
+          return asset.maxAmount ?? 25n * unit;
         case "supportedStock":
           return state.supported;
         case "isDemo":
         case "isSyntheticDemo":
           return state.synthetic;
         case "tokenCount":
-          return 1n;
+          return BigInt(config.assets.length);
         case "demoTokens":
-          return config.assets[0].token;
+          return config.assets[state.wrongOrder ? 0 : Number(o.args?.[0])]?.token;
         case "cycleSeconds":
           return state.cycle;
         case "basePrice":
-          return 600n * 10n ** 8n;
+          return asset.basePriceUsd8 ?? 600n * 10n ** 8n;
+        case "epoch":
+          return config.epoch;
+        case "demoYieldBpsPerCycle":
+          return (asset.demoYieldBpsPerCycle ?? 0n) + (state.wrongYield ? 1n : 0n);
+        case "downsideBps":
+          return asset.downsideBps;
+        case "assetScale":
+          return 10n ** BigInt(asset.decimals) * (state.wrongScale ? 10n : 1n);
         case "decimals":
-          return o.address === config.quoteToken ? 6 : 18;
+          return o.address === config.quoteToken ? 6 : asset.decimals;
         case "symbol":
-          return o.address === config.quoteToken ? "TestUSDC" : "tWBNB";
+          return o.address === config.quoteToken ? "TestUSDC" : asset.symbol;
         case "name":
-          return config.assets[0].name;
+          return asset.name;
         case "getPrice":
-          return state.price;
-        case "quote":
-          return [o.args?.[1] ? state.usdBuy : state.usdSell, 1_800_000n, state.quotePrice];
+          return config.model === "accelerated-yield" ? state.prices[asset.token] : state.price;
+        case "quote": {
+          if (config.model !== "accelerated-yield")
+            return [o.args?.[1] ? state.usdBuy : state.usdSell, 1_800_000n, state.quotePrice];
+          const price = state.prices[asset.token]!;
+          const notional = (BigInt(String(o.args?.[2])) * price) / (10n ** BigInt(asset.decimals) * 100n);
+          const fee = (notional * 30n) / 10_000n;
+          return [o.args?.[1] ? notional + fee : notional - fee, fee, price];
+        }
         case "balanceOf":
           return o.args?.[0] === config.exchange ? state.inventory : state.wallet;
         case "allowance":
@@ -119,6 +154,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   delete (DEMO_DEPLOYMENTS as Record<number, DemoDeployment>)[97];
+  delete (YIELD_DEMO_DEPLOYMENTS as Record<number, DemoDeployment>)[97];
   vi.useRealTimers();
 });
 
@@ -311,5 +347,169 @@ describe("BSC Testnet token trading", () => {
     expect(() => plan.extract?.({ logs: [event(address(99), usdBuy)] } as never)).toThrow("receipt");
     expect(() => plan.extract?.({ logs: [event(owner, usdBuy + 1n)] } as never)).toThrow("receipt");
     expect(() => plan.extract?.({ logs: [event(owner, usdBuy, address(88))] } as never)).toThrow("receipt");
+  });
+});
+
+const yieldConfig: DemoDeployment = {
+  ...config,
+  exchange: address(11),
+  oracle: address(12),
+  model: "accelerated-yield",
+  epoch: BigInt(now - 100),
+  assets: [
+    {
+      token: address(14),
+      codehash: keccak256("0x6003"),
+      symbol: "tSlisBNB",
+      name: "Synthetic staked BNB - no value",
+      decimals: 18,
+      basePriceUsd8: 600n * 10n ** 8n,
+      maxAmount: 25n * unit,
+      demoYieldBpsPerCycle: 20n,
+      downsideBps: 1500n,
+    },
+    {
+      token: address(15),
+      codehash: keccak256("0x6003"),
+      symbol: "tWBETH",
+      name: "Synthetic wrapped ETH - no value",
+      decimals: 18,
+      basePriceUsd8: 2000n * 10n ** 8n,
+      maxAmount: 10n * unit,
+      demoYieldBpsPerCycle: 15n,
+      downsideBps: 1500n,
+    },
+    {
+      token: address(16),
+      codehash: keccak256("0x6003"),
+      symbol: "tsUSDe",
+      name: "Synthetic staked USDe - no value",
+      decimals: 18,
+      basePriceUsd8: 110_000_000n,
+      maxAmount: 25_000n * unit,
+      demoYieldBpsPerCycle: 10n,
+      downsideBps: 1000n,
+    },
+    {
+      token: address(17),
+      codehash: keccak256("0x6003"),
+      symbol: "tvUSDT",
+      name: "Synthetic Venus USDT - no value",
+      decimals: 8,
+      basePriceUsd8: 2_000_000n,
+      maxAmount: 50_000n * 10n ** 8n,
+      demoYieldBpsPerCycle: 10n,
+      downsideBps: 1000n,
+    },
+  ],
+};
+
+describe("separate BSC yield demo venues", () => {
+  it("exposes all four verified assets with decimal-aware limits and synthetic model metadata", async () => {
+    const { client } = fixture(yieldConfig);
+    const market = await readDemoMarket(client, yieldConfig);
+    expect(market.assets.map((asset) => [asset.symbol, asset.decimals, asset.exchange, asset.maxAmount])).toEqual(
+      yieldConfig.assets.map((asset) => [asset.symbol, asset.decimals, yieldConfig.exchange, asset.maxAmount]),
+    );
+    expect(market.assets[3]).toMatchObject({
+      demoModel: "accelerated-yield",
+      demoYieldBpsPerCycle: 10,
+      demoCycleSeconds: 240,
+    });
+  });
+
+  it("selects only the reviewed exchange for each token, including eight-decimal vUSDT", async () => {
+    const { client } = fixture(yieldConfig);
+    Object.assign(YIELD_DEMO_DEPLOYMENTS, { 97: yieldConfig });
+    for (const asset of yieldConfig.assets) {
+      const size = 10n ** BigInt(asset.decimals);
+      const quote = await readDemoTradeQuote(client, { asset: asset.token, side: "buy", amount: size });
+      expect(quote).toMatchObject({ asset: asset.token, exchange: yieldConfig.exchange, outputAmount: size });
+      expect(quote.priceUsd8).toBe(asset.basePriceUsd8);
+      await expect(
+        readDemoTradeQuote(client, { asset: asset.token, side: "buy", amount: asset.maxAmount! + 1n }),
+      ).rejects.toThrow("trade limit");
+    }
+    await expect(
+      readDemoTradeQuote(client, { asset: config.assets[0]!.token, side: "buy", amount }, yieldConfig),
+    ).rejects.toThrow("reviewed");
+  });
+
+  it("rejects wrong asset ordering, model rate, decimal scale, and substituted exchange oracle", async () => {
+    for (const field of ["wrongOrder", "wrongYield", "wrongScale", "wrongExchangeOracle"] as const) {
+      const { client, state } = fixture(yieldConfig);
+      state[field] = true;
+      await expect(readDemoMarket(client, yieldConfig)).rejects.toThrow("reviewed deployment");
+    }
+  });
+
+  it("requires new assets to have explicit prices and limits in the published manifest", async () => {
+    const asset = yieldConfig.assets[3]!;
+    const invalid = { ...yieldConfig, assets: [{ ...asset, maxAmount: undefined }] };
+    await expect(readDemoMarket(fixture(invalid).client, invalid)).rejects.toThrow("invalid");
+  });
+
+  it("combines the existing WBNB and new yield venues without substituting their exchanges", async () => {
+    Object.assign(YIELD_DEMO_DEPLOYMENTS, { 97: yieldConfig });
+    const original = fixture();
+    const yields = fixture(yieldConfig);
+    const yieldAddresses = [
+      yieldConfig.exchange,
+      yieldConfig.oracle,
+      ...yieldConfig.assets.map((asset) => asset.token),
+    ];
+    const client = {
+      ...original.client,
+      getCode: (call: { address: Address }) =>
+        (yieldAddresses.includes(call.address) ? yields.client : original.client).getCode(call as never),
+      readContract: (call: { address: Address }) =>
+        (yieldAddresses.includes(call.address) ? yields.client : original.client).readContract(call as never),
+    } as PublicClient;
+    const market = await readDemoMarket(client);
+    expect(market.assets.map((asset) => asset.symbol)).toEqual(["tWBNB", "tSlisBNB", "tWBETH", "tsUSDe", "tvUSDT"]);
+    expect(market.assets[0]!.exchange).toBe(config.exchange);
+    expect(market.assets[4]!.exchange).toBe(yieldConfig.exchange);
+  });
+
+  it("binds approvals and swap receipts to the selected asset’s verified yield exchange", async () => {
+    Object.assign(YIELD_DEMO_DEPLOYMENTS, { 97: yieldConfig });
+    const { client } = fixture(yieldConfig);
+    const asset = yieldConfig.assets[3]!;
+    const size = 100_000_000n;
+    const intent = {
+      kind: "demoTrade" as const,
+      asset: asset.token,
+      side: "buy" as const,
+      amount: size,
+      limit: 20_100n,
+      deadline: BigInt(now + 120),
+    };
+    const plan = await planIntent(client, owner, { factory: address(8) }, intent);
+    expect(plan.steps[0]!.args).toEqual([yieldConfig.exchange, intent.limit]);
+    expect(plan.steps[1]!).toMatchObject({
+      address: yieldConfig.exchange,
+      args: [asset.token, true, size, intent.limit, intent.deadline],
+    });
+    const event = (token: Address, exchange: Address) => ({
+      address: exchange,
+      topics: encodeEventTopics({ abi: demoExchangeAbi, eventName: "Swapped", args: { trader: owner, stock: token } }),
+      data: encodeAbiParameters(
+        [{ type: "bool" }, { type: "uint256" }, { type: "uint256" }, { type: "uint256" }],
+        [true, size, 20_060n, 60n],
+      ),
+    });
+    expect(plan.extract!({ logs: [event(asset.token, yieldConfig.exchange)] } as never)).toEqual({});
+    expect(() => plan.extract!({ logs: [event(asset.token, config.exchange)] } as never)).toThrow("receipt");
+    expect(() => plan.extract!({ logs: [event(config.assets[0]!.token, yieldConfig.exchange)] } as never)).toThrow(
+      "receipt",
+    );
+  });
+
+  it("rejects ambiguous token routing before any chain reads or approvals", async () => {
+    Object.assign(YIELD_DEMO_DEPLOYMENTS, { 97: { ...yieldConfig, assets: config.assets } });
+    const { client } = fixture();
+    await expect(readDemoTradeQuote(client, { asset: config.assets[0]!.token, side: "buy", amount })).rejects.toThrow(
+      "ambiguous",
+    );
   });
 });

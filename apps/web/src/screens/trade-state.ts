@@ -43,7 +43,7 @@ export function demoQuoteMatches(
   if (!asset || request.amount <= 0n || request.amount > (asset.maxAmount ?? market.maxStockAmount)) return false;
   return (
     quote.chainId === 97 &&
-    same(quote.exchange, market.exchange) &&
+    same(quote.exchange, asset.exchange ?? market.exchange) &&
     same(quote.asset, request.asset) &&
     same(quote.owner, request.owner) &&
     quote.side === request.side &&

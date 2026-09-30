@@ -237,7 +237,12 @@ export async function sendEvmIntent(
   const plan = await planIntent(
     adapter.publicClient,
     owner,
-    { factory: adapter.addresses.factory, faucet: adapter.addresses.faucet },
+    {
+      factory: adapter.addresses.factory,
+      factories: adapter.addresses.factories,
+      faucet: adapter.addresses.faucet,
+      faucets: adapter.addresses.faucets,
+    },
     intent,
   );
   let lastReceipt: TransactionReceipt | null = null;

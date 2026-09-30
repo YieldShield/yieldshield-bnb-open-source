@@ -1,4 +1,13 @@
-import { erc20Abi, getAddress, zeroAddress, zeroHash, type Address, type PublicClient } from "viem";
+import {
+  erc20Abi,
+  getAddress,
+  keccak256,
+  zeroAddress,
+  zeroHash,
+  type Address,
+  type Hash,
+  type PublicClient,
+} from "viem";
 import { tokenFaucetAbi } from "./abis/tokenFaucet.js";
 
 export type EvmFaucetStatus = {
@@ -33,6 +42,7 @@ export async function readFaucetStatus(
   faucetAddress: Address,
   recipient: Address,
   expectedTokens?: readonly Address[],
+  expectedCodehash?: Hash,
 ): Promise<EvmFaucetStatus> {
   const address = getAddress(faucetAddress),
     owner = getAddress(recipient);
@@ -62,6 +72,11 @@ export async function readFaucetStatus(
     client.readContract({ address, abi: tokenFaucetAbi, functionName: "getAllTokens", blockNumber }),
   ]);
   requireState(code && code !== "0x", "The configured test-token dispenser has no contract.");
+  if (expectedCodehash)
+    requireState(
+      keccak256(code) === expectedCodehash,
+      "Test-token dispenser code differs from the reviewed deployment.",
+    );
   requireState(typeof nativeBalance === "bigint" && nativeBalance >= 0n, "Test BNB balance is unavailable.");
   requireState(Array.isArray(inventory) && inventory.length <= 64, "Test-token inventory is invalid.");
   const tokens = inventory.map((token) => getAddress(token));

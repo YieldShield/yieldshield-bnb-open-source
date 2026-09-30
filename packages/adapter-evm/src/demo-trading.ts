@@ -9,7 +9,7 @@ import {
   type PublicClient,
 } from "viem";
 import type { DemoMarket, DemoTradeQuote, DemoTradeRequest } from "@yieldshield/core";
-import { DEMO_DEPLOYMENTS, type DemoDeployment } from "./demo-deployments.js";
+import { demoDeploymentsFor, type DemoDeployment, type DemoAssetDeployment } from "./demo-deployments.js";
 import { demoExchangeAbi, demoOracleAbi } from "./abis/demoExchange.js";
 import { readSnapshot } from "./snapshot.js";
 
@@ -18,69 +18,84 @@ function requireState(value: unknown, message: string): asserts value {
   if (!value) throw new Error(message);
 }
 const validAddress = (value: string) => isAddress(value) && !same(value, zeroAddress);
-const MAX_AMOUNT = 25n * 10n ** 18n;
-const BASE_PRICE = 600n * 10n ** 8n;
+const LEGACY_MAX_AMOUNT = 25n * 10n ** 18n;
+const LEGACY_BASE_PRICE = 600n * 10n ** 8n;
 
-/** Only one independently reviewed BSC Testnet token pair can be executed. */
-export async function readDemoContext(client: PublicClient, deployment?: DemoDeployment) {
+const assetLimits = (asset: DemoAssetDeployment) => {
+  const legacy = asset.symbol === "tWBNB" && asset.decimals === 18;
+  return {
+    ...asset,
+    basePriceUsd8: asset.basePriceUsd8 ?? (legacy ? LEGACY_BASE_PRICE : 0n),
+    maxAmount: asset.maxAmount ?? (legacy ? LEGACY_MAX_AMOUNT : 0n),
+  };
+};
+
+function checkedDeployments(deployment?: DemoDeployment) {
+  const configs = deployment ? [deployment] : demoDeploymentsFor(97);
+  requireState(configs.length > 0, "Demo trading is being prepared.");
+  const tokens = configs.flatMap((config) => config.assets.map((asset) => asset.token.toLowerCase()));
+  requireState(new Set(tokens).size === tokens.length, "Demo assets have ambiguous exchange routing.");
+  return configs;
+}
+
+/** Verify every token and all immutable routing/model fields before exposing an executable venue. */
+export async function readDemoContext(client: PublicClient, deployment?: DemoDeployment, token?: string) {
   requireState((await client.getChainId()) === 97, "Demo trading requires BSC Testnet.");
-  const config = deployment ?? DEMO_DEPLOYMENTS[97];
-  requireState(config?.chainId === 97, "Demo trading is being prepared.");
+  const configs = checkedDeployments(deployment);
+  const config = token
+    ? configs.find((candidate) => candidate.assets.some((asset) => same(asset.token, token)))
+    : configs[0];
+  requireState(config?.chainId === 97, "Choose a reviewed BSC Testnet demo asset.");
+  const assets = config.assets.map(assetLimits);
+  const addresses = [config.exchange, config.oracle, config.quoteToken, ...assets.map((asset) => asset.token)];
   requireState(
-    config.assets.length === 1 &&
-      [config.exchange, config.oracle, config.quoteToken, config.assets[0]!.token].every(validAddress) &&
-      new Set([config.exchange, config.oracle, config.quoteToken, config.assets[0]!.token].map((a) => a.toLowerCase()))
-        .size === 4 &&
-      config.assets[0]!.symbol === "tWBNB" &&
-      config.assets[0]!.decimals === 18,
+    assets.length > 0 &&
+      assets.length <= 64 &&
+      addresses.every(validAddress) &&
+      new Set(addresses.map((address) => address.toLowerCase())).size === addresses.length &&
+      assets.every(
+        (asset) =>
+          Number.isInteger(asset.decimals) &&
+          asset.decimals >= 0 &&
+          asset.decimals <= 18 &&
+          asset.maxAmount > 0n &&
+          asset.maxAmount <= maxUint256 &&
+          asset.basePriceUsd8 > 0n,
+      ),
     "Demo deployment is invalid.",
   );
   const snapshot = await readSnapshot(client, "Demo trading");
   const blockNumber = snapshot.block.number;
-  const asset = config.assets[0]!;
+  const asset = token ? assets.find((candidate) => same(candidate.token, token))! : assets[0]!;
   const exchange = { address: config.exchange, abi: demoExchangeAbi, blockNumber } as const;
   const oracle = { address: config.oracle, abi: demoOracleAbi, blockNumber } as const;
   const [
     exchangeCode,
     oracleCode,
     quoteCode,
-    assetCode,
     exchangeOracle,
     exchangeQuote,
     feeBps,
     maxStockAmount,
-    supported,
-    maxAssetAmount,
     isDemo,
     oracleQuote,
     tokenCount,
-    oracleAsset,
     cycle,
-    basePrice,
     quoteDecimals,
     quoteSymbol,
     quoteSynthetic,
-    assetDecimals,
-    assetSymbol,
-    assetName,
-    assetSynthetic,
   ] = await Promise.all([
     client.getCode({ address: config.exchange, blockNumber }),
     client.getCode({ address: config.oracle, blockNumber }),
     client.getCode({ address: config.quoteToken, blockNumber }),
-    client.getCode({ address: asset.token, blockNumber }),
     client.readContract({ ...exchange, functionName: "oracle" }),
     client.readContract({ ...exchange, functionName: "quoteToken" }),
     client.readContract({ ...exchange, functionName: "feeBps" }),
     client.readContract({ ...exchange, functionName: "maxStockAmount" }),
-    client.readContract({ ...exchange, functionName: "supportedStock", args: [asset.token] }),
-    client.readContract({ ...exchange, functionName: "maxAssetAmount", args: [asset.token] }),
     client.readContract({ ...oracle, functionName: "isDemo" }),
     client.readContract({ ...oracle, functionName: "quoteToken" }),
     client.readContract({ ...oracle, functionName: "tokenCount" }),
-    client.readContract({ ...oracle, functionName: "demoTokens", args: [0n] }),
     client.readContract({ ...oracle, functionName: "cycleSeconds" }),
-    client.readContract({ ...oracle, functionName: "basePrice", args: [asset.token] }),
     client.readContract({ address: config.quoteToken, abi: erc20Abi, functionName: "decimals", blockNumber }),
     client.readContract({ address: config.quoteToken, abi: erc20Abi, functionName: "symbol", blockNumber }),
     client.readContract({
@@ -89,10 +104,6 @@ export async function readDemoContext(client: PublicClient, deployment?: DemoDep
       functionName: "isSyntheticDemo",
       blockNumber,
     }),
-    client.readContract({ address: asset.token, abi: erc20Abi, functionName: "decimals", blockNumber }),
-    client.readContract({ address: asset.token, abi: erc20Abi, functionName: "symbol", blockNumber }),
-    client.readContract({ address: asset.token, abi: erc20Abi, functionName: "name", blockNumber }),
-    client.readContract({ address: asset.token, abi: syntheticTokenAbi, functionName: "isSyntheticDemo", blockNumber }),
   ]);
   requireState(
     exchangeCode && exchangeCode !== "0x" && same(keccak256(exchangeCode), config.exchangeCodehash),
@@ -103,12 +114,7 @@ export async function readDemoContext(client: PublicClient, deployment?: DemoDep
     "Demo pricing could not be verified.",
   );
   requireState(
-    quoteCode &&
-      quoteCode !== "0x" &&
-      same(keccak256(quoteCode), config.quoteTokenCodehash) &&
-      assetCode &&
-      assetCode !== "0x" &&
-      same(keccak256(assetCode), asset.codehash),
+    quoteCode && quoteCode !== "0x" && same(keccak256(quoteCode), config.quoteTokenCodehash),
     "Demo test-token code could not be verified.",
   );
   requireState(
@@ -116,27 +122,80 @@ export async function readDemoContext(client: PublicClient, deployment?: DemoDep
       same(exchangeQuote, config.quoteToken) &&
       same(oracleQuote, config.quoteToken) &&
       isDemo === true &&
-      tokenCount === 1n &&
-      same(oracleAsset, asset.token) &&
-      cycle === 240n &&
-      basePrice === BASE_PRICE &&
-      feeBps === 30n &&
-      maxStockAmount === MAX_AMOUNT &&
-      maxAssetAmount === MAX_AMOUNT &&
-      supported === true,
+      tokenCount === BigInt(assets.length) &&
+      cycle === (config.cycleSeconds ?? 240n) &&
+      feeBps === (config.feeBps ?? 30n) &&
+      maxStockAmount === (config.maxStockAmount ?? LEGACY_MAX_AMOUNT),
     "Demo configuration differs from the reviewed deployment.",
   );
   requireState(
-    quoteDecimals === 6 &&
-      quoteSymbol === "TestUSDC" &&
-      quoteSynthetic === true &&
-      assetDecimals === 18 &&
-      assetSymbol === asset.symbol &&
-      assetName === asset.name &&
-      assetSynthetic === true,
+    quoteDecimals === 6 && quoteSymbol === "TestUSDC" && quoteSynthetic === true,
     "Demo asset configuration differs from the reviewed deployment.",
   );
-  return { config, asset, snapshot, blockNumber, exchange, feeBps, maxStockAmount };
+  if (config.model === "accelerated-yield") {
+    requireState(typeof config.epoch === "bigint" && config.epoch > 0n, "Synthetic yield model has no reviewed epoch.");
+    const epoch = await client.readContract({ ...oracle, functionName: "epoch" });
+    requireState(epoch === config.epoch, "Synthetic yield epoch differs from the reviewed deployment.");
+  }
+  await Promise.all(
+    assets.map(async (expected, index) => {
+      const [code, supported, maxAmount, oracleAsset, basePrice, decimals, symbol, name, synthetic] = await Promise.all(
+        [
+          client.getCode({ address: expected.token, blockNumber }),
+          client.readContract({ ...exchange, functionName: "supportedStock", args: [expected.token] }),
+          client.readContract({ ...exchange, functionName: "maxAssetAmount", args: [expected.token] }),
+          client.readContract({ ...oracle, functionName: "demoTokens", args: [BigInt(index)] }),
+          client.readContract({ ...oracle, functionName: "basePrice", args: [expected.token] }),
+          client.readContract({ address: expected.token, abi: erc20Abi, functionName: "decimals", blockNumber }),
+          client.readContract({ address: expected.token, abi: erc20Abi, functionName: "symbol", blockNumber }),
+          client.readContract({ address: expected.token, abi: erc20Abi, functionName: "name", blockNumber }),
+          client.readContract({
+            address: expected.token,
+            abi: syntheticTokenAbi,
+            functionName: "isSyntheticDemo",
+            blockNumber,
+          }),
+        ],
+      );
+      requireState(
+        code && code !== "0x" && same(keccak256(code), expected.codehash),
+        "Demo test-token code could not be verified.",
+      );
+      requireState(
+        supported === true &&
+          maxAmount === expected.maxAmount &&
+          same(oracleAsset, expected.token) &&
+          basePrice === expected.basePriceUsd8,
+        "Demo configuration differs from the reviewed deployment.",
+      );
+      requireState(
+        decimals === expected.decimals && symbol === expected.symbol && name === expected.name && synthetic === true,
+        "Demo asset configuration differs from the reviewed deployment.",
+      );
+      if (config.model === "accelerated-yield") {
+        requireState(
+          typeof expected.demoYieldBpsPerCycle === "bigint" &&
+            expected.demoYieldBpsPerCycle >= 0n &&
+            typeof expected.downsideBps === "bigint" &&
+            expected.downsideBps > 0n &&
+            expected.downsideBps < 10_000n,
+          "Synthetic yield asset model is invalid.",
+        );
+        const [yieldBps, downside, scale] = await Promise.all([
+          client.readContract({ ...oracle, functionName: "demoYieldBpsPerCycle", args: [expected.token] }),
+          client.readContract({ ...oracle, functionName: "downsideBps", args: [expected.token] }),
+          client.readContract({ ...exchange, functionName: "assetScale", args: [expected.token] }),
+        ]);
+        requireState(
+          yieldBps === expected.demoYieldBpsPerCycle &&
+            downside === expected.downsideBps &&
+            scale === 10n ** BigInt(expected.decimals),
+          "Synthetic yield model differs from the reviewed deployment.",
+        );
+      }
+    }),
+  );
+  return { config, asset, assets, snapshot, blockNumber, exchange, feeBps, maxStockAmount };
 }
 
 const syntheticTokenAbi = [
@@ -149,16 +208,37 @@ const syntheticTokenAbi = [
   },
 ] as const;
 
-export async function readDemoMarket(client: PublicClient, deployment?: DemoDeployment): Promise<DemoMarket> {
-  const { config, asset, snapshot, blockNumber, feeBps, maxStockAmount } = await readDemoContext(client, deployment);
-  const price = await client.readContract({
-    address: config.oracle,
-    abi: demoOracleAbi,
-    functionName: "getPrice",
-    args: [asset.token],
-    blockNumber,
-  });
-  requireState(price > 0n, "Demo scenario price is unavailable.");
+async function readVenueMarket(client: PublicClient, deployment: DemoDeployment): Promise<DemoMarket> {
+  const { config, assets, snapshot, blockNumber, feeBps, maxStockAmount } = await readDemoContext(client, deployment);
+  const resultAssets = await Promise.all(
+    assets.map(async (asset) => {
+      const price = await client.readContract({
+        address: config.oracle,
+        abi: demoOracleAbi,
+        functionName: "getPrice",
+        args: [asset.token],
+        blockNumber,
+      });
+      requireState(price > 0n, "Demo scenario price is unavailable.");
+      return {
+        token: asset.token,
+        symbol: asset.symbol,
+        name: asset.name,
+        decimals: asset.decimals,
+        priceUsd8: price,
+        maxAmount: asset.maxAmount,
+        exchange: config.exchange,
+        feeBps: Number(feeBps),
+        demoModel: config.model ?? ("price-cycle" as const),
+        ...(config.model === "accelerated-yield"
+          ? {
+              demoYieldBpsPerCycle: Number(asset.demoYieldBpsPerCycle),
+              demoCycleSeconds: Number(config.cycleSeconds ?? 240n),
+            }
+          : {}),
+      };
+    }),
+  );
   return snapshot.finish({
     chainId: 97,
     exchange: config.exchange,
@@ -167,18 +247,26 @@ export async function readDemoMarket(client: PublicClient, deployment?: DemoDepl
     validUntil: Number(snapshot.validUntil),
     feeBps: Number(feeBps),
     maxStockAmount,
-    assets: [
-      {
-        token: asset.token,
-        symbol: asset.symbol,
-        name: asset.name,
-        decimals: 18,
-        priceUsd8: price,
-        maxAmount: MAX_AMOUNT,
-      },
-    ],
+    assets: resultAssets,
     quoteToken: { token: config.quoteToken, symbol: "TestUSDC", decimals: 6 },
   });
+}
+
+/** Aggregate independently verified venues; token routing is unique and shared quote identity is sealed. */
+export async function readDemoMarket(client: PublicClient, deployment?: DemoDeployment): Promise<DemoMarket> {
+  const configs = checkedDeployments(deployment);
+  const markets = await Promise.all(configs.map((config) => readVenueMarket(client, config)));
+  const first = markets[0]!;
+  requireState(
+    markets.every((market) => same(market.quoteToken.token, first.quoteToken.token)),
+    "Demo markets use inconsistent quote assets.",
+  );
+  return {
+    ...first,
+    assets: markets.flatMap((market) => market.assets),
+    evaluatedAt: Math.min(...markets.map((market) => market.evaluatedAt)),
+    validUntil: Math.min(...markets.map((market) => market.validUntil)),
+  };
 }
 
 export async function readDemoTradeQuote(
@@ -195,11 +283,8 @@ export async function readDemoTradeQuote(
     "Enter a valid token amount.",
   );
   requireState(request.owner === undefined || validAddress(request.owner), "Wallet address is invalid.");
-  const { config, asset, snapshot, blockNumber, exchange } = await readDemoContext(client, deployment);
-  requireState(
-    same(request.asset, asset.token) && request.amount <= MAX_AMOUNT,
-    "Choose tWBNB and an amount up to 25 tokens.",
-  );
+  const { config, asset, snapshot, blockNumber, exchange } = await readDemoContext(client, deployment, request.asset);
+  requireState(request.amount <= asset.maxAmount, "Enter an amount within this demo asset’s trade limit.");
   const buy = request.side === "buy";
   const [quote, oraclePrice] = await Promise.all([
     client.readContract({ ...exchange, functionName: "quote", args: [asset.token, buy, request.amount] }),

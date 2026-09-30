@@ -282,6 +282,21 @@ describe("transaction intent boundaries", () => {
     );
     expect(client.readContract.mock.calls.some(([c]: any) => c.functionName === "allowance")).toBe(false);
   });
+  it("uses the reviewed yield factory for new protection pools before any approval", async () => {
+    const client = clientFor({
+      getPoolInfo: (call: any) => {
+        if (call.address === factory) throw { data: { errorName: "PoolDoesNotExist" } };
+        return info;
+      },
+    });
+    const plan = await planIntent(client, owner, { factory, factories: [factory, other] }, deposit);
+    expect(plan.steps[0]).toMatchObject({ address: shielded, functionName: "approve", args: [pool, deposit.amount] });
+    expect(
+      client.readContract.mock.calls.some(
+        ([call]: any) => call.address === other && call.functionName === "isPoolActive",
+      ),
+    ).toBe(true);
+  });
   it("rejects unknown factory pools before approval", async () => {
     await expect(planIntent(clientFor({ getPoolInfo: failure() }), owner, { factory }, deposit)).rejects.toThrow(
       "RPC down",
@@ -1028,6 +1043,23 @@ describe("test-token transaction preflight", () => {
     await expect(planIntent(client, owner, { factory, faucet: other }, { kind: "faucetDrip" })).rejects.toThrow(
       "test BNB",
     );
+  });
+  it("selects a new dispenser only from reviewed sources and rejects route-supplied replacements", async () => {
+    const client = faucetClient();
+    const sources = [
+      { address: other, label: "Original" },
+      { address: pool, label: "Yield demos" },
+    ];
+    const plan = await planIntent(
+      client,
+      owner,
+      { factory, faucet: other, faucets: sources },
+      { kind: "faucetDrip", faucet: pool },
+    );
+    expect(plan.steps[0]).toMatchObject({ address: pool, functionName: "dripAll" });
+    await expect(
+      planIntent(client, owner, { factory, faucet: other, faucets: sources }, { kind: "faucetDrip", faucet: shielded }),
+    ).rejects.toThrow("reviewed test-token");
   });
   it("requires a positive dispense event for the exact faucet and recipient", async () => {
     const plan = await planIntent(faucetClient(), owner, { factory, faucet: other }, { kind: "faucetDrip" });

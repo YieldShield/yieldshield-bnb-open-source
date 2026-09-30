@@ -8,7 +8,14 @@
 export * from "./adapter.js";
 export * from "./chains.js";
 export * from "./deployments.js";
-export { DEMO_DEPLOYMENTS, type DemoDeployment } from "./demo-deployments.js";
+export * from "./yield-deployments.js";
+export {
+  DEMO_DEPLOYMENTS,
+  YIELD_DEMO_DEPLOYMENTS,
+  demoDeploymentsFor,
+  type DemoDeployment,
+  type DemoAssetDeployment,
+} from "./demo-deployments.js";
 export { readDemoMarket, readDemoTradeQuote, assertDemoTrade } from "./demo-trading.js";
 export * from "./errors.js";
 export { planIntent, type EvmIntentDeps, type EvmStep, type IntentPlan } from "./intents.js";

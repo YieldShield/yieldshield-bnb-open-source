@@ -22,6 +22,8 @@ import { decodePositionId, encodePositionId } from "./positionId.js";
 import { assertDepositPreflight } from "./preflight.js";
 import { readFaucetStatus } from "./faucet.js";
 import { demoExchangeAbi } from "./abis/demoExchange.js";
+import { findFactoryForPool } from "./factory-routing.js";
+import type { EvmFaucetDeployment } from "./yield-deployments.js";
 import { assertDemoTrade } from "./demo-trading.js";
 
 export type EvmStep = {
@@ -41,7 +43,12 @@ export type IntentPlan = {
   extract?: (receipt: TransactionReceipt) => Partial<Pick<TxResult, "positionId" | "poolId">>;
 };
 
-export type EvmIntentDeps = { factory: Address; faucet?: Address };
+export type EvmIntentDeps = {
+  factory: Address;
+  factories?: readonly Address[];
+  faucet?: Address;
+  faucets?: readonly EvmFaucetDeployment[];
+};
 
 /** Prepend an approve step when the spender's allowance can't cover the amount. */
 async function approvalStep(
@@ -124,15 +131,12 @@ export async function planIntent(
       throw new Error("Position pool does not match this action.");
   }
   const poolAddress = position?.pool ?? ("pool" in intent ? validAddress(intent.pool) : null);
+  let actionFactory = deps.factory;
   if (poolAddress) {
     // Never approve an address supplied by a route or stale UI unless this deployment's
     // factory recognises it; withdrawals can still target a retired factory pool.
-    const info = await client.readContract({
-      address: deps.factory,
-      abi: splitRiskPoolFactoryAbi,
-      functionName: "getPoolInfo",
-      args: [poolAddress],
-    });
+    const { factory, info } = await findFactoryForPool(client, deps.factories ?? [deps.factory], poolAddress);
+    actionFactory = factory;
     if (
       "shieldedToken" in intent &&
       validAddress(intent.shieldedToken).toLowerCase() !== info.shieldedToken.toLowerCase()
@@ -200,7 +204,7 @@ export async function planIntent(
       const poolAddr = intent.pool as Address;
       const asset = intent.shieldedToken as Address;
       const beforeStep = () =>
-        assertDepositPreflight(client, deps.factory, poolAddr, owner, "shield", asset, intent.amount);
+        assertDepositPreflight(client, actionFactory, poolAddr, owner, "shield", asset, intent.amount);
       await beforeStep();
       const [approvals, nft] = await Promise.all([
         approvalStep(client, owner, asset, poolAddr, intent.amount),
@@ -230,7 +234,7 @@ export async function planIntent(
       const poolAddr = intent.pool as Address;
       const asset = intent.backingToken as Address;
       const beforeStep = () =>
-        assertDepositPreflight(client, deps.factory, poolAddr, owner, "backing", asset, intent.amount);
+        assertDepositPreflight(client, actionFactory, poolAddr, owner, "backing", asset, intent.amount);
       await beforeStep();
       const [approvals, nft] = await Promise.all([
         approvalStep(client, owner, asset, poolAddr, intent.amount),
@@ -384,29 +388,49 @@ export async function planIntent(
       const backing = validAddress(p.backingToken);
       validAddress(shielded);
       if (shielded.toLowerCase() === backing.toLowerCase()) throw new Error("Choose two different pool assets.");
+      if ((deps.factories?.length ?? 0) > 1) {
+        const eligibility = await Promise.all(
+          deps.factories!.map(async (factory) => ({
+            factory,
+            allowed: await Promise.all(
+              [shielded, backing].map((token) =>
+                client.readContract({
+                  address: factory,
+                  abi: splitRiskPoolFactoryAbi,
+                  functionName: "isWhitelisted",
+                  args: [token],
+                }),
+              ),
+            ),
+          })),
+        );
+        const matches = eligibility.filter(({ allowed }) => allowed.every((value) => value === true));
+        if (matches.length === 0) throw new Error("These assets do not share a reviewed protection deployment.");
+        actionFactory = matches[0]!.factory;
+      }
       const bond = p.creationBondAmount ?? 0n;
       if (bond < 0n || bond > maxUint256) throw new Error("Invalid creation bond amount.");
       const [shInfo, bkInfo, bondApprovals] = await Promise.all([
         client.readContract({
-          address: deps.factory,
+          address: actionFactory,
           abi: splitRiskPoolFactoryAbi,
           functionName: "tokenInfo",
           args: [shielded],
         }),
         client.readContract({
-          address: deps.factory,
+          address: actionFactory,
           abi: splitRiskPoolFactoryAbi,
           functionName: "tokenInfo",
           args: [backing],
         }),
-        bond > 0n ? approvalStep(client, owner, backing, deps.factory, bond) : Promise.resolve([]),
+        bond > 0n ? approvalStep(client, owner, backing, actionFactory, bond) : Promise.resolve([]),
       ]);
       return {
         steps: [
           ...bondApprovals,
           {
             label: "Create pool",
-            address: deps.factory,
+            address: actionFactory,
             abi: splitRiskPoolFactoryAbi as Abi,
             functionName: "createPool",
             args: [
@@ -423,7 +447,7 @@ export async function planIntent(
         ],
         extract: (receipt) => {
           const logs = parseEventLogs({ abi: splitRiskPoolFactoryAbi, logs: receipt.logs, eventName: "PoolCreated" });
-          const created = logs.find((log) => log.address.toLowerCase() === deps.factory.toLowerCase())?.args
+          const created = logs.find((log) => log.address.toLowerCase() === actionFactory.toLowerCase())?.args
             .poolAddress;
           return created ? { poolId: created } : {};
         },
@@ -431,11 +455,15 @@ export async function planIntent(
     }
 
     case "faucetDrip": {
-      if (!deps.faucet) throw new Error("No on-chain faucet on this deployment.");
-      validAddress(deps.faucet);
+      const faucet = intent.faucet ? validAddress(intent.faucet) : deps.faucet;
+      if (!faucet) throw new Error("No on-chain faucet on this deployment.");
+      const sources = deps.faucets ?? (deps.faucet ? [{ address: deps.faucet, label: "Test tokens" }] : []);
+      const source = sources.find((item) => item.address.toLowerCase() === faucet.toLowerCase());
+      if (!source) throw new Error("Choose a reviewed test-token dispenser.");
+      validAddress(faucet);
       const recipient = validAddress(intent.recipient ?? owner);
       const beforeStep = async () => {
-        const status = await readFaucetStatus(client, deps.faucet!, recipient);
+        const status = await readFaucetStatus(client, faucet, recipient, source.tokens, source.codehash);
         if (!status.ready)
           throw new Error("No test tokens are available for this wallet yet. Check the dispenser status.");
         const senderBalance =
@@ -453,7 +481,7 @@ export async function planIntent(
           if (
             !drips.some(
               (log) =>
-                log.address.toLowerCase() === deps.faucet!.toLowerCase() &&
+                log.address.toLowerCase() === faucet.toLowerCase() &&
                 log.args.recipient.toLowerCase() === recipient.toLowerCase() &&
                 log.args.amount > 0n,
             )
@@ -464,7 +492,7 @@ export async function planIntent(
         steps: [
           {
             label: "Get test tokens",
-            address: deps.faucet,
+            address: faucet,
             abi: tokenFaucetAbi as Abi,
             functionName: "dripAll",
             args: [recipient],

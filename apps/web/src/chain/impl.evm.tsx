@@ -31,18 +31,36 @@ function ChainProvider({ children }: { children: ReactNode }) {
   return <EvmChainProvider adapter={adapter}>{children}</EvmChainProvider>;
 }
 
-/** On-chain drip: one wallet tx calling the deployment's ConfigurableTokenFaucet.dripAll. */
+/** Each dispenser is selected from the sealed deployment registry before reading or signing. */
 function useFaucet(): FaucetApi {
   const { send } = useIntentSender();
+  const sources = adapter.addresses.faucets ?? [];
+  const selected = (address?: string) => {
+    const target = address ?? adapter.addresses.faucet;
+    const source = sources.find((entry) => entry.address.toLowerCase() === target?.toLowerCase());
+    if (!source) throw new Error("Choose a reviewed test-token dispenser.");
+    return source;
+  };
   return {
     enabled: adapter.info.capabilities.faucet,
     address: adapter.addresses.faucet,
+    sources: sources.map(({ address, label }) => ({ address, label })),
     status: adapter.addresses.faucet
-      ? (recipient) => readFaucetStatus(adapter.publicClient, adapter.addresses.faucet!, recipient as `0x${string}`)
+      ? (recipient, address) => {
+          const source = selected(address);
+          return readFaucetStatus(
+            adapter.publicClient,
+            source.address,
+            recipient as `0x${string}`,
+            source.tokens,
+            source.codehash,
+          );
+        }
       : undefined,
-    drip: async (recipient: AccountId) => {
+    drip: async (recipient: AccountId, address?: string) => {
       try {
-        const result = await send({ kind: "faucetDrip", recipient });
+        const source = selected(address);
+        const result = await send({ kind: "faucetDrip", recipient, faucet: source.address });
         return { ok: true, txId: result.txId };
       } catch (e) {
         return { ok: false, error: friendlyError(e) };
