@@ -17,6 +17,12 @@ export function createCombinedReader(client: PublicClient, deployments: readonly
   };
   const reader: ChainReader = {
     ...first,
+    ...(readers.every((source) => source.getPoolCreationOptions)
+      ? {
+          getPoolCreationOptions: async () =>
+            (await Promise.all(readers.map((source) => source.getPoolCreationOptions!()))).flat(),
+        }
+      : {}),
     async loadPools() {
       return uniquePools((await Promise.all(readers.map((source) => source.loadPools()))).flat());
     },

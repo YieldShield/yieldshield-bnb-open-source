@@ -81,6 +81,8 @@ export type DemoTradeQuote = DemoTradeRequest & {
 };
 
 export interface ChainReader {
+  /** Verified creation settings for each supported protection deployment. */
+  getPoolCreationOptions?(): Promise<PoolCreationOptions[]>;
   getDemoMarket?(): Promise<DemoMarket>;
   getDemoTradeQuote?(request: DemoTradeRequest): Promise<DemoTradeQuote>;
   /** Every pool, fully assembled for display (stats + token metadata + oracle health). */
@@ -120,6 +122,36 @@ export type CreatePoolIntentParams = {
   protectorTransferLock: number;
   /** Creation bond in backing-token base units (default 0). */
   creationBondAmount?: bigint;
+};
+
+/** A short-lived, verified set of choices for creating a BSC Testnet pool. */
+export type PoolCreationOptions = {
+  chainId: 97;
+  factory: string;
+  protectedAssets: SeedToken[];
+  backingAssets: Array<SeedToken & { minimumBondAmount: bigint }>;
+  minimumBondUsd: bigint;
+  bounds: {
+    commissionMinBp: number;
+    commissionMaxBp: number;
+    poolFeeMinBp: number;
+    poolFeeMaxBp: number;
+    collateralMinBp: number;
+    collateralMaxBp: number;
+  };
+  fixed: Pick<
+    CreatePoolIntentParams,
+    | "protocolFeeBp"
+    | "maxTvlUsd"
+    | "minimumPoolTime"
+    | "unlockDuration"
+    | "shieldTransferLock"
+    | "protectorTransferLock"
+  >;
+  activePools: number;
+  maxActivePools: number;
+  evaluatedAt: number;
+  validUntil: number;
 };
 
 /**

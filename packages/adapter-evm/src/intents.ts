@@ -25,6 +25,7 @@ import { demoExchangeAbi } from "./abis/demoExchange.js";
 import { findFactoryForPool } from "./factory-routing.js";
 import type { EvmFaucetDeployment } from "./yield-deployments.js";
 import { assertDemoTrade } from "./demo-trading.js";
+import { creationFactoryForPair, readPoolCreationOptions, validateCreationParams } from "./pool-creation.js";
 
 export type EvmStep = {
   /** Short human label for progress UX ("Approve USDG", "Confirm deposit"). */
@@ -380,64 +381,39 @@ export async function planIntent(
     }
 
     case "createPool": {
-      // The EVM factory sets pool timing/fee-cap/TVL parameters at the protocol level, so only
-      // the per-pool terms (tokens, commission, pool fee, collateral ratio, bond) are passed;
-      // the intent's remaining fields are Solana-configurable and ignored here.
       const p = intent.params;
-      const shielded = p.shieldedToken as Address;
-      const backing = validAddress(p.backingToken);
-      validAddress(shielded);
-      if (shielded.toLowerCase() === backing.toLowerCase()) throw new Error("Choose two different pool assets.");
-      if ((deps.factories?.length ?? 0) > 1) {
-        const eligibility = await Promise.all(
-          deps.factories!.map(async (factory) => ({
-            factory,
-            allowed: await Promise.all(
-              [shielded, backing].map((token) =>
-                client.readContract({
-                  address: factory,
-                  abi: splitRiskPoolFactoryAbi,
-                  functionName: "isWhitelisted",
-                  args: [token],
-                }),
-              ),
-            ),
-          })),
-        );
-        const matches = eligibility.filter(({ allowed }) => allowed.every((value) => value === true));
-        if (matches.length === 0) throw new Error("These assets do not share a reviewed protection deployment.");
-        actionFactory = matches[0]!.factory;
-      }
+      validAddress(p.shieldedToken);
+      validAddress(p.backingToken);
+      const factoryAddress = creationFactoryForPair(deps.factories ?? [deps.factory], p.shieldedToken, p.backingToken);
+      const options = await readPoolCreationOptions(client, factoryAddress);
+      const { shielded, backing } = validateCreationParams(p, options);
       const bond = p.creationBondAmount ?? 0n;
-      if (bond < 0n || bond > maxUint256) throw new Error("Invalid creation bond amount.");
-      const [shInfo, bkInfo, bondApprovals] = await Promise.all([
-        client.readContract({
-          address: actionFactory,
-          abi: splitRiskPoolFactoryAbi,
-          functionName: "tokenInfo",
-          args: [shielded],
-        }),
-        client.readContract({
-          address: actionFactory,
-          abi: splitRiskPoolFactoryAbi,
-          functionName: "tokenInfo",
-          args: [backing],
-        }),
-        bond > 0n ? approvalStep(client, owner, backing, actionFactory, bond) : Promise.resolve([]),
-      ]);
+      const beforeStep = async () => {
+        // Recheck after each approval too: governance or the required bond may have changed.
+        validateCreationParams(p, await readPoolCreationOptions(client, factoryAddress));
+        const balance = await client.readContract({
+          address: backing.token as Address,
+          abi: erc20Abi,
+          functionName: "balanceOf",
+          args: [owner],
+        });
+        if (balance < bond) throw new Error("Add enough TestUSDC to cover the creation bond.");
+      };
+      await beforeStep();
       return {
+        beforeStep,
         steps: [
-          ...bondApprovals,
+          ...(bond > 0n ? await approvalStep(client, owner, backing.token as Address, factoryAddress, bond) : []),
           {
             label: "Create pool",
-            address: actionFactory,
+            address: factoryAddress,
             abi: splitRiskPoolFactoryAbi as Abi,
             functionName: "createPool",
             args: [
-              shielded,
-              shInfo[1],
-              backing,
-              bkInfo[1],
+              shielded.token,
+              shielded.symbol,
+              backing.token,
+              backing.symbol,
               BigInt(p.commissionRateBp),
               BigInt(p.poolFeeBp),
               BigInt(p.collateralRatioBp),
@@ -447,9 +423,21 @@ export async function planIntent(
         ],
         extract: (receipt) => {
           const logs = parseEventLogs({ abi: splitRiskPoolFactoryAbi, logs: receipt.logs, eventName: "PoolCreated" });
-          const created = logs.find((log) => log.address.toLowerCase() === actionFactory.toLowerCase())?.args
-            .poolAddress;
-          return created ? { poolId: created } : {};
+          const matches = logs.filter((log) => log.address.toLowerCase() === factoryAddress.toLowerCase());
+          const result = matches[0]?.args;
+          if (
+            matches.length !== 1 ||
+            !result ||
+            result.poolAddress === zeroAddress ||
+            result.creator.toLowerCase() !== owner.toLowerCase() ||
+            result.shieldedToken.toLowerCase() !== shielded.token.toLowerCase() ||
+            result.backingToken.toLowerCase() !== backing.token.toLowerCase() ||
+            result.commissionRate !== BigInt(p.commissionRateBp) ||
+            result.poolFee !== BigInt(p.poolFeeBp) ||
+            result.collateralRatio !== BigInt(p.collateralRatioBp)
+          )
+            throw new Error("The confirmed receipt does not match the reviewed pool terms.");
+          return { poolId: result.poolAddress };
         },
       };
     }

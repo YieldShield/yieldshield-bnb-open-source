@@ -34,6 +34,9 @@ import { splitRiskPoolAbi } from "./abis/splitRiskPool.js";
 import { splitRiskPoolFactoryAbi } from "./abis/splitRiskPoolFactory.js";
 import { decodePositionId, encodePositionId } from "./positionId.js";
 import { readSnapshot, SNAPSHOT_VALIDITY_SECONDS } from "./snapshot.js";
+import { creationDeploymentFor } from "./creation-deployments.js";
+import { readPoolCreationOptions } from "./pool-creation.js";
+import { assertCreatedPools } from "./pool-registry.js";
 import { readDemoMarket, readDemoTradeQuote } from "./demo-trading.js";
 
 const BPS = 10_000n;
@@ -309,6 +312,9 @@ export function createReader(client: PublicClient, deps: EvmReaderDeps): ChainRe
   }
 
   return {
+    ...(creationDeploymentFor(deps.factory)
+      ? { getPoolCreationOptions: async () => [await readPoolCreationOptions(client, deps.factory)] }
+      : {}),
     getDemoMarket: () => readDemoMarket(client),
     getDemoTradeQuote: (request) => readDemoTradeQuote(client, request),
     async loadPools(): Promise<PoolData[]> {
@@ -316,6 +322,7 @@ export function createReader(client: PublicClient, deps: EvmReaderDeps): ChainRe
       const block = snapshot.block;
       const blockNumber = block.number;
       const pools = await allPools(blockNumber);
+      if (creationDeploymentFor(deps.factory)) await assertCreatedPools(client, deps.factory, pools, blockNumber);
       if (pools.length === 0) return snapshot.finish([]);
       const infos = await Promise.all(
         pools.map((address) =>
