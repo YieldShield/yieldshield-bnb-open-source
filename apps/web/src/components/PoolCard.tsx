@@ -21,7 +21,7 @@ export function PoolCard({ pool }: { pool: PoolView }) {
       )}
     >
       <div className="flex items-center gap-3">
-        <AssetGlyph glyph={preset.glyph} label={preset.asset} />
+        <AssetGlyph glyph={preset.glyph} label={preset.asset} symbol={pool.shielded.symbol} />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className="truncate text-[16px] font-extrabold tracking-tight2">

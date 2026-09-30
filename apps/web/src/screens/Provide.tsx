@@ -223,7 +223,7 @@ function BackPoolRow({ pool, selected, onClick }: { pool: PoolView; selected: bo
         selected ? "border-indigo ring-1 ring-indigo" : "border-hairline",
       )}
     >
-      <AssetGlyph glyph={pool.preset.glyph} label={pool.preset.asset} />
+      <AssetGlyph glyph={pool.preset.glyph} label={pool.preset.asset} symbol={pool.shielded.symbol} />
       <div className="min-w-0 flex-1">
         <div className="truncate text-[15px] font-bold text-ink">{pool.preset.asset}</div>
         <div className="truncate text-[12.5px] text-muted">

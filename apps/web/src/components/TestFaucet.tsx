@@ -1,19 +1,25 @@
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui";
+import { AssetGlyph, Button } from "@/components/ui";
 import { PendingOverlay, TransactionError } from "@/components/TxFeedback";
 import { useFaucet } from "@/chain/faucet";
 import { useWalletConnection } from "@/chain/wallet";
 import { useSubmitTx } from "@/chain/useSubmitTx";
+import { useWhitelistedTokens } from "@/data/tokens";
+import { formatToken } from "@/lib/format";
 
 export function TestFaucet() {
   const faucet = useFaucet();
   const { address } = useWalletConnection();
   const tx = useSubmitTx();
+  const { data: tokens } = useWhitelistedTokens();
+  const [selectedSource, setSelectedSource] = useState<string | null>(null);
+  const sources = faucet.sources ?? (faucet.address ? [{ address: faucet.address, label: "Original BNB demo" }] : []);
+  const source = sources.find((entry) => entry.address === selectedSource) ?? sources.at(-1);
   const { data, error, isLoading, mutate } = useSWR(
-    faucet.enabled && faucet.status && address ? ["bsc-faucet", faucet.address, address] : null,
-    () => faucet.status!(address!),
+    faucet.enabled && faucet.status && address && source ? ["bsc-faucet", source.address, address] : null,
+    () => faucet.status!(address!, source!.address),
     { refreshInterval: 10000, shouldRetryOnError: false },
   );
   const [now, setNow] = useState(Date.now() / 1000);
@@ -22,13 +28,18 @@ export function TestFaucet() {
     return () => clearInterval(timer);
   }, []);
   if (!faucet.enabled) return null;
-  const fresh = !!data && !error && data.validUntil > now;
+  const fresh =
+    !!data &&
+    !error &&
+    data.validUntil > now &&
+    data.recipient.toLowerCase() === address?.toLowerCase() &&
+    data.address.toLowerCase() === source?.address.toLowerCase();
   const canClaim = fresh && data.ready && data.nativeBalance > 0n && !tx.pending;
   const cooldown = data?.tokens.filter((t) => t.nextDripTime > now).map((t) => t.nextDripTime) ?? [];
   const next = cooldown.length ? Math.min(...cooldown) : null;
   async function claim() {
     if (!canClaim || !address) return;
-    await tx.submit({ kind: "faucetDrip", recipient: address });
+    await tx.submit({ kind: "faucetDrip", recipient: address, faucet: source?.address });
     await mutate();
   }
   return (
@@ -36,9 +47,60 @@ export function TestFaucet() {
       {tx.pending && <PendingOverlay step={tx.step} txId={tx.txId} phase={tx.phase} label="Claiming test tokens…" />}
       <h2 className="text-[18px] font-extrabold">Free tokens for the demo</h2>
       <p className="mt-2 text-[13px] leading-relaxed text-body">
-        Claim 5 tWBNB and 10,000 TestUSDC. These synthetic tokens have no monetary value. One claim per token per wallet
-        every 24 hours.
+        Claim tokens for trading and protection. These synthetic tokens have no monetary value. One claim per token per
+        wallet every 24 hours.
       </p>
+      {sources.length > 1 && (
+        <div className="mt-4">
+          <label htmlFor="test-faucet-source" className="mb-2 block text-[12px] font-bold">
+            Token dispenser
+          </label>
+          <select
+            id="test-faucet-source"
+            value={source?.address ?? ""}
+            disabled={tx.pending}
+            onChange={(event) => {
+              setSelectedSource(event.target.value);
+              tx.reset();
+            }}
+            className="min-h-11 w-full rounded-input border border-hairline bg-white px-3 text-[14px] font-semibold"
+          >
+            {sources.map((entry) => (
+              <option key={entry.address} value={entry.address}>
+                {entry.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+      {fresh && (
+        <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+          {data.tokens
+            .filter((entry) => entry.enabled)
+            .map((entry) => {
+              const token = tokens.find((token) => token.token.toLowerCase() === entry.address.toLowerCase());
+              return (
+                <li key={entry.address} className="flex min-w-0 items-center gap-2 rounded-input bg-white/70 p-3">
+                  <AssetGlyph glyph="generic" label={token?.symbol ?? "Token"} symbol={token?.symbol} size={32} />
+                  <div className="min-w-0">
+                    <p className="break-words text-[13px] font-bold">
+                      {token
+                        ? formatToken(entry.dripAmount, token.decimals, token.symbol, 4)
+                        : "Token metadata unavailable"}
+                    </p>
+                    <p className="text-[11px] text-body">
+                      {entry.canDrip
+                        ? "Ready to claim"
+                        : entry.nextDripTime > now
+                          ? "Already claimed today"
+                          : "Inventory unavailable"}
+                    </p>
+                  </div>
+                </li>
+              );
+            })}
+        </ul>
+      )}
       <p className="mt-3 text-[13px] text-body" role="status">
         {isLoading
           ? "Checking faucet inventory and your wallet…"

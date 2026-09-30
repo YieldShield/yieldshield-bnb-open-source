@@ -48,7 +48,7 @@ export function TestnetTechnical() {
       </p>
       <h1 className="mt-4 text-4xl font-extrabold tracking-tight md:text-5xl">A proof you can inspect.</h1>
       <p className="mt-5 max-w-[65ch] text-base leading-relaxed text-body">
-        One synthetic trading pair and protection market on chain 97. These addresses and receipts identify the deployed
+        Synthetic trading and protection markets on chain 97. These addresses and receipts identify the deployed
         software. The demo uses free test assets and has internal testing, with no independent company audit.
       </p>
       <div className="my-8 grid gap-4 sm:grid-cols-3">
@@ -69,7 +69,7 @@ export function TestnetTechnical() {
         ))}
       </div>
       <section className="space-y-5 text-sm leading-relaxed text-body">
-        <h2 className="text-2xl font-bold text-ink">How it works</h2>
+        <h2 className="text-2xl font-bold text-ink">Original tWBNB deployment</h2>
         <p>
           A factory creates the pool and its two position receipt NFTs. Users deposit tWBNB; protectors supply TestUSDC.
           Each position records its own rights. A token withdrawal returns tWBNB under the pool’s fee and gain-sharing
@@ -189,12 +189,17 @@ export function TestnetTechnical() {
           wallet.
         </p>
         <p className="mt-4">
-          Source matching is not a security audit. The BNB repository currently has restricted access. Code release and
-          reuse licences will be finalized for any proposed open-source grant deliverables. Contact{" "}
-          <a href="mailto:david@yieldshield.ai" className="font-bold underline">
-            david@yieldshield.ai
+          Source matching is not a security audit. Project-authored code is public under MIT with third-party notices
+          preserved. Inspect the{" "}
+          <a
+            href="https://github.com/YieldShield/yieldshield-bnb-open-source"
+            target="_blank"
+            rel="noreferrer"
+            className="font-bold underline"
+          >
+            public repository
           </a>{" "}
-          for reviewer access.
+          for source, deployment recipes and tests.
         </p>
         <p className="mt-4">
           Operator: Hawig Ventures UG (haftungsbeschränkt), Germany.{" "}

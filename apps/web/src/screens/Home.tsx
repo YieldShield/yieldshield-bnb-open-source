@@ -52,8 +52,11 @@ function HomeFunded({ shield, protector }: { shield: ShieldVM[]; protector: Prot
             historical performance data is available.
           </p>
 
-          <button onClick={() => navigate("/trade")} className="mt-4 min-h-11 text-[14px] font-bold text-brand-deep underline underline-offset-4">
-            Trade tWBNB with TestUSDC →
+          <button
+            onClick={() => navigate("/trade")}
+            className="mt-4 min-h-11 text-[14px] font-bold text-brand-deep underline underline-offset-4"
+          >
+            Trade yield demo tokens with TestUSDC →
           </button>
 
           <div className="mt-3 grid grid-cols-3 gap-2">
@@ -138,7 +141,7 @@ function ShieldRow({ p, onClick }: { p: ShieldVM; onClick: () => void }) {
   return (
     <Row
       onClick={onClick}
-      glyph={p.view ? <AssetGlyph glyph={preset!.glyph} label={preset!.asset} /> : null}
+      glyph={p.view ? <AssetGlyph glyph={preset!.glyph} label={preset!.asset} symbol={sym} /> : null}
       title={`${preset?.asset ?? sym} test position`}
       sub="Early alpha · protection can fail"
       value={valueLabel}
@@ -267,8 +270,8 @@ function HomeEmpty() {
           token backing, insurance or a guaranteed return.
         </p>
         <div className="mt-5 rounded-card bg-green-tint-2 p-5 text-[14px] leading-relaxed text-green-dark">
-          Get test tokens, trade tWBNB, then choose a protection or backing position. Every transaction uses BSC
-          Testnet test assets. The contracts are unaudited and can fail.
+          Get test tokens, trade a yield asset demo, then choose a protection or backing position. Every transaction
+          uses BSC Testnet test assets. The contracts are unaudited and can fail.
         </div>
       </Card>
       <div className="mt-5 grid gap-3 sm:grid-cols-2">

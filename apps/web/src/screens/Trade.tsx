@@ -12,6 +12,8 @@ import { AssetGlyph, Button, Card, buttonStyles } from "@/components/ui";
 import { PendingOverlay, TransactionError } from "@/components/TxFeedback";
 import { formatBps, formatToken, formatUsd8 } from "@/lib/format";
 import { setupLink } from "@/lib/navigation";
+import { AssetReference } from "@/components/AssetReference";
+import { tradePresets, yieldAssetFor } from "@/config/yield-assets";
 import {
   demoMarketIsFresh,
   demoQuoteMatches,
@@ -59,9 +61,10 @@ export function Trade() {
 
   const symbol = params.get("asset") ?? "tWBNB";
   const side = params.get("side") === "sell" ? "sell" : "buy";
-  const defaultAmount = (_symbol: string) => "1";
+  const defaultAmount = (symbol: string) => String(tradePresets(symbol)[1] ?? 1);
   const value = params.get("amount") ?? defaultAmount(symbol);
   const asset = market?.assets.find((entry) => entry.symbol === symbol);
+  const reference = yieldAssetFor(symbol);
   const maxAmount = asset?.maxAmount ?? market?.maxStockAmount ?? 0n;
   const parsed = parseTradeAmount(value, asset?.decimals ?? 8);
   const marketFresh = !marketError && demoMarketIsFresh(market, now);
@@ -89,7 +92,9 @@ export function Trade() {
     isLoading: quoteLoading,
     mutate: refreshQuote,
   } = useSWR(
-    canQuote ? ["demo-trade-quote", market.exchange, asset.token, side, parsed.amount.toString(), tx.owner] : null,
+    canQuote
+      ? ["demo-trade-quote", asset.exchange ?? market.exchange, asset.token, side, parsed.amount.toString(), tx.owner]
+      : null,
     () => {
       if (!reader.getDemoTradeQuote) throw new Error("Demo quotes are not configured yet.");
       return reader.getDemoTradeQuote(request);
@@ -193,12 +198,11 @@ export function Trade() {
       )}
       <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="mb-3 text-[12px] font-bold uppercase tracking-wider text-ink">
-            BSC Testnet · synthetic prices
-          </p>
+          <p className="mb-3 text-[12px] font-bold uppercase tracking-wider text-ink">BSC Testnet · synthetic prices</p>
           <h1 className="text-[34px] font-extrabold leading-tight tracking-hero md:text-[46px]">Trade a test token.</h1>
           <p className="mt-3 max-w-[58ch] text-[15px] leading-relaxed text-body">
-            Buy or sell tWBNB with TestUSDC. These are free demo tokens, and the synthetic price does not track real BNB.
+            Buy or sell staking and stablecoin yield demo tokens with TestUSDC. All prices and yield scenarios are
+            synthetic.
           </p>
         </div>
         <Link to={setupLink("/test-tokens", pathname, search, hash)} className={buttonStyles({ variant: "secondary" })}>
@@ -216,15 +220,14 @@ export function Trade() {
               : "Your sale settled. The confirmed receipt and wallet balance show your TestUSDC proceeds."}
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
-            {completed.side === "buy" &&
-              completed.owner.toLowerCase() === tx.owner?.toLowerCase() && (
-                <Link
-                  to={`/protection/new?asset=${encodeURIComponent(completed.symbol)}&amount=${fromBaseUnits(completed.amount, completed.decimals)}`}
-                  className={buttonStyles({ variant: "primary" })}
-                >
-                  Protect these tokens
-                </Link>
-              )}
+            {completed.side === "buy" && completed.owner.toLowerCase() === tx.owner?.toLowerCase() && (
+              <Link
+                to={`/protection/new?asset=${encodeURIComponent(completed.symbol)}&amount=${fromBaseUnits(completed.amount, completed.decimals)}`}
+                className={buttonStyles({ variant: "primary" })}
+              >
+                Protect these tokens
+              </Link>
+            )}
             <a
               href={chain.explorerTxUrl(completed.txId)}
               target="_blank"
@@ -281,7 +284,7 @@ export function Trade() {
               {!asset && <option value="">{marketLoading ? "Loading assets…" : "Choose an asset"}</option>}
               {market?.assets.map((entry) => (
                 <option key={entry.token} value={entry.symbol}>
-                  {entry.name} · {entry.symbol}
+                  {yieldAssetFor(entry.symbol)?.name ?? entry.name} · {entry.symbol}
                 </option>
               ))}
             </select>
@@ -298,7 +301,7 @@ export function Trade() {
               value={value}
               onChange={(amount) => updateDraft({ amount })}
               symbol={symbol}
-              presets={[0.1, 0.5, 1]}
+              presets={tradePresets(symbol)}
               error={amountError}
               balanceLabel={
                 balance !== null && inputToken
@@ -342,7 +345,7 @@ export function Trade() {
               }
             />
             <TradeRow
-              label={`Trading fee${market ? ` (${formatBps(market.feeBps)})` : ""} · included`}
+              label={`Trading fee${market ? ` (${formatBps(asset?.feeBps ?? market.feeBps)})` : ""} · included`}
               value={
                 showReviewValues && market
                   ? formatToken(
@@ -385,7 +388,8 @@ export function Trade() {
               ))}
             </div>
             <p className="mt-3 text-[12px] leading-relaxed text-body">
-              The demo price changes every second. Your displayed maximum payment or minimum proceeds is enforced by the trade; if the price moves beyond it, review a new quote.
+              The demo price changes every second. Your displayed maximum payment or minimum proceeds is enforced by the
+              trade; if the price moves beyond it, review a new quote.
             </p>
           </fieldset>
           {review && quoteFresh && (
@@ -394,7 +398,8 @@ export function Trade() {
             </p>
           )}
           <p className="mt-3 text-[12px] leading-relaxed text-body">
-            {toleranceBps / 100}% price tolerance selected. Your wallet may request a spending approval before the trade. The quote is checked again after approval and before signing.
+            {toleranceBps / 100}% price tolerance selected. Your wallet may request a spending approval before the
+            trade. The quote is checked again after approval and before signing.
             {side === "buy" && " Buying does not add protection."}
           </p>
           {blocked && (review || blocked !== amountError) && (
@@ -452,6 +457,11 @@ export function Trade() {
           <TransactionError error={tx.error} txId={tx.txId} />
         </Card>
         <div className="min-w-0 space-y-5">
+          {reference && (
+            <Card>
+              <AssetReference asset={reference} />
+            </Card>
+          )}
           <Card>
             <h2 className="text-[20px] font-bold">In your wallet</h2>
             <p className="mt-2 text-[13px] leading-relaxed text-body">
@@ -517,7 +527,8 @@ export function Trade() {
           <Card className="bg-subtle">
             <h2 className="text-[18px] font-bold">Trading and protection, together.</h2>
             <p className="mt-3 text-[14px] leading-relaxed text-body">
-              Buy tWBNB, then choose whether to hold it in your wallet or deposit it into the tWBNB / TestUSDC protection pool. You can also provide TestUSDC backing.
+              Buy a test token, then hold it in your wallet or deposit it into its TestUSDC protection pool. You can
+              also provide TestUSDC backing to an asset’s pool.
             </p>
             <Link to="/how-it-works" className="mt-4 inline-block text-[13px] font-bold text-ink">
               How trading and protection work

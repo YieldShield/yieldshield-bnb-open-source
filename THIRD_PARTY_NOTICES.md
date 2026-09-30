@@ -6,4 +6,6 @@ This repository contains adapted source from other projects. A repository-level 
 - **Scaffold-ETH 2 / BuidlGuidl:** the Foundry `Makefile`, `script/Deploy.s.sol`, `script/DeployHelpers.s.sol`, `script/VerifyAll.s.sol`, and retained `scripts-js` account, deployment and ABI helpers originated in or were adapted from the Scaffold-ETH 2 starter. The original [MIT license and copyright notice](licenses/BUIDLGUIDL-MIT.txt) credits Copyright (c) 2023 BuidlGuidl. YieldShield modifications do not remove that notice.
 - **Foundry submodules:** `contracts/lib/forge-std`, `openzeppelin-contracts`, `openzeppelin-contracts-upgradeable`, and `solidity-bytes-utils` are pinned Git submodules. Their own upstream licenses apply when their contents are fetched.
 
+- **Reference-token artwork:** locally hosted logos identify third-party assets, with provenance and applicable notices in [token artwork attribution](apps/web/public/assets/tokens/ATTRIBUTION.md). The repository MIT license does not license third-party trademarks.
+
 Package dependencies resolved through npm lockfiles are not copied into the Git repository. Their package licenses apply to installed or bundled distributions. See [contracts/NOTICE](contracts/NOTICE) for the contracts workspace notice.

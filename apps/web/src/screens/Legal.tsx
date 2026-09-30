@@ -38,7 +38,7 @@ const pages: Record<string, { title: string; sections: { heading: string; body: 
       {
         heading: "Testnet assets only",
         body: protocolDeployed
-          ? "The protection demo runs on BSC Testnet (97). tWBNB and TestUSDC are fixed-supply, valueless demo tokens; tWBNB is not wrapped BNB. Testnet transactions use test BNB for gas. Never send real assets or confuse test addresses with mainnet references."
+          ? "The protection demo runs on BSC Testnet (97). tWBNB, tSlisBNB, tWBETH, tsUSDe, tvUSDT and TestUSDC are fixed-supply, valueless demo tokens. They are not redeemable for the reference assets or their yield. Testnet transactions use test BNB for gas. Never send real assets or confuse test addresses with mainnet references."
           : "The synthetic protection demo is prepared for BSC Testnet (97). The public contracts have not yet passed deployment verification, so wallet transactions remain disabled. Do not send assets to token or oracle reference addresses.",
       },
       {

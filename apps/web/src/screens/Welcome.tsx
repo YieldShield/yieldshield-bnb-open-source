@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import { Wordmark } from "@/components/Logo";
+import { AssetGlyph } from "@/components/ui";
+import { YIELD_ASSETS } from "@/config/yield-assets";
 
 export function Welcome() {
   return (
@@ -22,7 +24,8 @@ export function Welcome() {
               <span className="brand-underline">Choose protection.</span>
             </h1>
             <p className="mt-7 max-w-[40ch] text-[18px] leading-relaxed text-body">
-              Buy tWBNB with TestUSDC, protect your position, and manage both sides of the pool on BSC Testnet.
+              Explore BNB staking, ETH staking and stablecoin yield. Trade their test tokens, choose protection, and
+              manage your positions on BSC Testnet.
             </p>
             <Link
               to="/trade"
@@ -30,14 +33,17 @@ export function Welcome() {
             >
               Start trading <span aria-hidden>↗</span>
             </Link>
-            <Link to="/markets" className="ml-0 mt-4 inline-flex min-h-12 items-center px-2 text-[14px] font-bold text-ink underline underline-offset-4 sm:ml-4 sm:mt-0">
+            <Link
+              to="/markets"
+              className="ml-0 mt-4 inline-flex min-h-12 items-center px-2 text-[14px] font-bold text-ink underline underline-offset-4 sm:ml-4 sm:mt-0"
+            >
               Get protection ↗
             </Link>
             <p className="mt-4 text-[12px] text-body">Free synthetic test tokens · no redeemable value · chain 97</p>
           </div>
           <div className="animate-fade-up rounded-hero border border-white bg-surface p-6 shadow-welcome md:p-8">
             <div className="flex items-center justify-between gap-4">
-              <h2 className="text-[21px] font-extrabold tracking-tight2">One market. The full journey.</h2>
+              <h2 className="text-[21px] font-extrabold tracking-tight2">Yield assets. The full journey.</h2>
               <span
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-input bg-brand-tint text-xl text-brand-deep"
                 aria-hidden
@@ -49,23 +55,21 @@ export function Welcome() {
               className="my-7 flex items-center gap-2 rounded-input bg-subtle p-3.5"
               aria-label="Supported token references"
             >
-              {[
-                ["TestUSDC", "$"],
-                ["tWBNB", "◆"],
-                ["Protection", "◇"],
-              ].map(([symbol, glyph]) => (
-                <div key={symbol} className="flex flex-1 flex-col items-center gap-2 py-1">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[22px] font-bold text-ink">
-                    {glyph}
-                  </span>
-                  <span className="text-[10px] font-bold tracking-wide text-body">{symbol}</span>
-                </div>
+              {YIELD_ASSETS.map((asset) => (
+                <Link
+                  to={`/trade?asset=${encodeURIComponent(asset.demoSymbol)}`}
+                  key={asset.demoSymbol}
+                  className="flex min-w-0 flex-1 flex-col items-center gap-2 py-1"
+                >
+                  <AssetGlyph glyph="generic" label={asset.name} symbol={asset.demoSymbol} size={42} />
+                  <span className="text-[10px] font-bold tracking-wide text-body">{asset.referenceSymbol}</span>
+                </Link>
               ))}
             </div>
             <div className="space-y-6">
               {[
-                ["01", "Get free test tokens", "Claim tWBNB and TestUSDC for your wallet."],
-                ["02", "Buy or sell tWBNB", "Review the changing synthetic price and your limit."],
+                ["01", "Get free test tokens", "Claim synthetic staking tokens, stablecoin receipts and TestUSDC."],
+                ["02", "Choose a yield asset", "Buy or sell its demo token with a reviewed price limit."],
                 ["03", "Protect or provide", "Open a position and follow its exit conditions."],
               ].map(([n, title, sub]) => (
                 <div key={n} className="flex gap-4">
@@ -78,7 +82,7 @@ export function Welcome() {
               ))}
             </div>
             <div className="mt-7 border-t border-hairline pt-5 text-[12px] leading-relaxed text-body">
-              tWBNB is not wrapped real BNB. The four-minute price cycle is synthetic.{" "}
+              Protocol logos identify reference assets. Demo tokens, yield growth and price shocks are synthetic.{" "}
               <Link to="/learn/scenarios" className="font-bold text-ink underline underline-offset-2">
                 Explore separate mainnet reference scenarios
               </Link>

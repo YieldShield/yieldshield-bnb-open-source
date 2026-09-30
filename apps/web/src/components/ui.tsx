@@ -1,7 +1,9 @@
 import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from "react";
+import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { chain } from "@/chain/adapter";
 import type { PoolGlyph } from "@/config/pools";
+import { assetLogo } from "@/config/yield-assets";
 
 // --- Card -------------------------------------------------------------------
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
@@ -21,7 +23,11 @@ const VARIANTS: Record<Variant, string> = {
 };
 
 /** Keep link and button actions visually identical. */
-export function buttonStyles({ variant = "ink", full, className }: { variant?: Variant; full?: boolean; className?: string } = {}) {
+export function buttonStyles({
+  variant = "ink",
+  full,
+  className,
+}: { variant?: Variant; full?: boolean; className?: string } = {}) {
   return cn(
     "inline-flex min-h-[52px] min-w-0 max-w-full items-center justify-center gap-2 rounded-input px-5 py-3 text-center text-[15px] font-bold transition-colors",
     "disabled:cursor-not-allowed disabled:bg-disabled disabled:text-white/80 disabled:hover:bg-disabled",
@@ -37,12 +43,7 @@ export function Button({
   full,
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; full?: boolean }) {
-  return (
-    <button
-      className={buttonStyles({ variant, full, className })}
-      {...props}
-    />
-  );
+  return <button className={buttonStyles({ variant, full, className })} {...props} />;
 }
 
 // --- Pill / Badge -----------------------------------------------------------
@@ -125,7 +126,19 @@ export function Bar({ pct, tone = "green" }: { pct: number; tone?: "green" | "in
 }
 
 // --- Asset glyph ------------------------------------------------------------
-export function AssetGlyph({ glyph, label, size = 40 }: { glyph: PoolGlyph; label: string; symbol?: string; size?: number }) {
+export function AssetGlyph({
+  glyph,
+  label,
+  symbol,
+  size = 40,
+}: {
+  glyph: PoolGlyph;
+  label: string;
+  symbol?: string;
+  size?: number;
+}) {
+  const logo = assetLogo(symbol ?? label);
+  const [failedLogo, setFailedLogo] = useState<string | null>(null);
   const styles = {
     usdc: "bg-usdc-bg text-usdc-fg",
     jitosol: "bg-jitosol-bg text-jitosol-fg",
@@ -133,10 +146,18 @@ export function AssetGlyph({ glyph, label, size = 40 }: { glyph: PoolGlyph; labe
   } as const;
   return (
     <div
-      className={cn("flex shrink-0 items-center justify-center rounded-chip font-extrabold", styles[glyph])}
+      aria-hidden="true"
+      className={cn(
+        "flex shrink-0 items-center justify-center overflow-hidden rounded-chip font-extrabold",
+        logo && logo !== failedLogo ? "bg-white" : styles[glyph],
+      )}
       style={{ width: size, height: size, fontSize: size * 0.34 }}
     >
-      {label.slice(0, 1).toUpperCase()}
+      {logo && logo !== failedLogo ? (
+        <img src={logo} alt="" className="h-full w-full object-contain p-1" onError={() => setFailedLogo(logo)} />
+      ) : (
+        label.slice(0, 1).toUpperCase()
+      )}
     </div>
   );
 }
