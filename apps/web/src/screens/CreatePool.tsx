@@ -92,7 +92,7 @@ export function CreatePool() {
   if (step === "success") {
     return (
       <div className="mx-auto max-w-[640px] animate-fade-up">
-        <SuccessCard accent="indigo" title="Your pool is created.">
+        <SuccessCard accent="brand" title="Your pool is created.">
           {asset?.symbol} / {backing?.symbol} is on {chain.label}. Add backing next so it can accept protected
           positions.
         </SuccessCard>
@@ -146,7 +146,7 @@ export function CreatePool() {
       </button>
       <header className="mb-7">
         <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-brand-deep">Create a pool</p>
-        <h1 className="page-title">
+        <h1 className="text-[32px] font-extrabold leading-tight tracking-hero md:text-[42px]">
           {step === "pick" ? "Your pool. Your terms." : step === "config" ? "Set the gain share." : "Review your pool."}
         </h1>
         <p className="mt-3 max-w-[48ch] text-[16px] leading-relaxed text-body">
@@ -287,7 +287,7 @@ export function CreatePool() {
                   <Row
                     label="Backers’ share of gains"
                     value={review.params ? formatBps(review.params.commissionRateBp) : "—"}
-                    tone="indigo"
+                    tone="brand"
                   />
                   <Row label="Creator fee" value={review.params ? formatBps(review.params.poolFeeBp) : "—"} />
                   <Row label="Protocol fee" value={formatBps(options.fixed.protocolFeeBp)} />
@@ -304,7 +304,7 @@ export function CreatePool() {
                   <Row
                     label="Collateral ratio"
                     value={review.params ? formatBps(review.params.collateralRatioBp) : "—"}
-                    tone="indigo"
+                    tone="brand"
                   />
                   <Row
                     label="Creation bond"
@@ -383,7 +383,7 @@ function GainSplit({ commission, creator, protocol }: { commission?: number; cre
           </>
         )}
       </div>
-      <Row label="Backers" value={formatBps(commission ?? null)} tone="indigo" />
+      <Row label="Backers" value={formatBps(commission ?? null)} tone="brand" />
       <Row label="Creator" value={formatBps(creator ?? null)} />
       <Row label="Protocol" value={formatBps(protocol)} />
       <div className="mt-2 border-t border-hairline pt-2">

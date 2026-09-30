@@ -76,11 +76,16 @@ export function SuccessCard({
   title,
   children,
 }: {
-  accent?: "green" | "indigo";
+  accent?: "green" | "indigo" | "brand";
   title: string;
   children: ReactNode;
 }) {
-  const tint = accent === "indigo" ? "bg-indigo-tint text-indigo" : "bg-green-tint text-green-dark";
+  const tint =
+    accent === "brand"
+      ? "bg-brand-tint text-brand-deep"
+      : accent === "indigo"
+        ? "bg-indigo-tint text-indigo"
+        : "bg-green-tint text-green-dark";
   return (
     <div className="animate-fade-up flex flex-col items-center pt-6 text-center">
       <div className={`mb-5 flex h-16 w-16 animate-pop items-center justify-center rounded-pill ${tint}`}>
