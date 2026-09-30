@@ -20,7 +20,7 @@ import { splitRiskPoolFactoryAbi } from "./abis/splitRiskPoolFactory.js";
 import { tokenFaucetAbi } from "./abis/tokenFaucet.js";
 import { decodePositionId, encodePositionId } from "./positionId.js";
 import { assertDepositPreflight } from "./preflight.js";
-import { readFaucetStatus } from "./faucet.js";
+import { readFaucetStatus, extractFaucetClaim } from "./faucet.js";
 import { demoExchangeAbi } from "./abis/demoExchange.js";
 import { findFactoryForPool } from "./factory-routing.js";
 import type { EvmFaucetDeployment } from "./yield-deployments.js";
@@ -476,19 +476,7 @@ export async function planIntent(
       // dripAll skips tokens still on cooldown; an empty successful call is not a claim.
       return {
         beforeStep,
-        extract: (receipt) => {
-          const drips = parseEventLogs({ abi: tokenFaucetAbi, logs: receipt.logs, eventName: "TokensDripped" });
-          if (
-            !drips.some(
-              (log) =>
-                log.address.toLowerCase() === faucet.toLowerCase() &&
-                log.args.recipient.toLowerCase() === recipient.toLowerCase() &&
-                log.args.amount > 0n,
-            )
-          )
-            throw new Error("The confirmed transaction sent no test tokens. Refresh dispenser status before retrying.");
-          return {};
-        },
+        extract: (receipt) => extractFaucetClaim(receipt, faucet, recipient),
         steps: [
           {
             label: "Get test tokens",

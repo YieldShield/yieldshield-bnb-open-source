@@ -2,11 +2,13 @@ import {
   erc20Abi,
   getAddress,
   keccak256,
+  parseEventLogs,
   zeroAddress,
   zeroHash,
   type Address,
   type Hash,
   type PublicClient,
+  type TransactionReceipt,
 } from "viem";
 import { tokenFaucetAbi } from "./abis/tokenFaucet.js";
 
@@ -162,4 +164,23 @@ export async function readFaucetStatus(
     ready: states.some((token) => token.canDrip),
     tokens: states,
   };
+}
+
+/** The exact positive dispense receipt invariant shared by wallet submission and resumable verification. */
+export function extractFaucetClaim(
+  receipt: TransactionReceipt,
+  faucet: Address,
+  recipient: Address,
+): Record<string, never> {
+  const drips = parseEventLogs({ abi: tokenFaucetAbi, logs: receipt.logs, eventName: "TokensDripped" });
+  if (
+    !drips.some(
+      (log) =>
+        log.address.toLowerCase() === faucet.toLowerCase() &&
+        log.args.recipient.toLowerCase() === recipient.toLowerCase() &&
+        log.args.amount > 0n,
+    )
+  )
+    throw new Error("The confirmed transaction sent no test tokens. Refresh dispenser status before retrying.");
+  return {};
 }
