@@ -1,0 +1,78 @@
+[
+  {
+    "referenceSymbol": "slisBNB",
+    "demoSymbol": "tSlisBNB",
+    "name": "Lista Staked BNB",
+    "category": "bnb-staking",
+    "yieldMechanism": "BNB staking rewards accrue in the amount of BNB redeemable per slisBNB.",
+    "underlying": "BNB",
+    "mainnetToken": "0xB0b84D294e0C75A6abe60171b70edEb2EFd14A1B",
+    "mainnetDecimals": 18,
+    "docsUrl": "https://docs.bsc.lista.org/introduction/liquid-staking-slisbnb/about-slisbnb",
+    "risks": [
+      "BNB price volatility",
+      "Staking and validator risk",
+      "Smart contract and governance risk",
+      "Redemption delays and secondary-market discounts"
+    ],
+    "logo": "/assets/tokens/slisbnb.png",
+    "logoAttribution": "Lista DAO token mark; distributed by Trust Wallet assets under MIT. Used only to identify the reference asset."
+  },
+  {
+    "referenceSymbol": "WBETH",
+    "demoSymbol": "tWBETH",
+    "name": "Wrapped Beacon ETH",
+    "category": "eth-staking",
+    "yieldMechanism": "Ethereum staking rewards accrue through the WBETH-to-ETH conversion rate.",
+    "underlying": "ETH",
+    "mainnetToken": "0xa2E3356610840701BDf5611a53974510Ae27E2e1",
+    "mainnetDecimals": 18,
+    "docsUrl": "https://www.binance.com/en/support/faq/detail/e252366155174ba6887f6b32e3798273",
+    "risks": [
+      "ETH price volatility",
+      "Binance custody and redemption dependency",
+      "Staking and smart contract risk",
+      "Liquidity and secondary-market discounts"
+    ],
+    "logo": "/assets/tokens/wbeth.png",
+    "logoAttribution": "Binance WBETH token mark; distributed by Trust Wallet assets under MIT. Used only to identify the reference asset."
+  },
+  {
+    "referenceSymbol": "sUSDe",
+    "demoSymbol": "tsUSDe",
+    "name": "Ethena Staked USDe",
+    "category": "stable-yield",
+    "yieldMechanism": "Discretionary USDe rewards accrue to staked USDe shares; the BNB token represents bridged sUSDe.",
+    "underlying": "USDe",
+    "mainnetToken": "0x211Cc4DD073734dA055fbF44a2b4667d5E5fE5d2",
+    "mainnetDecimals": 18,
+    "docsUrl": "https://docs.ethena.fi/technical-design/staking-usde",
+    "risks": [
+      "USDe peg and backing risk",
+      "Funding, hedging, exchange and custodian risk",
+      "Bridge, smart contract and governance risk",
+      "Redemption cooldowns and secondary-market discounts"
+    ],
+    "logo": "/assets/tokens/susde.png",
+    "logoAttribution": "Ethena sUSDe token mark; distributed by Trust Wallet assets under MIT. Used only to identify the reference asset."
+  },
+  {
+    "referenceSymbol": "vUSDT",
+    "demoSymbol": "tvUSDT",
+    "name": "Venus USDT",
+    "category": "lending",
+    "yieldMechanism": "A Venus Core Pool lending receipt whose USDT redemption value changes with accrued borrower interest.",
+    "underlying": "Binance-Peg USDT",
+    "mainnetToken": "0xfD5840Cd36d94D7229439859C0112a4185BC0255",
+    "mainnetDecimals": 8,
+    "docsUrl": "https://docs-v4.venus.io/guides/supply-borrow",
+    "risks": [
+      "Underlying USDT peg, reserve and issuer risk",
+      "Lending bad debt and available redemption liquidity",
+      "Smart contract, oracle and governance risk",
+      "Variable utilization and market pause or cap changes"
+    ],
+    "logo": "/assets/tokens/vusdt.svg",
+    "logoAttribution": "Venus Protocol vUSDT token mark from the official Venus brand kit. Used only to identify the reference asset; trademark rights remain with Venus."
+  }
+]
