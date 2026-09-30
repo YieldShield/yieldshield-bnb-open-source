@@ -24,6 +24,12 @@ The production build, 19 web tests, 167 adapter tests, BNB service/deployment ch
 
 Desktop and 390-pixel mobile checks covered category filters, logos, available protection links and token amounts. Browser-wallet signing by an independent user remains unrecorded. The walkthroughs use a dedicated operator and do not replace an independent audit or a real-asset security/economic review.
 
+## Hosted release
+
+Vercel production deployment `dpl_AZxiVrdWHAjL36NXv76XFKD116xf` is Ready and assigned to `bnb.yieldshield.ai`. Its application commit is `b286894874df2c2ff38c19bf1a9205988f7287a8` in the existing deployment repository, synchronized from tested public-source commit `fa4cade79af7f23154bf4e1aac8ad4d4f707ea13`. Both jobs passed in [public GitHub Actions run 36722060541](https://github.com/YieldShield/yieldshield-bnb-open-source/actions/runs/36722060541).
+
+Public HTTPS returned 200 for every new trading route, the markets, token dispenser, technical page and four new logo files. The published yield proof exactly matched the release source: 51 deployment/funding receipts, 33 trading/protection walkthrough receipts and one six-token dispenser claim. The live browser loaded all five available pools, correct vUSDT amounts and six eligible faucet rows. All logos loaded, mobile category filters worked and there was no horizontal overflow at 390 pixels. The sidebar wallet remained within a 1280-by-720 viewport. No transaction was signed using the user's connected browser wallet during these checks.
+
 The sections below are historical release records; their repository, CI and deployment statuses describe the dates stated.
 
 ---
