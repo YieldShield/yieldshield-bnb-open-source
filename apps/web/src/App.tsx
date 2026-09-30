@@ -26,6 +26,7 @@ const PoolDetail = named(() => import("@/screens/PoolDetail"), "PoolDetail");
 const Deposit = named(() => import("@/screens/Deposit"), "Deposit");
 const PositionDetail = named(() => import("@/screens/PositionDetail"), "PositionDetail");
 const Activate = named(() => import("@/screens/Activate"), "Activate");
+const CreatePool = named(() => import("@/screens/CreatePool"), "CreatePool");
 const Provide = named(() => import("@/screens/Provide"), "Provide");
 const Underwriter = named(() => import("@/screens/Underwriter"), "Underwriter");
 const Activity = named(() => import("@/screens/Activity"), "Activity");
@@ -62,7 +63,7 @@ export default function App() {
               <Route path="/activate/:id" element={<Activate />} />
               <Route path="/provide" element={<Provide />} />
               <Route path="/protect" element={<Navigate to="/provide" replace />} />
-              <Route path="/create-pool" element={<Navigate to="/testnet" replace />} />
+              <Route path="/create-pool" element={<CreatePool />} />
               <Route path="/underwriter/:id" element={<Underwriter />} />
               <Route path="/activity" element={<Activity />} />
               <Route path="/account" element={<Account />} />
@@ -95,7 +96,9 @@ function RequireWallet() {
   if (!protocolDeployed) return <Navigate to="/testnet" replace />;
   if (connected) return <Outlet />;
   if (!isReady || connecting || !settled) return <Splash />;
-  return <Navigate to={`/connect?next=${encodeURIComponent(location.pathname + location.search + location.hash)}`} replace />;
+  return (
+    <Navigate to={`/connect?next=${encodeURIComponent(location.pathname + location.search + location.hash)}`} replace />
+  );
 }
 
 function Splash() {

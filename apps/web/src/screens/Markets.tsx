@@ -8,6 +8,7 @@ import { AssetReference } from "@/components/AssetReference";
 import { CATEGORY_LABELS, YIELD_ASSETS, yieldAssetFor } from "@/config/yield-assets";
 import { formatAmount, formatBps, formatDuration } from "@/lib/format";
 import { setupLink } from "@/lib/navigation";
+import { shortAddress } from "@/chain/wallet";
 
 const assets = [
   { symbol: "tWBNB", name: "Test BNB token", category: "token", subtitle: "The original BNB price-cycle demo" },
@@ -53,6 +54,9 @@ export function Markets() {
           <Link to="/positions" className="text-brand-deep underline underline-offset-4">
             View your positions
           </Link>
+          <Link to="/create-pool" className="text-brand-deep underline underline-offset-4">
+            Create a pool
+          </Link>
         </div>
       </header>
       {!owner && (
@@ -94,9 +98,10 @@ export function Markets() {
       )}
       <div className="grid items-start gap-5 xl:grid-cols-2">
         {filtered.map((asset) => {
-          const pool = pools.find(
+          const assetPools = pools.filter(
             (entry) => entry.shielded.symbol === asset.symbol && entry.backing.symbol === "TestUSDC",
           );
+          const pool = assetPools[0];
           const reference = yieldAssetFor(asset.symbol);
           const holding =
             pool && balances.find((entry) => entry.token.token.toLowerCase() === pool.shielded.token.toLowerCase());
@@ -168,6 +173,32 @@ export function Markets() {
                   </Link>
                 )}
               </div>
+              {assetPools.length > 1 && (
+                <details className="mt-4 border-t border-hairline pt-2">
+                  <summary className="min-h-11 cursor-pointer py-3 text-[13px] font-bold text-ink">
+                    Compare all {assetPools.length} pools for {asset.symbol}
+                  </summary>
+                  <ul className="space-y-3 pb-3">
+                    {assetPools.map((candidate) => (
+                      <li key={candidate.address} className="rounded-input bg-subtle p-3 text-[12px] text-body">
+                        <Link to={`/pool/${candidate.address}`} className="font-bold text-ink underline">
+                          Pool {shortAddress(candidate.address)}
+                        </Link>
+                        <p className="mt-2">
+                          Backers’ share {formatBps(candidate.stats.premiumRateBp)} · Creator fee{" "}
+                          {formatBps(candidate.stats.poolFeeBp)} · Collateral{" "}
+                          {formatBps(candidate.stats.collateralRatioBp)}
+                        </p>
+                        <p className="mt-1">
+                          {candidate.availability?.openPosition.state === "available" && !candidate.paused
+                            ? "Accepting test deposits"
+                            : "Review availability before depositing"}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
               {reference && (
                 <details className="mt-4 border-t border-hairline pt-2">
                   <summary className="min-h-11 cursor-pointer py-3 text-[13px] font-bold text-ink">

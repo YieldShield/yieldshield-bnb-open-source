@@ -15,6 +15,7 @@ export const activityKey = (owner: AccountId | null) => (owner ? (["activity", o
 /** First-element names of all app-owned SWR keys (used for targeted invalidation). */
 export const DATA_KEY_NAMES = new Set([
   "pools",
+  "pool-creation",
   "whitelist",
   "positions",
   "balance",

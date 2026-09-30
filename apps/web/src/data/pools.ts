@@ -40,6 +40,6 @@ export function useGlobalHealth(): { loading: boolean; paused: boolean; unavaila
 /** A single pool by address (derived from the cached list — no extra fetch). */
 export function usePool(address?: string): { loading: boolean; error: string | null; pool: PoolView | null } {
   const { loading, error, data } = usePools();
-  const pool = address ? (data.find((p) => p.address === address) ?? null) : null;
+  const pool = address ? (data.find((p) => p.address.toLowerCase() === address.toLowerCase()) ?? null) : null;
   return { loading, error, pool };
 }

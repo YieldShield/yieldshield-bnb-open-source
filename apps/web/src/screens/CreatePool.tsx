@@ -1,356 +1,467 @@
-import { useMemo, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toBaseUnits, type PoolId, type TokenId } from "@yieldshield/core";
+import useSWR from "swr";
+import { fromBaseUnits, type PoolCreationOptions, type PoolId, type SeedToken, type TokenId } from "@yieldshield/core";
 import { Expander, Row } from "@/components/Expander";
 import { ArrowLeft } from "@/components/icons";
 import { PendingOverlay, SuccessCard, TransactionError } from "@/components/TxFeedback";
-import { AssetGlyph, Button, Card, Pill } from "@/components/ui";
+import { AssetGlyph, Button, Card } from "@/components/ui";
 import { cn } from "@/lib/cn";
-import { formatPct } from "@/lib/format";
-import { chain } from "@/chain/adapter";
+import { formatBps, formatDuration, formatToken, formatUsd8 } from "@/lib/format";
+import { creationOptionsForAsset, reviewPoolCreation, type PoolCreationForm } from "@/lib/pool-creation";
+import { chain, reader } from "@/chain/adapter";
 import { useSubmitTx } from "@/chain/useSubmitTx";
-import { useWhitelistedTokens, type SeedToken } from "@/data/tokens";
+import { shortAddress } from "@/chain/wallet";
+import { useTokenBalance } from "@/data/balance";
 import { presetFor } from "@/config/pools";
 
 type Step = "pick" | "config" | "review" | "success";
-
-const USD_ONE = 100_000_000n; // USD, 8 decimals
-const DAY = 86_400;
-
-// Program parameter bounds (crates/yieldshield-common/src/constants.rs) — mirror them so the form
-// rejects out-of-range values up front instead of failing on-chain.
-const BOUNDS = {
-  collateralMinPct: 100, // MIN_COLLATERAL_RATIO 10_000 bp
-  collateralMaxPct: 500, // MAX_COLLATERAL_RATIO 50_000 bp
-  commissionMaxPct: 50, // MAX_COMMISSION_RATE 5_000 bp
-  poolFeeMaxPct: 20, // MAX_POOL_FEE 2_000 bp
-  protocolFeeMaxPct: 10, // MAX_PROTOCOL_FEE 1_000 bp
-  unlockMinDays: 1, // MIN_UNLOCK_DURATION
-  unlockMaxDays: 365, // MAX_UNLOCK_DURATION
-  minPoolMaxDays: 90, // MAX_MINIMUM_POOL_TIME
-  transferLockMaxHours: 720, // MAX_TRANSFER_LOCK 30 days
-};
-
-/** Human-unit form state (converted to chain units on submit). */
-const DEFAULTS = {
+const DEFAULT_FORM: PoolCreationForm = {
+  collateralPct: "150",
   commissionPct: "10",
-  poolFeePct: "5",
-  protocolFeePct: "1",
-  maxTvlUsd: "1000000",
-  minPoolDays: "1",
-  unlockDays: "28",
-  shieldLockHours: "1",
-  protectorLockHours: "0",
+  poolFeePct: "1",
   bond: "0",
 };
 
 export function CreatePool() {
   const navigate = useNavigate();
   const tx = useSubmitTx();
-  const { data: tokens, loading } = useWhitelistedTokens();
-
+  const {
+    data: configurations,
+    error: optionsError,
+    isLoading,
+    mutate,
+  } = useSWR(
+    reader.getPoolCreationOptions ? ["pool-creation", chain.protocolId] : null,
+    () => reader.getPoolCreationOptions!(),
+    { refreshInterval: 15_000, revalidateOnFocus: true },
+  );
+  const [now, setNow] = useState(() => Date.now() / 1000);
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now() / 1000), 1000);
+    return () => clearInterval(interval);
+  }, []);
   const [step, setStep] = useState<Step>("pick");
-  const [shieldedToken, setShieldedToken] = useState<TokenId | null>(null);
+  const [protectedToken, setProtectedToken] = useState<TokenId | null>(null);
   const [backingToken, setBackingToken] = useState<TokenId | null>(null);
-  const [collateralPct, setCollateralPct] = useState("");
-  const [cfg, setCfg] = useState(DEFAULTS);
+  const [form, setForm] = useState(DEFAULT_FORM);
   const [createdPool, setCreatedPool] = useState<PoolId | null>(null);
+  const options = creationOptionsForAsset(configurations, protectedToken);
+  const protectedAssets = configurations?.flatMap((configuration) => configuration.protectedAssets) ?? [];
+  const asset = options?.protectedAssets.find((token) => token.token === protectedToken);
+  const backing = options?.backingAssets.find((token) => token.token === backingToken);
+  const { balance, loading: balanceLoading } = useTokenBalance(backing?.token);
+  const review = reviewPoolCreation(form, protectedToken, backingToken, options, now);
+  const settingsFresh = !!options && !optionsError && now >= options.evaluatedAt && now < options.validUntil;
+  const bondError =
+    review.params && review.params.creationBondAmount! > 0n
+      ? balanceLoading
+        ? "Checking your bond balance…"
+        : balance === null
+          ? "Your bond balance could not be checked."
+          : balance < review.params.creationBondAmount!
+            ? `You need more ${backing?.symbol} for this creation bond.`
+            : null
+      : null;
+  const canSubmit = settingsFresh && !!review.params && !bondError && !!tx.owner;
+  const set = (key: keyof PoolCreationForm) => (value: string) => setForm((current) => ({ ...current, [key]: value }));
 
-  const shielded = useMemo(() => tokens.find((t) => t.token === shieldedToken) ?? null, [tokens, shieldedToken]);
-  const backing = useMemo(() => tokens.find((t) => t.token === backingToken) ?? null, [tokens, backingToken]);
-
-  // `create_pool` enforces the ratio against the BACKING token's whitelist floor (create_pool.rs),
-  // and the global MIN_COLLATERAL_RATIO. The effective floor is the greater of the two.
-  const floorBp = useMemo(() => {
-    const b = backing ? Number(backing.minCollateralRatioBp) : 0;
-    return Math.max(BOUNDS.collateralMinPct * 100, b);
-  }, [backing]);
-  const floorPct = floorBp / 100;
-
-  const set = (k: keyof typeof DEFAULTS) => (v: string) => setCfg((c) => ({ ...c, [k]: v }));
-  const num = (s: string) => Number(s || 0);
-
-  function toConfig() {
-    if (!shielded || !backing) return;
-    setCollateralPct(String(floorPct)); // prefill with the required minimum; user can raise it
+  function configure() {
+    if (!asset || !backing || !options || !settingsFresh) return;
+    setForm((current) => ({
+      ...current,
+      collateralPct: String(
+        Math.max(15_000, options.bounds.collateralMinBp, Number(backing.minCollateralRatioBp)) / 100,
+      ),
+      bond: fromBaseUnits(backing.minimumBondAmount, backing.decimals),
+    }));
+    tx.reset();
     setStep("config");
   }
 
-  const configError = useMemo<string | null>(() => {
-    const col = num(collateralPct);
-    if (col * 100 < floorBp) return `Collateral ratio must be at least ${formatPct(floorPct)}.`;
-    if (col > BOUNDS.collateralMaxPct) return `Collateral ratio can be at most ${BOUNDS.collateralMaxPct}%.`;
-    const feeChecks: Array<[string, string, number]> = [
-      ["Commission", cfg.commissionPct, BOUNDS.commissionMaxPct],
-      ["Pool fee", cfg.poolFeePct, BOUNDS.poolFeeMaxPct],
-      ["Protocol fee", cfg.protocolFeePct, BOUNDS.protocolFeeMaxPct],
-    ];
-    for (const [label, val, max] of feeChecks) {
-      const v = num(val);
-      if (v < 0 || v > max) return `${label} must be between 0% and ${max}%.`;
-    }
-    if (num(cfg.maxTvlUsd) <= 0) return "Max pool size must be greater than 0.";
-    const unlock = num(cfg.unlockDays);
-    if (unlock < BOUNDS.unlockMinDays || unlock > BOUNDS.unlockMaxDays)
-      return `Unlock notice must be between ${BOUNDS.unlockMinDays} and ${BOUNDS.unlockMaxDays} days.`;
-    if (num(cfg.minPoolDays) < 0 || num(cfg.minPoolDays) > BOUNDS.minPoolMaxDays)
-      return `Minimum pool time must be between 0 and ${BOUNDS.minPoolMaxDays} days.`;
-    for (const [label, val] of [
-      ["Shield transfer lock", cfg.shieldLockHours],
-      ["Protector transfer lock", cfg.protectorLockHours],
-    ] as const) {
-      const v = num(val);
-      if (v < 0 || v > BOUNDS.transferLockMaxHours)
-        return `${label} must be between 0 and ${BOUNDS.transferLockMaxHours} hours.`;
-    }
-    return null;
-  }, [collateralPct, floorBp, floorPct, cfg]);
-
   async function confirm() {
-    if (!shielded || !backing) return;
-    const bp = (pct: string) => Math.round(num(pct) * 100);
-    const res = await tx.submit({
-      kind: "createPool",
-      params: {
-        shieldedToken: shielded.token,
-        backingToken: backing.token,
-        collateralRatioBp: bp(collateralPct),
-        commissionRateBp: bp(cfg.commissionPct),
-        poolFeeBp: bp(cfg.poolFeePct),
-        protocolFeeBp: bp(cfg.protocolFeePct),
-        maxTvlUsd: BigInt(Math.round(num(cfg.maxTvlUsd))) * USD_ONE,
-        minimumPoolTime: Math.round(num(cfg.minPoolDays) * DAY),
-        unlockDuration: Math.round(num(cfg.unlockDays) * DAY),
-        shieldTransferLock: Math.round(num(cfg.shieldLockHours) * 3600),
-        protectorTransferLock: Math.round(num(cfg.protectorLockHours) * 3600),
-        creationBondAmount: cfg.bond ? toBaseUnits(cfg.bond, backing.decimals) : 0n,
-      },
-    });
-    if (res) {
-      setCreatedPool(res.poolId ?? null);
+    const current = reviewPoolCreation(form, protectedToken, backingToken, options, Date.now() / 1000);
+    if (!canSubmit || !current.params || tx.pending) return;
+    const result = await tx.submit({ kind: "createPool", params: current.params });
+    if (result) {
+      setCreatedPool(result.poolId ?? null);
       setStep("success");
     }
   }
 
-  // -- success ----------------------------------------------------------------
-  if (step === "success" && shielded && backing) {
+  if (step === "success") {
     return (
-      <div className="animate-fade-up">
-        <SuccessCard accent="indigo" title="Pool created.">
-          {shielded.symbol} / {backing.symbol} is live on {chain.label}. Protectors can now back it and savers can
-          deposit.
+      <div className="mx-auto max-w-[640px] animate-fade-up">
+        <SuccessCard accent="indigo" title="Your pool is created.">
+          {asset?.symbol} / {backing?.symbol} is on {chain.label}. Add backing next so it can accept protected
+          positions.
         </SuccessCard>
-        <div className="mx-auto mt-8 flex max-w-[360px] flex-col gap-3">
+        <p className="mx-auto mt-5 max-w-[44ch] text-center text-[14px] leading-relaxed text-body">
+          Creation and funding are separate. A creation bond does not provide backing capacity.
+        </p>
+        <div className="mx-auto mt-7 flex max-w-[360px] flex-col gap-3">
           {createdPool && (
-            <Button variant="indigo" full onClick={() => navigate(`/pool/${createdPool}`)}>
-              View pool
+            <Button variant="primary" full onClick={() => navigate(`/provide?pool=${createdPool}`)}>
+              Fund this pool
             </Button>
           )}
-          <Button variant="secondary" full onClick={() => navigate("/protect")}>
-            Done
-          </Button>
+          {createdPool && (
+            <Button variant="secondary" full onClick={() => navigate(`/pool/${createdPool}`)}>
+              View pool terms
+            </Button>
+          )}
+          {!createdPool && (
+            <Button variant="primary" full onClick={() => navigate("/provide")}>
+              Find your pool
+            </Button>
+          )}
+          {tx.txId && (
+            <a
+              className="mt-2 text-center text-[13px] font-semibold text-body underline"
+              href={chain.explorerTxUrl(tx.txId)}
+              target="_blank"
+              rel="noreferrer"
+            >
+              View creation transaction
+            </a>
+          )}
         </div>
       </div>
     );
   }
 
-  // -- pick / config / review -------------------------------------------------
   return (
     <div className="animate-fade-up">
-      {tx.pending && <PendingOverlay label="Creating pool…" phase={tx.phase} step={tx.step} txId={tx.txId} />}
-
+      {tx.pending && <PendingOverlay label="Creating your pool…" phase={tx.phase} step={tx.step} txId={tx.txId} />}
       <button
-        onClick={() => (step === "pick" ? navigate("/protect") : setStep(step === "review" ? "config" : "pick"))}
-        className="mb-4 flex items-center gap-1.5 text-[14px] text-body"
+        type="button"
+        onClick={() => {
+          tx.reset();
+          if (step === "pick") navigate("/provide");
+          else setStep(step === "review" ? "config" : "pick");
+        }}
+        className="mb-5 flex items-center gap-1.5 text-[14px] font-medium text-body"
       >
         <ArrowLeft className="h-4.5 w-4.5" /> Back
       </button>
+      <header className="mb-7">
+        <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-brand-deep">Create a pool</p>
+        <h1 className="page-title">
+          {step === "pick" ? "Your pool. Your terms." : step === "config" ? "Set the gain share." : "Review your pool."}
+        </h1>
+        <p className="mt-3 max-w-[48ch] text-[16px] leading-relaxed text-body">
+          {step === "pick"
+            ? "Choose the asset to protect and the capital that backs it."
+            : step === "config"
+              ? "Choose how gains are shared and how much backing is reserved."
+              : "Check the gain split, backing and creation bond before confirming."}
+        </p>
+        <p className="mt-3 max-w-[54ch] text-[13px] leading-relaxed text-muted">
+          BSC Testnet only. These are synthetic test tokens with no real value. A new pool is empty and must be funded
+          before it can protect positions.
+        </p>
+        <ol aria-label="Pool creation steps" className="mt-5 flex gap-5 text-[12px] font-semibold">
+          {(["pick", "config", "review"] as const).map((value, index) => (
+            <li
+              key={value}
+              aria-current={step === value ? "step" : undefined}
+              className={step === value ? "text-brand-deep" : "text-muted"}
+            >
+              {index + 1} · {value === "pick" ? "Assets" : value === "config" ? "Terms" : "Review"}
+            </li>
+          ))}
+        </ol>
+      </header>
 
-      {step === "pick" && (
-        <>
-          <h1 className="mb-1 text-[22px] font-extrabold tracking-tight2">Create a pool</h1>
-          <p className="mb-5 text-[14px] text-body">
-            Pick a protected asset and a backing asset from the whitelisted set. You'll configure terms next.
+      {!reader.getPoolCreationOptions ? (
+        <Card>Pool creation is not available on this deployment.</Card>
+      ) : isLoading ? (
+        <div role="status" className="h-60 animate-pulse rounded-card bg-subtle">
+          <span className="sr-only">Reading verified factory settings…</span>
+        </div>
+      ) : !settingsFresh || !options ? (
+        <Card>
+          <p role="alert" className="text-[14px] text-body">
+            Pool creation settings could not be verified. Refresh before continuing.
           </p>
-
-          {loading ? (
-            <div className="h-56 animate-pulse rounded-card bg-subtle" />
-          ) : (
-            <div className="flex flex-col gap-6">
-              <TokenPicker
-                label="Protected asset"
-                hint="What savers deposit and get downside protection on."
-                tokens={tokens}
-                selected={shieldedToken}
-                exclude={backingToken}
-                onSelect={setShieldedToken}
-              />
-              <TokenPicker
-                label="Backing asset"
-                hint="What protectors underwrite with. The pool prices its collateral off this token's feed."
-                tokens={tokens}
-                selected={backingToken}
-                exclude={shieldedToken}
-                onSelect={setBackingToken}
-              />
-            </div>
+          <Button className="mt-4" variant="secondary" onClick={() => void mutate()}>
+            Refresh settings
+          </Button>
+        </Card>
+      ) : step === "pick" ? (
+        <div className="max-w-[740px] space-y-7">
+          <TokenPicker
+            label="Protected asset"
+            tokens={protectedAssets}
+            selected={protectedToken}
+            onSelect={(token) => {
+              setProtectedToken(token);
+              const configuration = creationOptionsForAsset(configurations, token);
+              setBackingToken(configuration?.backingAssets[0]?.token ?? null);
+            }}
+          />
+          <TokenPicker
+            label="Backing asset"
+            tokens={options.backingAssets}
+            selected={backingToken}
+            onSelect={setBackingToken}
+          />
+          <Button
+            variant="primary"
+            full
+            disabled={!asset || !backing || options.activePools >= options.maxActivePools}
+            onClick={configure}
+          >
+            Set pool terms
+          </Button>
+          {options.activePools >= options.maxActivePools && (
+            <p role="alert" className="text-[14px] text-amber-deep">
+              The factory has reached its active-pool limit.
+            </p>
           )}
-
-          <div className="mt-6">
-            <Button variant="indigo" full disabled={!shielded || !backing} onClick={toConfig}>
-              Configure terms
+        </div>
+      ) : asset && backing ? (
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_260px]">
+          <div className="min-w-0 space-y-5">
+            <div className="flex flex-wrap items-center gap-3 text-[15px] font-bold">
+              <span className="rounded-full bg-brand-tint px-4 py-2 text-brand-deep">{asset.symbol}</span>
+              <span className="text-muted">backed by</span>
+              <span className="rounded-full bg-brand-tint px-4 py-2 text-brand-deep">{backing.symbol}</span>
+            </div>
+            {step === "config" ? (
+              <>
+                <div className="space-y-3">
+                  <Field
+                    label="Backers’ share of gains"
+                    suffix="%"
+                    value={form.commissionPct}
+                    onChange={set("commissionPct")}
+                    hint={`${formatBps(options.bounds.commissionMinBp)}–${formatBps(options.bounds.commissionMaxBp)} of new gains, shared with backing providers.`}
+                  />
+                  <Field
+                    label="Creator fee"
+                    suffix="%"
+                    value={form.poolFeePct}
+                    onChange={set("poolFeePct")}
+                    hint={`${formatBps(options.bounds.poolFeeMinBp)}–${formatBps(options.bounds.poolFeeMaxBp)} of new gains, paid to the pool creator.`}
+                  />
+                  <Field
+                    label="Collateral ratio"
+                    suffix="%"
+                    value={form.collateralPct}
+                    onChange={set("collateralPct")}
+                    hint={`Minimum ${formatBps(Math.max(options.bounds.collateralMinBp, Number(backing.minCollateralRatioBp)))}; maximum ${formatBps(options.bounds.collateralMaxBp)}.`}
+                  />
+                </div>
+                <div className="rounded-card bg-brand-tint px-4 py-3 text-[14px] text-body">
+                  <span className="font-semibold text-ink">
+                    Protocol fee: {formatBps(options.fixed.protocolFeeBp)}.
+                  </span>{" "}
+                  Set by the protocol, not the creator.
+                  <p className="mt-2">
+                    Required creation bond:{" "}
+                    <strong>
+                      {formatToken(backing.minimumBondAmount, backing.decimals, backing.symbol, backing.decimals)}
+                    </strong>
+                    . The protocol locks this separately; you will still need to add backing to fund the empty pool.
+                  </p>
+                </div>
+                <Expander title="Creation bond">
+                  <Field label="Bond amount" suffix={backing.symbol} value={form.bond} onChange={set("bond")} />
+                  <p className="mt-3 text-[13px] leading-relaxed text-body">
+                    Minimum {formatToken(backing.minimumBondAmount, backing.decimals, backing.symbol, backing.decimals)}
+                    . The protocol locks this bond separately from pool backing. It does not add protection capacity.
+                    The creator can recover it by closing an empty pool, subject to the contract’s checks.
+                  </p>
+                  {balance !== null && (
+                    <p className="mt-2 text-[12px] text-muted">
+                      Your balance: {formatToken(balance, backing.decimals, backing.symbol)}
+                    </p>
+                  )}
+                </Expander>
+                <FactoryTerms options={options} />
+              </>
+            ) : (
+              <>
+                <Card>
+                  <Row
+                    label="Backers’ share of gains"
+                    value={review.params ? formatBps(review.params.commissionRateBp) : "—"}
+                    tone="indigo"
+                  />
+                  <Row label="Creator fee" value={review.params ? formatBps(review.params.poolFeeBp) : "—"} />
+                  <Row label="Protocol fee" value={formatBps(options.fixed.protocolFeeBp)} />
+                  <Row
+                    label="Total gain fees"
+                    value={
+                      review.params
+                        ? formatBps(
+                            review.params.commissionRateBp + review.params.poolFeeBp + options.fixed.protocolFeeBp,
+                          )
+                        : "—"
+                    }
+                  />
+                  <Row
+                    label="Collateral ratio"
+                    value={review.params ? formatBps(review.params.collateralRatioBp) : "—"}
+                    tone="indigo"
+                  />
+                  <Row
+                    label="Creation bond"
+                    value={
+                      review.params
+                        ? `${fromBaseUnits(review.params.creationBondAmount ?? 0n, backing.decimals)} ${backing.symbol}`
+                        : "—"
+                    }
+                  />
+                  <Row label="Creator fee recipient" value={tx.owner ? shortAddress(tx.owner) : "Connect wallet"} />
+                  <Row label="Protected-exit delay" value={formatDuration(BigInt(options.fixed.minimumPoolTime))} />
+                  <Row label="Backer withdrawal notice" value={formatDuration(BigInt(options.fixed.unlockDuration))} />
+                </Card>
+                <p className="px-1 text-[14px] leading-relaxed text-body">
+                  Gain-sharing terms and the collateral ratio are fixed when the pool is created. The protocol locks the
+                  creation bond; it does not fund the pool or provide protection capacity. Fund the pool separately
+                  before opening protected positions.
+                </p>
+                <FactoryTerms options={options} />
+              </>
+            )}
+            {(review.error || bondError) && (
+              <p role="alert" className="text-[13px] font-medium text-amber-deep">
+                {review.error || bondError}
+              </p>
+            )}
+            <TransactionError error={tx.error} txId={tx.txId} />
+            <Button
+              variant="primary"
+              full
+              disabled={!canSubmit || tx.pending}
+              onClick={() => (step === "config" ? setStep("review") : void confirm())}
+            >
+              {step === "config" ? "Review pool" : "Create pool"}
             </Button>
           </div>
-        </>
-      )}
-
-      {step === "config" && shielded && backing && (
-        <>
-          <h1 className="mb-1 text-[22px] font-extrabold tracking-tight2">
-            {shielded.symbol} / {backing.symbol}
-          </h1>
-          <p className="mb-5 text-[14px] text-body">Set the pool's economics. Sensible defaults are prefilled.</p>
-
-          <div className="flex flex-col gap-3">
-            <Field
-              label="Collateral ratio"
-              suffix="%"
-              value={collateralPct}
-              onChange={setCollateralPct}
-              hint={`Backing coverage required. Minimum ${formatPct(floorPct)} for this pair.`}
-            />
-            <Field
-              label="Commission to protectors"
-              suffix="%"
-              value={cfg.commissionPct}
-              onChange={set("commissionPct")}
-              hint="Share of shield yield paid to backers."
-            />
-            <Field label="Pool fee" suffix="%" value={cfg.poolFeePct} onChange={set("poolFeePct")} />
-            <Field label="Max pool size" suffix="USD" value={cfg.maxTvlUsd} onChange={set("maxTvlUsd")} />
-          </div>
-
-          <div className="mt-4">
-            <Expander title="Advanced">
-              <div className="flex flex-col gap-3">
-                <Field label="Protocol fee" suffix="%" value={cfg.protocolFeePct} onChange={set("protocolFeePct")} />
-                <Field label="Minimum pool time" suffix="days" value={cfg.minPoolDays} onChange={set("minPoolDays")} />
-                <Field
-                  label="Protector unlock notice"
-                  suffix="days"
-                  value={cfg.unlockDays}
-                  onChange={set("unlockDays")}
-                />
-                <Field
-                  label="Shield transfer lock"
-                  suffix="hours"
-                  value={cfg.shieldLockHours}
-                  onChange={set("shieldLockHours")}
-                />
-                <Field
-                  label="Protector transfer lock"
-                  suffix="hours"
-                  value={cfg.protectorLockHours}
-                  onChange={set("protectorLockHours")}
-                />
-                <Field
-                  label="Creation bond"
-                  suffix={backing.symbol}
-                  value={cfg.bond}
-                  onChange={set("bond")}
-                  hint="Backing tokens you lock to create the pool (0 allowed on this deployment)."
-                />
-              </div>
-            </Expander>
-          </div>
-
-          {configError && <p className="mt-4 px-1 text-[13px] font-medium text-amber-deep">{configError}</p>}
-          <div className="mt-6">
-            <Button variant="indigo" full disabled={!!configError} onClick={() => setStep("review")}>
-              Review
-            </Button>
-          </div>
-        </>
-      )}
-
-      {step === "review" && shielded && backing && (
-        <>
-          <h1 className="mb-4 text-[22px] font-extrabold tracking-tight2">Review</h1>
-          <Card>
-            <Row label="Protected asset" value={`${shielded.symbol}`} />
-            <Row label="Backing asset" value={`${backing.symbol}`} />
-            <Row label="Collateral ratio" value={formatPct(num(collateralPct))} tone="indigo" />
-            <Row label="Commission to protectors" value={formatPct(num(cfg.commissionPct))} />
-            <Row label="Pool fee" value={formatPct(num(cfg.poolFeePct))} />
-            <Row label="Protocol fee" value={formatPct(num(cfg.protocolFeePct))} tone="muted" />
-            <Row label="Max pool size" value={`$${Number(num(cfg.maxTvlUsd)).toLocaleString("en-US")}`} />
-            <Row label="Unlock notice" value={`${num(cfg.unlockDays)} days`} tone="muted" />
-            <Row label="Creation bond" value={`${num(cfg.bond)} ${backing.symbol}`} tone="muted" />
-          </Card>
-          <div className="mt-3.5 rounded-card bg-indigo-tint-3 p-4 text-[13.5px] leading-relaxed text-indigo">
-            You'll be the pool creator. Fee recipients default to your wallet. This creates the pool on-chain; you can
-            back it or deposit right after.
-          </div>
-          <TransactionError error={tx.error} txId={tx.txId} />
-          <div className="mt-5">
-            <Button variant="indigo" full onClick={confirm} disabled={tx.pending}>
-              Create pool
-            </Button>
-          </div>
-        </>
+          <GainSplit
+            commission={review.params?.commissionRateBp}
+            creator={review.params?.poolFeeBp}
+            protocol={options.fixed.protocolFeeBp}
+          />
+        </div>
+      ) : (
+        <Card>
+          <p>The supported asset list has changed.</p>
+          <Button className="mt-4" variant="secondary" onClick={() => setStep("pick")}>
+            Choose assets again
+          </Button>
+        </Card>
       )}
     </div>
   );
 }
 
-// --- token picker -----------------------------------------------------------
+function GainSplit({ commission, creator, protocol }: { commission?: number; creator?: number; protocol: number }) {
+  const valid = commission !== undefined && creator !== undefined;
+  const protectedShare = valid ? 10_000 - commission - creator - protocol : null;
+  return (
+    <aside
+      className="rounded-card border border-hairline bg-surface p-5 lg:sticky lg:top-5"
+      aria-label="Your pool’s gain split"
+      aria-live="polite"
+    >
+      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">Your pool’s gain split</p>
+      <p className="mt-5 text-[44px] font-semibold leading-none tracking-tight text-brand-deep">
+        {formatBps(protectedShare)}
+      </p>
+      <p className="mt-2 text-[14px] font-semibold text-brand-deep">Protected holders keep</p>
+      <div aria-hidden className="mb-5 mt-6 flex h-3 overflow-hidden rounded-full bg-subtle-2">
+        {valid && (
+          <>
+            <span className="bg-brand" style={{ width: `${protectedShare! / 100}%` }} />
+            <span className="bg-amber" style={{ width: `${commission / 100}%` }} />
+            <span className="bg-ink" style={{ width: `${creator / 100}%` }} />
+            <span className="bg-muted" style={{ width: `${protocol / 100}%` }} />
+          </>
+        )}
+      </div>
+      <Row label="Backers" value={formatBps(commission ?? null)} tone="indigo" />
+      <Row label="Creator" value={formatBps(creator ?? null)} />
+      <Row label="Protocol" value={formatBps(protocol)} />
+      <div className="mt-2 border-t border-hairline pt-2">
+        <Row label="Total gain fees" value={valid ? formatBps(commission + creator + protocol) : "—"} />
+      </div>
+      <p className="mt-3 text-[12px] leading-relaxed text-muted">
+        Applies to newly accrued positive gains. Trading and network fees are separate.
+      </p>
+    </aside>
+  );
+}
+
+function FactoryTerms({ options }: { options: PoolCreationOptions }) {
+  const fixed = options.fixed;
+  return (
+    <Expander title="Protocol-set timing & limits">
+      <p className="mb-3 text-[13px] leading-relaxed text-body">
+        These factory settings apply to the new pool. They are not creator-editable.
+      </p>
+      <Row label="Protected-exit delay" value={formatDuration(BigInt(fixed.minimumPoolTime))} />
+      <Row label="Backer withdrawal notice" value={formatDuration(BigInt(fixed.unlockDuration))} />
+      <Row label="Protected receipt transfer lock" value={formatDuration(BigInt(fixed.shieldTransferLock))} />
+      <Row label="Backer receipt transfer lock" value={formatDuration(BigInt(fixed.protectorTransferLock))} />
+      <Row label="Maximum pool value" value={formatUsd8(fixed.maxTvlUsd)} />
+      <p className="mt-3 text-[12px] leading-relaxed text-muted">
+        Withdrawals remain subject to reserved backing and contract checks. Transfer locks are separate from exit
+        delays.
+      </p>
+      <a
+        href={`https://testnet.bscscan.com/address/${options.factory}`}
+        target="_blank"
+        rel="noreferrer"
+        className="mt-3 inline-block text-[12px] font-semibold text-body underline"
+      >
+        Inspect factory
+      </a>
+    </Expander>
+  );
+}
+
 function TokenPicker({
   label,
-  hint,
   tokens,
   selected,
-  exclude,
   onSelect,
 }: {
   label: string;
-  hint: string;
   tokens: SeedToken[];
   selected: TokenId | null;
-  exclude: TokenId | null;
   onSelect: (token: TokenId) => void;
 }) {
-  const options = tokens.filter((t) => t.token !== exclude);
   return (
-    <div>
-      <div className="section-label mb-1">{label}</div>
-      <p className="mb-2.5 text-[12.5px] text-muted">{hint}</p>
-      <div className="grid grid-cols-2 gap-2">
-        {options.map((t) => {
-          const isSel = t.token === selected;
-          return (
-            <button
-              key={t.token}
-              onClick={() => onSelect(t.token)}
-              className={cn(
-                "flex items-center gap-2.5 rounded-card border bg-surface p-3 text-left transition-shadow hover:shadow-card",
-                isSel ? "border-indigo ring-1 ring-indigo" : "border-hairline",
-              )}
-            >
-              <AssetGlyph glyph={presetFor(t.symbol).glyph} label={t.symbol} size={32} />
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-[14px] font-bold text-ink">{t.symbol}</div>
-                <div className="truncate text-[11.5px] text-muted">{t.name}</div>
-              </div>
-              {t.tranche === "volatile" && <Pill tone="amber">150%</Pill>}
-            </button>
-          );
-        })}
+    <fieldset className="min-w-0">
+      <legend className="mb-3 text-[14px] font-bold text-brand-deep">{label}</legend>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {tokens.map((token) => (
+          <button
+            key={token.token}
+            type="button"
+            aria-pressed={token.token === selected}
+            onClick={() => onSelect(token.token)}
+            className={cn(
+              "flex min-w-0 items-center gap-3 rounded-card border bg-surface p-4 text-left transition-shadow hover:shadow-card",
+              token.token === selected ? "border-brand ring-1 ring-brand" : "border-hairline",
+            )}
+          >
+            <AssetGlyph glyph={presetFor(token.symbol).glyph} label={token.name} symbol={token.symbol} size={36} />
+            <span className="min-w-0">
+              <span className="block text-[15px] font-bold text-ink">{token.symbol}</span>
+              <span className="block truncate text-[12px] text-muted">{token.name}</span>
+            </span>
+          </button>
+        ))}
       </div>
-    </div>
+    </fieldset>
   );
 }
 
-// --- labelled numeric field -------------------------------------------------
 function Field({
   label,
   suffix,
@@ -361,28 +472,39 @@ function Field({
   label: string;
   suffix: string;
   value: string;
-  onChange: (v: string) => void;
+  onChange: (value: string) => void;
   hint?: string;
 }) {
-  const sanitize = (raw: string) => {
-    const cleaned = raw.replace(/[^\d.]/g, "");
-    const parts = cleaned.split(".");
-    return parts.length > 2 ? `${parts[0]}.${parts.slice(1).join("")}` : cleaned;
-  };
+  const id = useId();
   return (
     <div>
-      <div className="flex items-center gap-2 rounded-input border border-hairline bg-surface px-4 py-3">
-        <span className="flex-1 text-[14px] font-semibold text-body">{label}</span>
-        <input
-          inputMode="decimal"
-          placeholder="0"
-          value={value}
-          onChange={(e) => onChange(sanitize(e.target.value))}
-          className="w-24 bg-transparent text-right text-[16px] font-bold text-ink outline-none tnum placeholder:text-disabled"
-        />
-        <span className="w-12 text-right text-[13px] font-semibold text-muted">{suffix}</span>
+      <div className="grid gap-2 rounded-input border border-hairline bg-surface px-4 py-3 focus-within:ring-2 focus-within:ring-brand sm:grid-cols-[minmax(0,1fr)_minmax(0,9rem)] sm:items-center">
+        <label htmlFor={id} className="text-[14px] font-semibold text-body">
+          {label}
+        </label>
+        <div className="flex min-w-0 items-center gap-2">
+          <input
+            id={id}
+            name={label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}
+            inputMode="decimal"
+            autoComplete="off"
+            maxLength={80}
+            spellCheck={false}
+            aria-describedby={hint ? `${id}-suffix ${id}-hint` : `${id}-suffix`}
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            className="min-w-0 flex-1 bg-transparent text-right text-[20px] font-bold text-ink outline-none tnum"
+          />
+          <span id={`${id}-suffix`} className="shrink-0 text-[13px] font-semibold text-muted">
+            {suffix}
+          </span>
+        </div>
       </div>
-      {hint && <p className="mt-1 px-1 text-[12px] text-muted">{hint}</p>}
+      {hint && (
+        <p id={`${id}-hint`} className="mt-1.5 px-1 text-[12px] leading-relaxed text-muted">
+          {hint}
+        </p>
+      )}
     </div>
   );
 }

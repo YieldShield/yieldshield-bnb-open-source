@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { fromBaseUnits, minReceived, toBaseUnits, type PositionId } from "@yieldshield/core";
 import { AmountInput } from "@/components/AmountInput";
 import { Row } from "@/components/Expander";
@@ -12,6 +12,7 @@ import { chain } from "@/chain/adapter";
 import { useSubmitTx } from "@/chain/useSubmitTx";
 import { useTokenBalance } from "@/data/balance";
 import { usePools, type PoolView } from "@/data/pools";
+import { requestedPool } from "@/lib/pool-selection";
 import { VOCAB } from "@/vocab";
 
 type Step = "pick" | "amount" | "review" | "success";
@@ -19,12 +20,19 @@ type Step = "pick" | "amount" | "review" | "success";
 export function Provide() {
   const navigate = useNavigate();
   const tx = useSubmitTx();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedAddress = searchParams.get("pool");
   const { data, loading, error: loadError } = usePools();
   const open = data.filter((p) => !p.paused);
 
-  const [step, setStep] = useState<Step>("pick");
-  const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
-  const selected = data.find((p) => p.address === selectedAddress) ?? null;
+  const [step, setStep] = useState<Step>(requestedAddress ? "amount" : "pick");
+  const [selectedAddress, setSelectedAddress] = useState<string | null>(requestedAddress);
+  const selected = requestedPool(data, selectedAddress);
+  useEffect(() => {
+    setSelectedAddress(requestedAddress);
+    setStep(requestedAddress ? "amount" : "pick");
+    setValue("");
+  }, [requestedAddress]);
   const [value, setValue] = useState("");
   const [createdPosition, setCreatedPosition] = useState<PositionId | null>(null);
 
@@ -98,6 +106,26 @@ export function Provide() {
         </Card>
       )}
 
+      {step !== "pick" && !selected && (
+        <Card>
+          <p role="status">
+            {loading
+              ? "Loading your pool…"
+              : "This pool could not be found in the verified pool list. Newly created pools may take a moment to appear. We’ll check again automatically."}
+          </p>
+          <Button
+            className="mt-4"
+            variant="secondary"
+            onClick={() => {
+              setSearchParams({});
+              setSelectedAddress(null);
+              setStep("pick");
+            }}
+          >
+            Choose another pool
+          </Button>
+        </Card>
+      )}
       {step !== "pick" && (
         <button
           onClick={() => setStep(step === "review" ? "amount" : "pick")}
@@ -124,6 +152,17 @@ export function Provide() {
             </div>
           </div>
 
+          <Card className="mb-5 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 className="text-[16px] font-bold text-ink">Set up your own pool</h2>
+              <p className="mt-1 text-[13px] text-body">
+                Choose a protected test asset and set the gain share and backing terms.
+              </p>
+            </div>
+            <Button variant="primary" onClick={() => navigate("/create-pool")}>
+              Create a pool
+            </Button>
+          </Card>
           <div className="section-label mb-2.5">Pick a pool to back</div>
           {loading ? (
             <div className="h-40 animate-pulse rounded-card bg-subtle" />
@@ -149,7 +188,8 @@ export function Provide() {
       {step === "amount" && selected && backing && (
         <>
           <h1 className="mb-1 text-[22px] font-extrabold tracking-tight2">Back {selected.preset.asset}</h1>
-          <p className="mb-5 text-[14px] text-body">Test-token collateral · full loss possible</p>
+          <p className="mb-3 text-[14px] text-body">Test-token collateral · full loss possible</p>
+          <p className="mb-5 break-all text-[12px] text-muted">Pool: {selected.address}</p>
           <AmountInput
             value={value}
             onChange={setValue}
@@ -179,6 +219,7 @@ export function Provide() {
           <Card>
             <Row label="Backing collateral" value={formatToken(amountBase, backing.decimals, backing.symbol)} />
             <Row label="Pool" value={`${selected.preset.asset} · ${chain.label}`} />
+            <p className="break-all py-2 text-[12px] text-muted">{selected.address}</p>
             <Row label="Backers’ share of gains" value={formatBps(selected.stats.premiumRateBp)} tone="indigo" />
             <Row label="Loss order" value="Paid last" tone="muted" />
             <Row label="Notice period" value={formatDuration(selected.stats.unlockDuration)} tone="muted" />

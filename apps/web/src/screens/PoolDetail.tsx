@@ -65,7 +65,7 @@ function ActiveDetail({ pool, onSave }: { pool: PoolView; onSave: () => void }) 
       </div>
 
       <button
-        onClick={() => navigate("/provide")}
+        onClick={() => navigate(`/provide?pool=${pool.address}`)}
         className="mt-1 flex items-center gap-1 text-[13px] font-semibold text-indigo"
       >
         Try backing this pool <ChevronRight className="h-4 w-4" />
