@@ -14,12 +14,11 @@ export function TestFaucet() {
   const { address } = useWalletConnection();
   const tx = useSubmitTx();
   const { data: tokens } = useWhitelistedTokens();
-  const [selectedSource, setSelectedSource] = useState<string | null>(null);
-  const sources = faucet.sources ?? (faucet.address ? [{ address: faucet.address, label: "Original BNB demo" }] : []);
-  const source = sources.find((entry) => entry.address === selectedSource) ?? sources.at(-1);
+  // The latest reviewed dispenser supplies every demo market through one claim.
+  const source = faucet.sources?.at(-1)?.address ?? faucet.address;
   const { data, error, isLoading, mutate } = useSWR(
-    faucet.enabled && faucet.status && address && source ? ["bsc-faucet", source.address, address] : null,
-    () => faucet.status!(address!, source!.address),
+    faucet.enabled && faucet.status && address && source ? ["bsc-faucet", source, address] : null,
+    () => faucet.status!(address!, source!),
     { refreshInterval: 10000, shouldRetryOnError: false },
   );
   const [now, setNow] = useState(Date.now() / 1000);
@@ -33,13 +32,13 @@ export function TestFaucet() {
     !error &&
     data.validUntil > now &&
     data.recipient.toLowerCase() === address?.toLowerCase() &&
-    data.address.toLowerCase() === source?.address.toLowerCase();
+    data.address.toLowerCase() === source?.toLowerCase();
   const canClaim = fresh && data.ready && data.nativeBalance > 0n && !tx.pending;
   const cooldown = data?.tokens.filter((t) => t.nextDripTime > now).map((t) => t.nextDripTime) ?? [];
   const next = cooldown.length ? Math.min(...cooldown) : null;
   async function claim() {
-    if (!canClaim || !address) return;
-    await tx.submit({ kind: "faucetDrip", recipient: address, faucet: source?.address });
+    if (!canClaim || !address || !source) return;
+    await tx.submit({ kind: "faucetDrip", recipient: address, faucet: source });
     await mutate();
   }
   return (
@@ -50,29 +49,6 @@ export function TestFaucet() {
         Claim tokens for trading and protection. These synthetic tokens have no monetary value. One claim per token per
         wallet every 24 hours.
       </p>
-      {sources.length > 1 && (
-        <div className="mt-4">
-          <label htmlFor="test-faucet-source" className="mb-2 block text-[12px] font-bold">
-            Token dispenser
-          </label>
-          <select
-            id="test-faucet-source"
-            value={source?.address ?? ""}
-            disabled={tx.pending}
-            onChange={(event) => {
-              setSelectedSource(event.target.value);
-              tx.reset();
-            }}
-            className="min-h-11 w-full rounded-input border border-hairline bg-white px-3 text-[14px] font-semibold"
-          >
-            {sources.map((entry) => (
-              <option key={entry.address} value={entry.address}>
-                {entry.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
       {fresh && (
         <ul className="mt-4 grid gap-2 sm:grid-cols-2">
           {data.tokens

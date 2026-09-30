@@ -8,7 +8,7 @@ The new oracle illustrates modest share-value growth followed by a downside shoc
 
 `tvUSDT` deliberately uses eight decimals to exercise lending-receipt unit handling. The other new test tokens use 18 decimals. Per-asset limits are 25 tSlisBNB, 10 tWBETH, 25,000 tsUSDe and 50,000 tvUSDT. Every trade charges a 0.3% synthetic quote-token fee.
 
-The new token dispenser supplies 5 tWBNB, 10,000 TestUSDC, 5 tSlisBNB, 2 tWBETH, 1,000 tsUSDe and 50,000 tvUSDT per eligible wallet every 24 hours, while funded. The original dispenser remains separately available. Test BNB for network fees comes from the official BNB faucet.
+The new token dispenser supplies 5 tWBNB, 10,000 TestUSDC, 5 tSlisBNB, 2 tWBETH, 1,000 tsUSDe and 50,000 tvUSDT per eligible wallet every 24 hours, while funded. The app uses this six-token dispenser automatically. The original dispenser remains deployed for earlier flows and is not offered as a separate choice in the app. Test BNB for network fees comes from the official BNB faucet.
 
 ## Deployment controls
 
