@@ -28,11 +28,11 @@ cd contracts
 forge test --match-path 'test/Bsc*.t.sol' --extra-output storageLayout
 cd ..
 node scripts/deploy-bsc-yield-assets.mjs --prepare
-node scripts/deploy-bsc-yield-assets.mjs --broadcast
+npm run deploy:bsc:yield
 node scripts/verify-bsc-yield-assets.mjs --write
 ```
 
-The sequential deployment records each signed request/hash before sending, rejects ambiguous nonces, reconciles only its exact saved transaction and checks canonical receipts with ten sealed confirmations. It caps cumulative deployment fees at 0.03 test BNB. Pool addresses are obtained from canonical factory events before the backing deposits are prepared. It stops if inherited code or governance no longer matches the original manifest.
+The sequential deployment records each signed request/hash before sending, rejects ambiguous nonces, reconciles only its exact saved transaction and checks canonical receipts with ten sealed confirmations. It caps cumulative deployment fees at 0.03 test BNB. Pool addresses are obtained from canonical factory events before the backing deposits are prepared. It stops if inherited code or governance no longer matches the original manifest. The deployment command waits and reconciles its exact saved transactions when confirmations have not yet sealed; other errors stop immediately.
 
 The independent verifier reconstructs expected deployment calldata and checks transaction destinations, receipts, inherited modules, runtime code, routing, token metadata, ownership, pool configuration and initial funding. It publishes a trimmed proof without keys or signer configuration. Verified values are then pinned in the adapter's additional factory, trading and faucet registries. Build-time settings cannot add execution targets; every signature rechecks eligibility against the reviewed deployment.
 
