@@ -33,3 +33,5 @@ contracts/deployments/bsc-testnet-plan.json
 # Local review copies of compiler inputs; publication requires explicit approval.
 artifacts/bsc-source-review/
 contracts/deployments/bsc-testnet-trading-plan.json
+
+contracts/deployments/bsc-testnet-yield-assets-plan.json

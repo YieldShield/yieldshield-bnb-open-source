@@ -32,7 +32,11 @@
     "prepare:bsc:trading": "node scripts/deploy-bsc-trading.mjs --prepare",
     "deploy:bsc:trading": "node scripts/deploy-bsc-trading.mjs --broadcast",
     "verify:bsc:trading": "node scripts/verify-bsc-trading.mjs --check",
-    "walkthrough:bsc:trading": "node scripts/bsc-trading-flow.mjs --broadcast"
+    "walkthrough:bsc:trading": "node scripts/bsc-trading-flow.mjs --broadcast",
+    "prepare:bsc:yield": "node scripts/deploy-bsc-yield-assets.mjs --prepare",
+    "deploy:bsc:yield": "node scripts/deploy-bsc-yield-assets.mjs --broadcast",
+    "verify:bsc:yield": "node scripts/verify-bsc-yield-assets.mjs --check",
+    "walkthrough:bsc:yield": "node scripts/bsc-yield-assets-flow.mjs --broadcast"
   },
   "dependencies": {
     "@solana-program/token": "^0.17.0",

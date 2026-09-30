@@ -48,3 +48,7 @@ jobs:
         working-directory: contracts
         run: forge test --match-path 'test/Bsc*.t.sol' --extra-output storageLayout
       - run: node scripts/verify-base-modules.mjs
+      - name: Yield demo initializer storage and size guards
+        run: node scripts/verify-bsc-yield-layout.mjs
+      - name: Yield demo deployment and proof regressions
+        run: node --test scripts/bsc-yield-assets.test.mjs
