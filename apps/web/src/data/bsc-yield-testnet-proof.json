@@ -1,0 +1,465 @@
+{
+  "schemaVersion": 1,
+  "chainId": 97,
+  "genesisHash": "0x6d3c66c5357ec91d5c43af47e234a939b22557cbb552dc45bebbceeed90fbe34",
+  "verifiedAt": "2026-09-30T12:56:10.852Z",
+  "scope": "Valueless test tokens: no real staking, APY, protocol claim or redemption.",
+  "demo": {
+    "priceMode": "synthetic accelerated yield and downside formula",
+    "realYield": false,
+    "cycleSeconds": 240,
+    "minimumPoolTime": 60,
+    "unlockDuration": 120,
+    "notice": "Valueless test tokens: no real staking, APY, protocol claim or redemption.",
+    "operatorControls": "Factory and faucet governed by inherited two-day timelock; oracle and exchange have no admin."
+  },
+  "contracts": [
+    {
+      "name": "tSlisBNB",
+      "address": "0x1ee984B017e80214A314BFf1042c43456325Ce8A",
+      "codeHash": "0x63e0872cf6940ecbfaaf828cb2429c86839a96fae580569f2d5aa2f07f4ef56d"
+    },
+    {
+      "name": "tWBETH",
+      "address": "0xB07598F9ACCE93C46B9BbB138d108D626621e4B9",
+      "codeHash": "0x63e0872cf6940ecbfaaf828cb2429c86839a96fae580569f2d5aa2f07f4ef56d"
+    },
+    {
+      "name": "tsUSDe",
+      "address": "0x28e37F207671B98Bdf5AfFA3d8cACB1F93721962",
+      "codeHash": "0x63e0872cf6940ecbfaaf828cb2429c86839a96fae580569f2d5aa2f07f4ef56d"
+    },
+    {
+      "name": "tvUSDT",
+      "address": "0x40B73bA38F51C100d9dC6D33632B6aCa4E2989E1",
+      "codeHash": "0x63e0872cf6940ecbfaaf828cb2429c86839a96fae580569f2d5aa2f07f4ef56d"
+    },
+    {
+      "name": "BscYieldScenarioOracle",
+      "address": "0x6d8049BAE53B5f43d9024ff79c2cE7a38AB8aC1D",
+      "codeHash": "0x4e7432db4a06ecdc92de411ad4fdefbe85ad2b8d3adc7e4d0a269002602c2155"
+    },
+    {
+      "name": "BscYieldPoolInitializeModule",
+      "address": "0x20D1D44795570E8446Eb16435966ca547a75163e",
+      "codeHash": "0xc41c2d20b77bb8e5bcccb3f640d52ad80b7796865811d995925f4d0f5285061a"
+    },
+    {
+      "name": "YieldPoolRouter",
+      "address": "0x9cDF155426575D7C8318CbFefE7Fe94c6b17fa8C",
+      "codeHash": "0x2004447027370e023e859d6b670659c148aca7d8ac7273c230f08cda84aaa33d"
+    },
+    {
+      "name": "YieldFactory",
+      "address": "0xE451957815949CE33c5C3aa1873138F38F20eC2C",
+      "codeHash": "0x322850f0f79b33b56c8ad74c9673c97fad0dcb722fb136b3ef2b8a91e5a9686b"
+    },
+    {
+      "name": "YieldCompositeOracle",
+      "address": "0x6590434b94b0b36CE6929b60020b5d15F5f0E03C",
+      "codeHash": "0x5b8f4e1f84c0e9de90908af0af4975c0729c0f87a54b158655dcebc4bafaad9f"
+    },
+    {
+      "name": "BscYieldTestExchange",
+      "address": "0x9861556d2c0Ad28BE45113Eea93799aA7D0147A0",
+      "codeHash": "0x80648c2ab96651250e8bf8a04166b6c6399417fd55fa788b8374080743b934ce"
+    },
+    {
+      "name": "YieldFaucet",
+      "address": "0x7C2f42466CA67cf5eB652952979b799532c8531C",
+      "codeHash": "0x2c77324429e4ef6f633b304ea5ba01b831bc047833e15ab8fa83c194c118a5c5"
+    },
+    {
+      "name": "TestUSDC (existing)",
+      "address": "0x7Fc086DA704fC345f99817Afe0CBd3C649E3266C",
+      "codeHash": "0x8523822ba9a59b8179dc4eee1a59ac8eca4846176d41712e0cc175f1a4f1b17e"
+    },
+    {
+      "name": "Timelock (existing)",
+      "address": "0x3dA69f44A1069e4a5422a38740dd61FA4D56A084",
+      "codeHash": "0xf8ebfd1b2875548d51b8babe1c97f27250dd72f58572966f720206ea516d0225"
+    }
+  ],
+  "assets": [
+    {
+      "id": "slisbnb",
+      "symbol": "tSlisBNB",
+      "name": "YieldShield test slisBNB - no value",
+      "decimals": 18,
+      "address": "0x1ee984B017e80214A314BFf1042c43456325Ce8A",
+      "pool": "0xF295dBc9263B96Fb7A6B9249256D4Ac0dB016492",
+      "basePriceUsd8": "60000000000",
+      "demoYieldBpsPerCycle": "20",
+      "downsideBps": "1500"
+    },
+    {
+      "id": "wbeth",
+      "symbol": "tWBETH",
+      "name": "YieldShield test wBETH - no value",
+      "decimals": 18,
+      "address": "0xB07598F9ACCE93C46B9BbB138d108D626621e4B9",
+      "pool": "0x2A48e9EDD17937a03BA15346d665650130b59F3F",
+      "basePriceUsd8": "200000000000",
+      "demoYieldBpsPerCycle": "15",
+      "downsideBps": "1500"
+    },
+    {
+      "id": "susde",
+      "symbol": "tsUSDe",
+      "name": "YieldShield test sUSDe - no value",
+      "decimals": 18,
+      "address": "0x28e37F207671B98Bdf5AfFA3d8cACB1F93721962",
+      "pool": "0x5DF82180a84b9cFFA2AFF9bA6ae415F3fa26eB77",
+      "basePriceUsd8": "110000000",
+      "demoYieldBpsPerCycle": "10",
+      "downsideBps": "1000"
+    },
+    {
+      "id": "vusdt",
+      "symbol": "tvUSDT",
+      "name": "YieldShield test Venus vUSDT - no value",
+      "decimals": 8,
+      "address": "0x40B73bA38F51C100d9dC6D33632B6aCa4E2989E1",
+      "pool": "0x6382C38566Da122aEcE80cd294615d4CE9D9247c",
+      "basePriceUsd8": "2000000",
+      "demoYieldBpsPerCycle": "10",
+      "downsideBps": "1000"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "deploy:tSlisBNB",
+      "hash": "0x12845772f95fa715c50975323e5aaa3faaa012fe29f37b486841e58e39fc303b",
+      "blockNumber": "134055274"
+    },
+    {
+      "id": "deploy:tWBETH",
+      "hash": "0x77b19ee257616fc034523123eb6ff69b6877ed09a48883187cd39c910524a277",
+      "blockNumber": "134055293"
+    },
+    {
+      "id": "deploy:tsUSDe",
+      "hash": "0x5c4270385d659a6c3f01c6111328fb6e05362bb246585ef5c6f5dd5c8b06251e",
+      "blockNumber": "134055311"
+    },
+    {
+      "id": "deploy:tvUSDT",
+      "hash": "0x2beb7d0643929a79f1759e8bac60321a02f9f24d71f77eb2d8bdb0a16695fbd3",
+      "blockNumber": "134055330"
+    },
+    {
+      "id": "deploy:BscYieldScenarioOracle",
+      "hash": "0x093d48097750a7446c12fecac864fbc44589fd24d0463a2524bffff7b9e470b0",
+      "blockNumber": "134055611"
+    },
+    {
+      "id": "deploy:BscYieldPoolInitializeModule",
+      "hash": "0x1ad3edf58b497865d3b6d02829571a7266c8eb003d64f931fa3a3c7b15da3519",
+      "blockNumber": "134055655"
+    },
+    {
+      "id": "deploy:YieldPoolRouter",
+      "hash": "0xfe3cf6192ac60f8e9ef00c24cf1ab3b056bb36be5201dc37a1071f4e364f84d1",
+      "blockNumber": "134055675"
+    },
+    {
+      "id": "deploy:YieldFactory",
+      "hash": "0xb143b161e62e611ffd3971c99d352ee23e01acf31984342e88ee00adc87b96a3",
+      "blockNumber": "134055692"
+    },
+    {
+      "id": "deploy:YieldCompositeOracle",
+      "hash": "0xece1cb9b0b9846b2c4ba7d0759b5380a1419eeaa024b85e18c5fc2e926bde4be",
+      "blockNumber": "134055710"
+    },
+    {
+      "id": "deploy:BscYieldTestExchange",
+      "hash": "0x1ce1f08c052db65ebe5cb42d69cdc00db057bde54e79d09c2e3caa326d02b4e4",
+      "blockNumber": "134055760"
+    },
+    {
+      "id": "deploy:YieldFaucet",
+      "hash": "0x124f8a5259b1b5f81c8c5b18ca2f41f91a52884b7a6f4d51c9446d7a6fd47cc7",
+      "blockNumber": "134055779"
+    },
+    {
+      "id": "oracle:ownership",
+      "hash": "0x3adcf764c08dca179211e8a8a14de834aebaa32109b2d97149c5a26afac73ca3",
+      "blockNumber": "134055796"
+    },
+    {
+      "id": "factory:oracle",
+      "hash": "0x7a56dd2c1950cd53fb6425c96f432dc958a1beaf5fe5fc3ea52bca4a6c5a5628",
+      "blockNumber": "134055850"
+    },
+    {
+      "id": "factory:fees",
+      "hash": "0x4364cec1f68128bc593704fdf4df1806404fb2ab7dec28a3033ac13bde40a78a",
+      "blockNumber": "134055907"
+    },
+    {
+      "id": "factory:token:slisbnb",
+      "hash": "0x81248979a96c7ad66433e7c391d23d01967c95f8b6ebe80aa22a62ab6c4480b4",
+      "blockNumber": "134055925"
+    },
+    {
+      "id": "factory:token:wbeth",
+      "hash": "0x62693732807da7f9a9ace196bf205982c0d200b36977cce3a6dbf83a14c5c7fa",
+      "blockNumber": "134055943"
+    },
+    {
+      "id": "factory:token:susde",
+      "hash": "0x820501c5d1fd44b2336ef88baaadc86d99f88182c0b287b7a304ed29cdd2c81e",
+      "blockNumber": "134056008"
+    },
+    {
+      "id": "factory:token:vusdt",
+      "hash": "0xa7bcc1d5ce42eb3b6877852e13e7b6f70067740afaa6fc2db74e88e4fa615947",
+      "blockNumber": "134056025"
+    },
+    {
+      "id": "factory:token:TestUSDC",
+      "hash": "0xdcbcc50ed3fd7669d266c55ef2d5001c0c96ed41eee9be5af5e3c5e910210e2e",
+      "blockNumber": "134056044"
+    },
+    {
+      "id": "factory:strict-backing",
+      "hash": "0xb6126657928b49f0bbdf1d55698dd48c595e6d3ba6cfad605c48a16afef6ee66",
+      "blockNumber": "134056106"
+    },
+    {
+      "id": "factory:finalize",
+      "hash": "0x7e7a097bb2771cdb0cad13c5d7ec7b19838d6a6fad0ae2fc2238a9235b38b6d6",
+      "blockNumber": "134056125"
+    },
+    {
+      "id": "factory:ownership",
+      "hash": "0xb18ec29feb6748648885a5d0bb8a6abac9a1089f7fc524896cd6fde67558692c",
+      "blockNumber": "134056190"
+    },
+    {
+      "id": "pool:slisbnb:approve-bond",
+      "hash": "0x78712bd5595af82abe01c01d2f9891e1fd7389c8369ad008bb8243aa042b3406",
+      "blockNumber": "134056255"
+    },
+    {
+      "id": "pool:slisbnb:create",
+      "hash": "0xac560bec058b414a930c766b7e3d66eddb0695bf8a446c1bb8462629b430a7be",
+      "blockNumber": "134056274"
+    },
+    {
+      "id": "pool:slisbnb:approve-backing",
+      "hash": "0x068759732e7df8e5540bc80b422c5d2b6f2fcb8314e1c980523b0682a542127e",
+      "blockNumber": "134056296"
+    },
+    {
+      "id": "pool:slisbnb:seed-backing",
+      "hash": "0xe70348994bc70f740027da7280effa689059a775e5bab34cfcce0c4dae32bf72",
+      "blockNumber": "134056314"
+    },
+    {
+      "id": "exchange:fund:slisbnb",
+      "hash": "0x2e520d0ee337b4d8eee485949f0f341a9f05e75f31350fe9c07ef8dda76029f3",
+      "blockNumber": "134056333"
+    },
+    {
+      "id": "pool:wbeth:approve-bond",
+      "hash": "0x15319acf19ae1fad50a482b3c27d30e9ff3e9a49c6008c3010e4a8d6342ea061",
+      "blockNumber": "134056352"
+    },
+    {
+      "id": "pool:wbeth:create",
+      "hash": "0x48e588ff69b655a6c024c4ca70e72369a57c7844f18f8c7174b588c7cfe48d61",
+      "blockNumber": "134056424"
+    },
+    {
+      "id": "pool:wbeth:approve-backing",
+      "hash": "0x356be2c090ad93f3db52c94b78994c413901cd956c946264bccc41d67f052478",
+      "blockNumber": "134056496"
+    },
+    {
+      "id": "pool:wbeth:seed-backing",
+      "hash": "0xf0354afa0719fa64565b60328fabf2db682aefad5d9f2f12f6ebe172a5aab5f7",
+      "blockNumber": "134056514"
+    },
+    {
+      "id": "exchange:fund:wbeth",
+      "hash": "0xce2f4bd8372599756f727ab3aa8c637c8967652d765122244f0197f592835b9b",
+      "blockNumber": "134056533"
+    },
+    {
+      "id": "pool:susde:approve-bond",
+      "hash": "0x9dba12f392346e685e64d079670c63fee689936e6edcf287932d7dbc6c8e5260",
+      "blockNumber": "134056552"
+    },
+    {
+      "id": "pool:susde:create",
+      "hash": "0xc5758c911ddbb69928ebc96ac0ee0cb1cabf87b79b6db627c446fa9f14fd2c19",
+      "blockNumber": "134056630"
+    },
+    {
+      "id": "pool:susde:approve-backing",
+      "hash": "0x05627e0f368b6267d6514d7440b7ca5cf0a4eb63231aa492078d962cf8a322d1",
+      "blockNumber": "134056656"
+    },
+    {
+      "id": "pool:susde:seed-backing",
+      "hash": "0xfa484e6b10e2ad1ea842a1bf5e5897667fd7eee4f7bc7d0590d8c350ef584dde",
+      "blockNumber": "134056672"
+    },
+    {
+      "id": "exchange:fund:susde",
+      "hash": "0x9feb9294d0c940a03160fb339b63f1bc9332bbd88bd9860e5d9c7f8e2cc75f63",
+      "blockNumber": "134056753"
+    },
+    {
+      "id": "pool:vusdt:approve-bond",
+      "hash": "0x3028771b2d07026a3f8c21320d4dd78e025b08bba84d66710443a1687870ac81",
+      "blockNumber": "134056837"
+    },
+    {
+      "id": "pool:vusdt:create",
+      "hash": "0x19837455925137b6bd477e4fe55783fd5f13b568cebbea6809e11fe4fd7fbd90",
+      "blockNumber": "134056855"
+    },
+    {
+      "id": "pool:vusdt:approve-backing",
+      "hash": "0xf5c24aaff0c9578b6152519d5e0fa21df5bf719ad66f4b78eb28537bc4ae0f4e",
+      "blockNumber": "134056874"
+    },
+    {
+      "id": "pool:vusdt:seed-backing",
+      "hash": "0x3bd45ab665c3c4f2a95ceccb6b5a4bb3287a51222e5fc50d1bd3c93812ddda89",
+      "blockNumber": "134056892"
+    },
+    {
+      "id": "exchange:fund:vusdt",
+      "hash": "0x144fdee75be12aa8d0dd83a7009928b2a1e8806b53557d2fe2e9721a440c4406",
+      "blockNumber": "134056981"
+    },
+    {
+      "id": "exchange:fund:TestUSDC",
+      "hash": "0x973061f7cf414c513f63ebbc96bb6e45f85a25c60139431a87117090c651f797",
+      "blockNumber": "134057069"
+    },
+    {
+      "id": "faucet:configure",
+      "hash": "0x7f3ff350d827b51a9fc73d0d7bd8cb50804c5dd34ed0fe7f1b3549c348e8ba1b",
+      "blockNumber": "134057088"
+    },
+    {
+      "id": "faucet:fund:tWBNB",
+      "hash": "0x7d34005b18a21fbe309caaaeb36e17a0211f6bb85eaa148e5f3b1f3af972b242",
+      "blockNumber": "134057178"
+    },
+    {
+      "id": "faucet:fund:TestUSDC",
+      "hash": "0xfb0735416d45a463383b0dc8cd82f8d51dad1a9c6d8d85b8935df2269e520854",
+      "blockNumber": "134057196"
+    },
+    {
+      "id": "faucet:fund:slisbnb",
+      "hash": "0xd353a4df08b550fc288cbd89dcc69d52647497d1fd6b2f2c89dfcf137b6e45b2",
+      "blockNumber": "134057215"
+    },
+    {
+      "id": "faucet:fund:wbeth",
+      "hash": "0xe48d4a2031404b203da3ea4930833864aee627c5ad1ef2c324440477291bab05",
+      "blockNumber": "134057311"
+    },
+    {
+      "id": "faucet:fund:susde",
+      "hash": "0xe649479b65096304df2843437fbaab84664d47a6ccf559a5cc218468ac6c023a",
+      "blockNumber": "134057329"
+    },
+    {
+      "id": "faucet:fund:vusdt",
+      "hash": "0xb67a36ed4aa34cd91fc7b5c5259e48860c1eea3231035ef1c53dc1f72fcbaa5e",
+      "blockNumber": "134057348"
+    },
+    {
+      "id": "faucet:ownership",
+      "hash": "0x8ee33a13a433269f03f97676d1258f8cec05501b04c38c3e962e3974b5b00daa",
+      "blockNumber": "134057448"
+    }
+  ],
+  "adapterVenue": {
+    "chainId": 97,
+    "exchange": "0x9861556d2c0Ad28BE45113Eea93799aA7D0147A0",
+    "exchangeCodehash": "0x80648c2ab96651250e8bf8a04166b6c6399417fd55fa788b8374080743b934ce",
+    "oracle": "0x6d8049BAE53B5f43d9024ff79c2cE7a38AB8aC1D",
+    "oracleCodehash": "0x4e7432db4a06ecdc92de411ad4fdefbe85ad2b8d3adc7e4d0a269002602c2155",
+    "quoteToken": "0x7Fc086DA704fC345f99817Afe0CBd3C649E3266C",
+    "quoteTokenCodehash": "0x8523822ba9a59b8179dc4eee1a59ac8eca4846176d41712e0cc175f1a4f1b17e",
+    "model": "accelerated-yield",
+    "epoch": "1790771980",
+    "cycleSeconds": "240",
+    "feeBps": "30",
+    "maxStockAmount": "25000000000000000000",
+    "assets": [
+      {
+        "token": "0x1ee984B017e80214A314BFf1042c43456325Ce8A",
+        "codehash": "0x63e0872cf6940ecbfaaf828cb2429c86839a96fae580569f2d5aa2f07f4ef56d",
+        "symbol": "tSlisBNB",
+        "name": "YieldShield test slisBNB - no value",
+        "decimals": 18,
+        "basePriceUsd8": "60000000000",
+        "maxAmount": "25000000000000000000",
+        "demoYieldBpsPerCycle": "20",
+        "downsideBps": "1500"
+      },
+      {
+        "token": "0xB07598F9ACCE93C46B9BbB138d108D626621e4B9",
+        "codehash": "0x63e0872cf6940ecbfaaf828cb2429c86839a96fae580569f2d5aa2f07f4ef56d",
+        "symbol": "tWBETH",
+        "name": "YieldShield test wBETH - no value",
+        "decimals": 18,
+        "basePriceUsd8": "200000000000",
+        "maxAmount": "10000000000000000000",
+        "demoYieldBpsPerCycle": "15",
+        "downsideBps": "1500"
+      },
+      {
+        "token": "0x28e37F207671B98Bdf5AfFA3d8cACB1F93721962",
+        "codehash": "0x63e0872cf6940ecbfaaf828cb2429c86839a96fae580569f2d5aa2f07f4ef56d",
+        "symbol": "tsUSDe",
+        "name": "YieldShield test sUSDe - no value",
+        "decimals": 18,
+        "basePriceUsd8": "110000000",
+        "maxAmount": "25000000000000000000000",
+        "demoYieldBpsPerCycle": "10",
+        "downsideBps": "1000"
+      },
+      {
+        "token": "0x40B73bA38F51C100d9dC6D33632B6aCa4E2989E1",
+        "codehash": "0x63e0872cf6940ecbfaaf828cb2429c86839a96fae580569f2d5aa2f07f4ef56d",
+        "symbol": "tvUSDT",
+        "name": "YieldShield test Venus vUSDT - no value",
+        "decimals": 8,
+        "basePriceUsd8": "2000000",
+        "maxAmount": "5000000000000",
+        "demoYieldBpsPerCycle": "10",
+        "downsideBps": "1000"
+      }
+    ]
+  },
+  "adapterDeployment": {
+    "factory": "0xE451957815949CE33c5C3aa1873138F38F20eC2C",
+    "compositeOracle": "0x6590434b94b0b36CE6929b60020b5d15F5f0E03C",
+    "deploymentBlock": "134055692",
+    "faucet": "0x7C2f42466CA67cf5eB652952979b799532c8531C",
+    "faucetProof": {
+      "address": "0x7C2f42466CA67cf5eB652952979b799532c8531C",
+      "label": "Yield asset test tokens",
+      "codehash": "0x2c77324429e4ef6f633b304ea5ba01b831bc047833e15ab8fa83c194c118a5c5",
+      "tokens": [
+        "0x05c674Bbc8930a580fCc5924060807C6153FeA6C",
+        "0x7Fc086DA704fC345f99817Afe0CBd3C649E3266C",
+        "0x1ee984B017e80214A314BFf1042c43456325Ce8A",
+        "0xB07598F9ACCE93C46B9BbB138d108D626621e4B9",
+        "0x28e37F207671B98Bdf5AfFA3d8cACB1F93721962",
+        "0x40B73bA38F51C100d9dC6D33632B6aCa4E2989E1"
+      ]
+    }
+  }
+}

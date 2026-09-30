@@ -5,6 +5,9 @@ import { readDemoMarket, readDemoTradeQuote, assertDemoTrade } from "../src/demo
 import { planIntent } from "../src/intents";
 import { DEMO_DEPLOYMENTS, YIELD_DEMO_DEPLOYMENTS, type DemoDeployment } from "../src/demo-deployments";
 
+const publishedLegacy = DEMO_DEPLOYMENTS[97];
+const publishedYield = YIELD_DEMO_DEPLOYMENTS[97];
+
 const address = (n: number) => ("0x" + n.toString(16).padStart(40, "0")) as Address;
 const now = 1_800_000_000;
 const unit = 10n ** 18n;
@@ -151,10 +154,13 @@ beforeEach(() => {
   vi.useFakeTimers();
   vi.setSystemTime(now * 1000);
   Object.assign(DEMO_DEPLOYMENTS, { 97: config });
+  delete (YIELD_DEMO_DEPLOYMENTS as Record<number, DemoDeployment>)[97];
 });
 afterEach(() => {
   delete (DEMO_DEPLOYMENTS as Record<number, DemoDeployment>)[97];
   delete (YIELD_DEMO_DEPLOYMENTS as Record<number, DemoDeployment>)[97];
+  if (publishedLegacy) Object.assign(DEMO_DEPLOYMENTS, { 97: publishedLegacy });
+  if (publishedYield) Object.assign(YIELD_DEMO_DEPLOYMENTS, { 97: publishedYield });
   vi.useRealTimers();
 });
 
