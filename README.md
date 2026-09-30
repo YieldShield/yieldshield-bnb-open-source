@@ -1,6 +1,6 @@
 # YieldShield on BNB Chain
 
-A BSC Testnet trading and token-protection demo using valueless test tokens and a synthetic price cycle. A separate read-only explorer shows BSC mainnet reference prices and modeled scenarios.
+A BSC Testnet trading and token-protection demo for BNB staking, ETH staking, stablecoin yield and lending receipts, using valueless synthetic tokens. A separate read-only explorer shows BSC mainnet reference prices and modeled scenarios.
 
 - Website: https://bnb.yieldshield.ai
 - Trade test tokens: https://bnb.yieldshield.ai/trade
@@ -18,15 +18,17 @@ A BSC Testnet trading and token-protection demo using valueless test tokens and 
 
 ## What works
 
-On BSC Testnet (chain 97), connect an EVM wallet, claim free demo tokens, buy or sell tWBNB against TestUSDC, open a protected position, provide backing and view positions. The deployed exchange and protection pool have been exercised together by an operator wallet. An independent user browser-wallet signing session has not yet been recorded. See the [release evidence](docs/BNB_RELEASE.md).
+On BSC Testnet (chain 97), connect an EVM wallet, claim free demo tokens, buy or sell tWBNB, tSlisBNB, tWBETH, tsUSDe and tvUSDT against TestUSDC, open a protected position, provide backing and view positions. The deployed exchanges and protection pools have been exercised together by a dedicated operator wallet. An independent user browser-wallet signing session has not yet been recorded. See the [release evidence](docs/BNB_RELEASE.md).
 
 Separately, explore WBNB, BTCB, Binance-Peg ETH and CAKE mainnet reference prices without a wallet at `/learn/scenarios`. Change token quantity, market movement and available collateral to compare modeled outcomes. These references do not price the synthetic testnet pool or serve as executable swap quotes.
 
 The reference-data API reads Chainlink feeds on BNB Smart Chain (chain 56). WBNB uses BNB/USD, BTCB uses BTC/USD and Binance-Peg ETH uses ETH/USD; those references do not measure wrapper or peg risk. The browser stops calculations when observations expire or the service fails.
 
-**Protection contracts are deployed on BSC Testnet (chain 97).** One tWBNB / TestUSDC pool supports faucet claims, backing deposits, protected deposits, token withdrawals, protected TestUSDC exits, and protector unlock/withdrawal. A separate testnet exchange supports bounded trades between the same two tokens. Both assets are fixed-supply, valueless test tokens. tWBNB is not wrapped BNB. The synthetic oracle follows a four-minute price cycle; it does not use the mainnet market references. Mainnet references remain read only.
+**Protection contracts are deployed on BSC Testnet (chain 97).** Five TestUSDC-backed protection pools support protected deposits and both withdrawal paths. The original tWBNB market retains its synthetic BNB price cycle; a separate four-asset oracle illustrates accelerated yield growth and downside shocks. A six-token dispenser supplies the test assets, and funded exchanges enforce per-asset trade limits and a reviewed payment/proceeds bound. All six tokens are fixed-supply and have no redeemable value. There is no real staking, protocol yield, redemption or acquisition in these demos. Mainnet references remain read only.
 
-The pool is `0x711c600188a4BEE06C35848280FB76FF2d91F7F3`; the exchange is `0x2DdF03a89A861028fA00A1282365A68A284f9386`. The [original deployment manifest](contracts/deployments/bsc-testnet-alpha.json) records 43 transactions; the [trading manifest](contracts/deployments/bsc-testnet-trading.json) records its extension. Wallet actions are enabled only by the independently verified chain-97 registry. Internal testing and bytecode checks are not an independent company audit. This is not real-asset insurance or a production launch.
+The four new references are Lista slisBNB, Binance WBETH, Ethena sUSDe and Venus Core vUSDT. [Research and primary sources](docs/bnb-yield-assets.md) explain the selection, verified mainnet addresses, risks and alternatives. Local token logos include [provenance and third-party notices](apps/web/public/assets/tokens/ATTRIBUTION.md). The research catalog is display-only; wallet actions use the independently verified chain-97 registry.
+
+The original pool is `0x711c600188a4BEE06C35848280FB76FF2d91F7F3`; its exchange is `0x2DdF03a89A861028fA00A1282365A68A284f9386`. The [original deployment manifest](contracts/deployments/bsc-testnet-alpha.json) records 43 transactions; the [trading manifest](contracts/deployments/bsc-testnet-trading.json) records its extension. The [yield extension manifest](contracts/deployments/bsc-testnet-yield-assets.json) and [four-asset walkthrough](contracts/deployments/bsc-testnet-yield-assets-flow.json) record the new deployment and both exits for every asset. See the [yield demo runbook](docs/BSC_YIELD_DEMO_RUNBOOK.md) and [public evidence](https://bnb.yieldshield.ai/bsc-yield-testnet-proof.json). Wallet actions are enabled only by the independently verified chain-97 registry. Internal testing and bytecode checks are not an independent company audit. This is not real-asset insurance or a production launch.
 
 ## Run locally
 
@@ -47,7 +49,7 @@ npm run test:web
 npm run test:bnb
 ```
 
-The tests cover source identity, stale/future data, incomplete RPC responses, cache expiration, HTTP failures, scenario math and inherited EVM transaction guards.
+The tests cover source identity, stale/future data, incomplete RPC responses, cache expiration, HTTP failures, scenario math, multiple factory/exchange routing, reviewed dispenser selection, 8-decimal receipt units and inherited EVM transaction guards. CI also checks contract storage/size compatibility and the four-asset trading/protection flows.
 
 ## Deploy the preview
 

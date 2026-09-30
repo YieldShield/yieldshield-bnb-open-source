@@ -461,5 +461,259 @@
         "0x40B73bA38F51C100d9dC6D33632B6aCa4E2989E1"
       ]
     }
+  },
+  "walkthrough": {
+    "status": "complete",
+    "verifiedAt": "2026-09-30T13:14:13.851Z",
+    "scope": "Valueless BSC Testnet demo reference tokens: four buy/protect/normal-exit/sell/protected-downside exits",
+    "assets": [
+      {
+        "id": "slisbnb",
+        "symbol": "tSlisBNB",
+        "token": "0x1ee984B017e80214A314BFf1042c43456325Ce8A",
+        "pool": "0xF295dBc9263B96Fb7A6B9249256D4Ac0dB016492",
+        "amount": "500000000000000000",
+        "decimals": 18,
+        "receiptTokenId": "0",
+        "valueAtDeposit": "30005250000",
+        "depositTime": "1790773201",
+        "protectHash": "0xc3d960564dd4d3ea28a4f5cb598e1503ab13e519a97777eff972a4a0adf96b56",
+        "normalReceiptTokenId": "1",
+        "normalProtectHash": "0x7b4a30686ae00fb2045c7ef7257b501398e84256c81051018c3bbff8959f6c1c",
+        "normalExitHash": "0x8ece49530d0324d3418e9ef807e6dfab535754aaa879c6d9775b0eb201b2147f",
+        "normalPayout": "499996001266265680",
+        "exitHash": "0x7d141da9a32413a30f15ce12b78b9d38a6dc87681be8317ba3aecdae88aa38f4",
+        "payout": "300052500",
+        "downsideValue": "29880500000",
+        "complete": true
+      },
+      {
+        "id": "wbeth",
+        "symbol": "tWBETH",
+        "token": "0xB07598F9ACCE93C46B9BbB138d108D626621e4B9",
+        "pool": "0x2A48e9EDD17937a03BA15346d665650130b59F3F",
+        "amount": "500000000000000000",
+        "decimals": 18,
+        "receiptTokenId": "0",
+        "valueAtDeposit": "100011250000",
+        "depositTime": "1790773438",
+        "protectHash": "0x731ccdf8d14eaeaaf7b56c7bec8bc161567b8821d1a71f3264b86a94d676be2f",
+        "normalReceiptTokenId": "1",
+        "normalProtectHash": "0x09e608918fdfd23f45179a60a4cc744ea9593b143fabe85a6ae5a052ace4a0fb",
+        "normalExitHash": "0x8c410123278fe6ca8d6daccbe5ff045dd9ad9725784acb2a0fd62a650132332a",
+        "normalPayout": "499997000693589605",
+        "exitHash": "0x0991b8791a3b22af81f15b5c7ef9a9399abd9eb949df8af554149015b57cb9c6",
+        "payout": "1000112500",
+        "downsideValue": "99326875000",
+        "complete": true
+      },
+      {
+        "id": "susde",
+        "symbol": "tsUSDe",
+        "token": "0x28e37F207671B98Bdf5AfFA3d8cACB1F93721962",
+        "pool": "0x5DF82180a84b9cFFA2AFF9bA6ae415F3fa26eB77",
+        "amount": "500000000000000000000",
+        "decimals": 18,
+        "receiptTokenId": "0",
+        "valueAtDeposit": "55004812500",
+        "depositTime": "1790773681",
+        "protectHash": "0x781028d62124b2c8b9015e5dab9b17167ca0461f228ceae559ee071c59ff0c3d",
+        "normalReceiptTokenId": "1",
+        "normalProtectHash": "0xab6189f00f3f5b2075f985cc038d946b1cfa7d312d4e2411828943effdca29e5",
+        "normalExitHash": "0xe5e5112577eeae0024995c31babfc29b91150a1ad7b1692b42577bf79eb0b300",
+        "normalPayout": "499998000151483844060",
+        "exitHash": "0xbf3e351f303efbb66a602a3767ac0ab81473929c61cf5734349f1f030cd32303",
+        "payout": "550048125",
+        "downsideValue": "54753187500",
+        "complete": true
+      },
+      {
+        "id": "vusdt",
+        "symbol": "tvUSDT",
+        "token": "0x40B73bA38F51C100d9dC6D33632B6aCa4E2989E1",
+        "pool": "0x6382C38566Da122aEcE80cd294615d4CE9D9247c",
+        "amount": "100000000000",
+        "decimals": 8,
+        "receiptTokenId": "0",
+        "valueAtDeposit": "2000158000",
+        "depositTime": "1790773919",
+        "protectHash": "0x82be8aa211f923d0e9a732ecb25c4737b511dc7035ffa46f1df6fd424306ecbb",
+        "normalReceiptTokenId": "1",
+        "normalProtectHash": "0x5117e6f8f6bd20b3f4b0d1043186ca0b0cb5c58372aebe605ea4e02907063c6b",
+        "normalExitHash": "0xbf8ecaef18b697288d029a758b01e7d1f4e16fafa837854a53d8df7f438b7e18",
+        "normalPayout": "99999400099",
+        "exitHash": "0x3ae7fb0ada702a6470b801e0a4e5f2e722ac1351e34a671d94f7303a1db5902e",
+        "payout": "20001580",
+        "downsideValue": "1994350000",
+        "complete": true
+      }
+    ],
+    "transactions": [
+      {
+        "id": "approve:quote",
+        "hash": "0x0a2aba5c44f5a1a0a1b163bd9bdf3c694860ec245e959a3cd46610b4272cd21a",
+        "blockNumber": "134058182"
+      },
+      {
+        "id": "slisbnb:buy",
+        "hash": "0xfa8a71490fb5989bc9bd7f6e072835cc36859a5b90cc66cf25ce107c47fad232",
+        "blockNumber": "134058207"
+      },
+      {
+        "id": "slisbnb:approve-protection",
+        "hash": "0xdfefb2909c1f2863281638e84eab677f79cadaf338067ec631069007804948d4",
+        "blockNumber": "134058226"
+      },
+      {
+        "id": "slisbnb:protect",
+        "hash": "0xc3d960564dd4d3ea28a4f5cb598e1503ab13e519a97777eff972a4a0adf96b56",
+        "blockNumber": "134058325"
+      },
+      {
+        "id": "slisbnb:protect-for-normal-exit",
+        "hash": "0x7b4a30686ae00fb2045c7ef7257b501398e84256c81051018c3bbff8959f6c1c",
+        "blockNumber": "134058344"
+      },
+      {
+        "id": "slisbnb:normal-exit",
+        "hash": "0x8ece49530d0324d3418e9ef807e6dfab535754aaa879c6d9775b0eb201b2147f",
+        "blockNumber": "134058363"
+      },
+      {
+        "id": "slisbnb:approve-sale",
+        "hash": "0x96b419816ab40b6bdea5989c107f1dcde81bb554ad1f7a415bc61acf5e138422",
+        "blockNumber": "134058387"
+      },
+      {
+        "id": "slisbnb:sell",
+        "hash": "0x7246d678eff0b2804d7d5e60ee66d892502784522ecabe69eece282605642696",
+        "blockNumber": "134058407"
+      },
+      {
+        "id": "slisbnb:protected-exit",
+        "hash": "0x7d141da9a32413a30f15ce12b78b9d38a6dc87681be8317ba3aecdae88aa38f4",
+        "blockNumber": "134058553"
+      },
+      {
+        "id": "wbeth:buy",
+        "hash": "0x52e2555b588f4676fcaf36c27d4e855925f63b65c0e833d6dd8f5a2979ab6c79",
+        "blockNumber": "134058574"
+      },
+      {
+        "id": "wbeth:approve-protection",
+        "hash": "0x75c8d6be5d0314abfb8f6fde59fb69d1962c5ff155637387e5a9347ec333c967",
+        "blockNumber": "134058600"
+      },
+      {
+        "id": "wbeth:protect",
+        "hash": "0x731ccdf8d14eaeaaf7b56c7bec8bc161567b8821d1a71f3264b86a94d676be2f",
+        "blockNumber": "134058851"
+      },
+      {
+        "id": "wbeth:protect-for-normal-exit",
+        "hash": "0x09e608918fdfd23f45179a60a4cc744ea9593b143fabe85a6ae5a052ace4a0fb",
+        "blockNumber": "134058876"
+      },
+      {
+        "id": "wbeth:normal-exit",
+        "hash": "0x8c410123278fe6ca8d6daccbe5ff045dd9ad9725784acb2a0fd62a650132332a",
+        "blockNumber": "134058894"
+      },
+      {
+        "id": "wbeth:approve-sale",
+        "hash": "0x81005bc72836208cee672c3e87cd64a73a641db6b4a9dbbcf2e5386cefe7d794",
+        "blockNumber": "134058913"
+      },
+      {
+        "id": "wbeth:sell",
+        "hash": "0x99ec172ac2b26db4de1b359bb5523a29ab51ad43d4d51cfb9d357304d83aa4f5",
+        "blockNumber": "134058932"
+      },
+      {
+        "id": "wbeth:protected-exit",
+        "hash": "0x0991b8791a3b22af81f15b5c7ef9a9399abd9eb949df8af554149015b57cb9c6",
+        "blockNumber": "134059089"
+      },
+      {
+        "id": "susde:buy",
+        "hash": "0x2d380de55b2fa59888cb6fb556a728b397980f425150b6b5456ef1ba0eaf207f",
+        "blockNumber": "134059108"
+      },
+      {
+        "id": "susde:approve-protection",
+        "hash": "0x3ad978a48df4d2c03923fe995ced3f9a6f9b349b072049217f5dde2601f8cb2b",
+        "blockNumber": "134059128"
+      },
+      {
+        "id": "susde:protect",
+        "hash": "0x781028d62124b2c8b9015e5dab9b17167ca0461f228ceae559ee071c59ff0c3d",
+        "blockNumber": "134059392"
+      },
+      {
+        "id": "susde:protect-for-normal-exit",
+        "hash": "0xab6189f00f3f5b2075f985cc038d946b1cfa7d312d4e2411828943effdca29e5",
+        "blockNumber": "134059415"
+      },
+      {
+        "id": "susde:normal-exit",
+        "hash": "0xe5e5112577eeae0024995c31babfc29b91150a1ad7b1692b42577bf79eb0b300",
+        "blockNumber": "134059433"
+      },
+      {
+        "id": "susde:approve-sale",
+        "hash": "0xc57d9844b7836d05a788eca3d7c086d0a8d50ed682796ac8a360e47f71d405f6",
+        "blockNumber": "134059452"
+      },
+      {
+        "id": "susde:sell",
+        "hash": "0xae0d6fa201e75fc1a3f2725a9904415681251fc28a38bc8dcc68e924d1b71fb5",
+        "blockNumber": "134059477"
+      },
+      {
+        "id": "susde:protected-exit",
+        "hash": "0xbf3e351f303efbb66a602a3767ac0ab81473929c61cf5734349f1f030cd32303",
+        "blockNumber": "134059624"
+      },
+      {
+        "id": "vusdt:buy",
+        "hash": "0xba8a1654b4a3497bb48a1d993f8b70a51c0d2368c459e9cf1f1c6759f30d2ea2",
+        "blockNumber": "134059644"
+      },
+      {
+        "id": "vusdt:approve-protection",
+        "hash": "0x32c1a3a996566468f4b3f161221dfa55cbaef24b9bec23ffe7bd1df1af94dac7",
+        "blockNumber": "134059663"
+      },
+      {
+        "id": "vusdt:protect",
+        "hash": "0x82be8aa211f923d0e9a732ecb25c4737b511dc7035ffa46f1df6fd424306ecbb",
+        "blockNumber": "134059921"
+      },
+      {
+        "id": "vusdt:protect-for-normal-exit",
+        "hash": "0x5117e6f8f6bd20b3f4b0d1043186ca0b0cb5c58372aebe605ea4e02907063c6b",
+        "blockNumber": "134059940"
+      },
+      {
+        "id": "vusdt:normal-exit",
+        "hash": "0xbf8ecaef18b697288d029a758b01e7d1f4e16fafa837854a53d8df7f438b7e18",
+        "blockNumber": "134059968"
+      },
+      {
+        "id": "vusdt:approve-sale",
+        "hash": "0x35d6b202742b6e864469a851a02a3a921066d2a6f5f9b63b088c3696759e2a06",
+        "blockNumber": "134059989"
+      },
+      {
+        "id": "vusdt:sell",
+        "hash": "0x44ef247037406386d4c7cffecfe59ff31ce9a9bcfb714cb322f7aab24daf4c47",
+        "blockNumber": "134060008"
+      },
+      {
+        "id": "vusdt:protected-exit",
+        "hash": "0x3ae7fb0ada702a6470b801e0a4e5f2e722ac1351e34a671d94f7303a1db5902e",
+        "blockNumber": "134060155"
+      }
+    ]
   }
 }

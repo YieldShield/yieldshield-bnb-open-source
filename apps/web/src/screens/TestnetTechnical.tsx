@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { Wordmark } from "@/components/Logo";
 import { Card } from "@/components/ui";
 import rawProof from "@/data/bsc-testnet-proof.json";
+import rawYieldProof from "@/data/bsc-yield-testnet-proof.json";
+import { YieldProof, type YieldProofData } from "@/components/YieldProof";
 
 type Transaction = { action: string; label?: string; hash: string; blockNumber: string };
 const proof = rawProof as Omit<typeof rawProof, "walkthrough" | "trading"> & {
@@ -51,16 +53,17 @@ export function TestnetTechnical() {
         Synthetic trading and protection markets on chain 97. These addresses and receipts identify the deployed
         software. The demo uses free test assets and has internal testing, with no independent company audit.
       </p>
+      <YieldProof proof={rawYieldProof as YieldProofData} />
       <div className="my-8 grid gap-4 sm:grid-cols-3">
         {[
-          ["Deployment", `${proof.deploymentTransactions.length} confirmed transactions`],
+          ["Original deployment", `${proof.deploymentTransactions.length} confirmed transactions`],
           [
-            "User flow",
+            "Original user flow",
             proof.walkthrough && proof.trading.operatorWalkthrough
               ? `${proof.walkthrough.transactions.length + proof.trading.operatorWalkthrough.transactions.length} operator test transactions`
               : "Public walkthrough in progress",
           ],
-          ["Assets", "tWBNB / TestUSDC"],
+          ["Original assets", "tWBNB / TestUSDC"],
         ].map(([label, value]) => (
           <Card key={label}>
             <p className="text-xs font-bold uppercase tracking-wide text-brand-deep">{label}</p>

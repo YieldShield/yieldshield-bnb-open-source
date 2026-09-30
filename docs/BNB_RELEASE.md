@@ -1,3 +1,32 @@
+# Yield-asset extension — 30 September 2026
+
+Four researched references now have separate synthetic BSC Testnet markets: Lista slisBNB (`tSlisBNB`), Binance WBETH (`tWBETH`), Ethena sUSDe (`tsUSDe`) and Venus Core vUSDT (`tvUSDT`). The original `tWBNB` market remains available. Each new market supports TestUSDC trading, protected deposits and both withdrawal paths. The app includes locally hosted, attributed token artwork, category filters, mechanism explanations and asset-specific amounts. This is a testnet demonstration of the user flow, not an integration that stakes or acquires the real assets.
+
+## Deployment and operator evidence
+
+- Chain 97 only; all six fixed-supply tokens have no redeemable value. No mainnet transactions were sent.
+- The extension has **51 confirmed deployment/funding transactions**, a new inventory exchange, four seeded protection pools and a six-token dispenser. An independent verifier rebuilt the expected calldata and checked canonical receipts, runtimes, inherited modules, governance, configuration and initial funding before the adapter registry was enabled.
+- The four-asset walkthrough has **33 confirmed operator transactions**. For each asset it completed a buy, protected deposits, a normal token withdrawal, a sale and a TestUSDC protected exit during the synthetic downside phase. It waited for actual public block timestamps, including the 60-second protected-exit delay. The verified receipt events and balances are internal integration evidence, not customer adoption.
+- Exchange: [0x9861556d2c0Ad28BE45113Eea93799aA7D0147A0](https://testnet.bscscan.com/address/0x9861556d2c0Ad28BE45113Eea93799aA7D0147A0). The original timelock owns the extension factory and dispenser; the oracle and inventory exchange have no administrator or minting/withdrawal key.
+- [Deployment manifest](../contracts/deployments/bsc-testnet-yield-assets.json), [four-asset walkthrough](../contracts/deployments/bsc-testnet-yield-assets-flow.json), [public proof](https://bnb.yieldshield.ai/bsc-yield-testnet-proof.json), [technical page](https://bnb.yieldshield.ai/testnet/technical), [research and primary sources](bnb-yield-assets.md), [runbook](BSC_YIELD_DEMO_RUNBOOK.md).
+
+| Demo token | Protection pool                                                                               | Verified protected exit                                                                                      |
+| ---------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| tSlisBNB   | [0xF295dBc9…](https://testnet.bscscan.com/address/0xF295dBc9263B96Fb7A6B9249256D4Ac0dB016492) | [Receipt](https://testnet.bscscan.com/tx/0x7d141da9a32413a30f15ce12b78b9d38a6dc87681be8317ba3aecdae88aa38f4) |
+| tWBETH     | [0x2A48e9ED…](https://testnet.bscscan.com/address/0x2A48e9EDD17937a03BA15346d665650130b59F3F) | [Receipt](https://testnet.bscscan.com/tx/0x0991b8791a3b22af81f15b5c7ef9a9399abd9eb949df8af554149015b57cb9c6) |
+| tsUSDe     | [0x5DF82180…](https://testnet.bscscan.com/address/0x5DF82180a84b9cFFA2AFF9bA6ae415F3fa26eB77) | [Receipt](https://testnet.bscscan.com/tx/0xbf3e351f303efbb66a602a3767ac0ab81473929c61cf5734349f1f030cd32303) |
+| tvUSDT     | [0x6382C385…](https://testnet.bscscan.com/address/0x6382C38566Da122aEcE80cd294615d4CE9D9247c) | [Receipt](https://testnet.bscscan.com/tx/0x3ae7fb0ada702a6470b801e0a4e5f2e722ac1351e34a671d94f7303a1db5902e) |
+
+## Release validation
+
+The production build, 19 web tests, 167 adapter tests, BNB service/deployment checks and inherited Base regressions passed locally. All 28 BSC contract tests passed, including the four new trading/protection lifecycles and fuzz cases. Storage-prefix, immutable module compatibility, bytecode size and deployment-recipe checks passed. Production dependency advisories reported zero vulnerabilities. The readonly website adapter successfully loaded all five pools, six reviewed tokens and unsigned trading plans for every market from the published deployment.
+
+Desktop and 390-pixel mobile checks covered category filters, logos, available protection links and token amounts. Browser-wallet signing by an independent user remains unrecorded. The walkthroughs use a dedicated operator and do not replace an independent audit or a real-asset security/economic review.
+
+The sections below are historical release records; their repository, CI and deployment statuses describe the dates stated.
+
+---
+
 # BSC Testnet release — 23 September 2026
 
 This is a dated release record. Development commit IDs and GitHub Actions run IDs below refer to the original private repository; the public-source history uses new commit IDs after author-email cleanup. Onchain transaction and address links remain the deployment evidence.
