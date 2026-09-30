@@ -7,6 +7,7 @@ import { ArrowLeft } from "@/components/icons";
 import { TransactionError, PendingOverlay, SuccessCard } from "@/components/TxFeedback";
 import { Button, Card } from "@/components/ui";
 import { PoolCard } from "@/components/PoolCard";
+import { tradePresets } from "@/config/yield-assets";
 import { formatDate, formatBps, formatToken } from "@/lib/format";
 import { chain } from "@/chain/adapter";
 import { useSubmitTx } from "@/chain/useSubmitTx";
@@ -173,7 +174,7 @@ function DepositFlow({ pool }: { pool: PoolView }) {
             value={value}
             onChange={setValue}
             symbol={shielded.symbol}
-            presets={[100, 500, 1000]}
+            presets={tradePresets(shielded.symbol)}
             balanceLabel={
               balance !== null ? `Balance ${formatToken(balance, shielded.decimals, shielded.symbol)}` : undefined
             }
