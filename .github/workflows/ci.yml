@@ -21,8 +21,10 @@ jobs:
       - run: npm run test:bnb
       - name: Inherited Base regression tests
         run: npm run test:base
-      - run: npx eslint apps/web/src packages/adapter-evm/src packages/adapter-evm/test packages/core/src/port.ts packages/core/src/views.ts services
-      - run: npm audit --omit=dev --audit-level=moderate
+      - run: npm run lint
+      - name: Test the live-check signing restrictions without broadcasting
+        run: node --test scripts/bsc-e2e-check.test.mjs
+      - run: npm audit --audit-level=moderate
   contracts:
     runs-on: ubuntu-latest
     steps:
@@ -36,7 +38,8 @@ jobs:
       - uses: foundry-rs/foundry-toolchain@v1
       - run: npm ci
       - run: npm ci --prefix contracts --ignore-scripts
-      - run: npm audit --prefix contracts --omit=dev --audit-level=moderate
+      - run: npm audit --prefix contracts --audit-level=moderate
+      - run: npm run check:foundry-lock --prefix contracts
       - run: npm run test:scripts --prefix contracts
       - name: Module and deployment lifecycle regressions
         working-directory: contracts
