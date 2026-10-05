@@ -8,7 +8,6 @@ import { pathToFileURL } from "node:url";
 import {
   createPublicClient,
   http,
-  getAddress,
   encodeDeployData,
   encodeFunctionData,
   keccak256,

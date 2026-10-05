@@ -9,7 +9,18 @@ import tseslint from "typescript-eslint";
  * ignored.
  */
 export default tseslint.config(
-  { ignores: ["**/dist/**", "**/node_modules/**", "**/src/generated/**", "**/idl/**"] },
+  {
+    ignores: [
+      "**/dist/**",
+      "**/node_modules/**",
+      "**/src/generated/**",
+      "**/idl/**",
+      // The vendored Foundry workspace has its own lint/test commands.
+      "contracts/**",
+      "artifacts/**",
+      ".vercel/**",
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
