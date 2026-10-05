@@ -296,10 +296,10 @@ contract SplitRiskPoolAuditFollowupBTest is Test, TestTimelockHelper {
         pool.depositBackingAsset(address(backingToken), overCapDeposit, 0);
     }
 
-    function test_B4_rewardPerShareDoesNotAdvanceWhenRepresentedRewardIsZero() public {
+    function test_B4_rewardPerShareDoesNotAdvanceWhenIncrementIsZero() public {
         (uint256 protectorTokenId,) = _seedPositions();
 
-        stdstore.target(address(pool)).sig("totalProtectorShares()").checked_write(uint256(3));
+        stdstore.target(address(pool)).sig("totalProtectorShares()").checked_write(ConstantsLib.REWARD_PRECISION + 1);
         stdstore.target(address(pool)).sig("pendingProtectorRewardDust()").checked_write(uint256(1));
         stdstore.target(address(pool)).sig("accumulatedCommissions()").checked_write(uint256(1));
         stdstore.target(address(pool)).sig("currentEpochCommissionReserve()").checked_write(uint256(1));
@@ -310,10 +310,42 @@ contract SplitRiskPoolAuditFollowupBTest is Test, TestTimelockHelper {
         vm.prank(protector);
         pool.claimCommission(protectorTokenId);
 
-        assertEq(pool.rewardPerShareAccumulated(), rewardPerShareBefore, "zero represented reward must not advance");
+        assertEq(pool.rewardPerShareAccumulated(), rewardPerShareBefore, "zero increment must not advance");
         assertEq(pool.pendingProtectorRewardDust(), 1, "dust remains pending");
         assertEq(pool.accumulatedCommissions(), 1, "commission reserve stays intact");
         assertEq(shieldedToken.balanceOf(protector), protectorBalanceBefore, "nothing is paid from unrepresented dust");
+    }
+
+    function test_B4_fractionalDustCreditCannotBeRecycled() public {
+        (uint256 protectorTokenId,) = _seedPositions();
+        // 2,001e18 shares do not divide REWARD_PRECISION evenly. Crediting one
+        // token unit leaves a fractional entitlement, not reusable whole-token dust.
+        vm.prank(protector);
+        uint256 secondTokenId = pool.depositBackingAsset(address(backingToken), 1e18, 0);
+        stdstore.target(address(pool)).sig("pendingProtectorRewardDust()").checked_write(uint256(1));
+        stdstore.target(address(pool)).sig("accumulatedCommissions()").checked_write(uint256(1));
+        stdstore.target(address(pool)).sig("currentEpochCommissionReserve()").checked_write(uint256(1));
+
+        uint256 rewardPerShareBefore = pool.rewardPerShareAccumulated();
+        uint256 protectorBalanceBefore = shieldedToken.balanceOf(protector);
+        vm.prank(protector);
+        pool.claimCommission(protectorTokenId);
+
+        uint256 creditedRewardPerShare = pool.rewardPerShareAccumulated();
+        assertGt(creditedRewardPerShare, rewardPerShareBefore, "fractional entitlement is credited");
+        assertEq(pool.pendingProtectorRewardDust(), 0, "credited fractions cannot remain distributable dust");
+
+        for (uint256 i; i < 3; ++i) {
+            vm.prank(protector);
+            pool.claimCommission(protectorTokenId);
+            vm.prank(protector);
+            pool.claimCommission(secondTokenId);
+        }
+
+        assertEq(pool.rewardPerShareAccumulated(), creditedRewardPerShare, "repeat claims cannot recycle dust");
+        assertEq(pool.accumulatedCommissions(), 1, "fractional entitlements remain funded");
+        assertEq(pool.currentEpochCommissionReserve(), 1, "reserve remains available for future whole-unit claims");
+        assertEq(shieldedToken.balanceOf(protector), protectorBalanceBefore, "fractions cannot pay a whole token unit");
     }
 
     function test_B4_pendingDustRedirectDoesNotCreateUnbackedProtocolFees() public {
