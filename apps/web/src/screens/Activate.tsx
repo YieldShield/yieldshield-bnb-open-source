@@ -11,6 +11,7 @@ import { formatDate, formatToken } from "@/lib/format";
 import { useSubmitTx } from "@/chain/useSubmitTx";
 import { usePositions, type ShieldVM } from "@/data/positions";
 import { VOCAB } from "@/vocab";
+import { actionBlocker } from "@/lib/action-availability";
 
 export function Activate() {
   const { id } = useParams();
@@ -78,10 +79,17 @@ function ActivatePanel({ p, onClose, onDone }: { p: ShieldVM; onClose: () => voi
     now >= Number(quote.quotedAt) * 1000;
   const estReceive = quote?.amount ?? 0n;
   const minOut = minReceived(estReceive);
-  const canConfirm = !!fresh && minOut > 0n && p.protectedExitUnlocked && !p.view!.paused && !tx.pending;
+  const blocker = actionBlocker(p, p.protectedExit, BigInt(Math.floor(now / 1000)));
+  const canConfirm = !!fresh && minOut > 0n && !blocker && !tx.pending;
 
   async function confirm() {
-    if (!canConfirm || !quote || Date.now() - Number(quote.quotedAt) * 1000 >= 30000) return;
+    if (
+      !canConfirm ||
+      !quote ||
+      Date.now() - Number(quote.quotedAt) * 1000 >= 30000 ||
+      actionBlocker(p, p.protectedExit, BigInt(Math.floor(Date.now() / 1000)))
+    )
+      return;
     const res = await tx.submit({
       kind: "activateShielded",
       pool: p.pool,
@@ -145,6 +153,11 @@ function ActivatePanel({ p, onClose, onDone }: { p: ShieldVM; onClose: () => voi
           Refresh quote
         </button>
         <TransactionError error={tx.error} txId={tx.txId} />
+        {blocker && (
+          <p role="status" className="mt-3 text-[13px] text-amber-deep">
+            {blocker}
+          </p>
+        )}
 
         <div className="mt-5 flex flex-col gap-3">
           <Button variant="green" full onClick={confirm} disabled={!canConfirm}>
