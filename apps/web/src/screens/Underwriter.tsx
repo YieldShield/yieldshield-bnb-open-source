@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { parseTokenAmount } from "@/lib/token-amount";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { fromBaseUnits, minReceived, toBaseUnits, type TxIntent } from "@yieldshield/core";
+import { fromBaseUnits, minReceived, type TxIntent } from "@yieldshield/core";
 import { AmountInput } from "@/components/AmountInput";
 import { Row } from "@/components/Expander";
 import { ArrowLeft } from "@/components/icons";
@@ -56,14 +57,11 @@ function UnderwriterPosition({ p, refresh }: { p: ProtectorVM; refresh: () => vo
   const ready = p.isUnlocking && p.noticeSecondsRemaining === 0n;
 
   const [withdrawValue, setWithdrawValue] = useState("");
-  const withdrawAmount = useMemo(() => {
-    try {
-      return withdrawValue ? toBaseUnits(withdrawValue, dec) : 0n;
-    } catch {
-      return 0n;
-    }
-  }, [withdrawValue, dec]);
-  const withdrawError = withdrawAmount > p.availableToWithdraw ? "More than available to withdraw." : null;
+  const parsed = parseTokenAmount(withdrawValue, dec);
+  const withdrawAmount = parsed.amount;
+
+  const withdrawError =
+    parsed.error ?? (withdrawAmount > p.availableToWithdraw ? "More than available to withdraw." : null);
   const isFullWithdraw = withdrawAmount === p.collateral;
   const canWithdraw =
     withdrawAmount > 0n && minReceived(withdrawAmount) > 0n && !withdrawError && ready && !p.view!.paused;

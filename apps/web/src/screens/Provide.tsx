@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { parseTokenAmount } from "@/lib/token-amount";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { fromBaseUnits, minReceived, toBaseUnits, type PositionId } from "@yieldshield/core";
+import { fromBaseUnits, minReceived, type PositionId } from "@yieldshield/core";
 import { AmountInput } from "@/components/AmountInput";
 import { Row } from "@/components/Expander";
 import { ArrowLeft, ShieldIcon } from "@/components/icons";
@@ -38,27 +39,24 @@ export function Provide() {
 
   const backing = selected?.backing;
   const { balance, loading: balanceLoading } = useTokenBalance(backing?.token);
-  const amountBase = useMemo(() => {
-    try {
-      return value && backing ? toBaseUnits(value, backing.decimals) : 0n;
-    } catch {
-      return 0n;
-    }
-  }, [value, backing]);
+  const parsed = parseTokenAmount(value, backing?.decimals ?? 6);
+  const amountBase = parsed.amount;
 
-  const balError = selected?.paused
-    ? "This pool is currently unavailable."
-    : balanceLoading
-      ? "Checking wallet balance…"
-      : balance === null
-        ? "Wallet balance is unavailable. Refresh before continuing."
-        : amountBase > balance
-          ? "More than your balance."
-          : selected && amountBase > 0n && amountBase < selected.stats.backingMinDeposit
-            ? `Minimum ${formatToken(selected.stats.backingMinDeposit, backing!.decimals, backing!.symbol)}.`
-            : selected && selected.stats.backingMaxDeposit > 0n && amountBase > selected.stats.backingMaxDeposit
-              ? `Maximum ${formatToken(selected.stats.backingMaxDeposit, backing!.decimals, backing!.symbol)}.`
-              : null;
+  const balError =
+    parsed.error ??
+    (selected?.paused
+      ? "This pool is currently unavailable."
+      : balanceLoading
+        ? "Checking wallet balance…"
+        : balance === null
+          ? "Wallet balance is unavailable. Refresh before continuing."
+          : amountBase > balance
+            ? "More than your balance."
+            : selected && amountBase > 0n && amountBase < selected.stats.backingMinDeposit
+              ? `Minimum ${formatToken(selected.stats.backingMinDeposit, backing!.decimals, backing!.symbol)}.`
+              : selected && selected.stats.backingMaxDeposit > 0n && amountBase > selected.stats.backingMaxDeposit
+                ? `Maximum ${formatToken(selected.stats.backingMaxDeposit, backing!.decimals, backing!.symbol)}.`
+                : null);
   const canContinue = !!selected && !loadError && amountBase > 0n && minReceived(amountBase) > 0n && !balError;
 
   async function confirm() {

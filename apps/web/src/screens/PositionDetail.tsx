@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { parseTokenAmount } from "@/lib/token-amount";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { fromBaseUnits, minReceived, toBaseUnits } from "@yieldshield/core";
+import { fromBaseUnits, minReceived } from "@yieldshield/core";
 import { AmountInput } from "@/components/AmountInput";
 import { ArrowLeft } from "@/components/icons";
 import { Row } from "@/components/Expander";
@@ -66,14 +67,11 @@ function SaverPosition({ p, onDone }: { p: ShieldVM; onDone: () => void }) {
   const coverage = p.view!.stats.coverageBps === null ? null : Number(p.view!.stats.coverageBps) / 100;
   const protectors = p.view ? Number(p.view.stats.protectorPositionCount) : 0;
 
-  const withdrawAmount = useMemo(() => {
-    try {
-      return withdrawValue ? toBaseUnits(withdrawValue, dec) : 0n;
-    } catch {
-      return 0n;
-    }
-  }, [withdrawValue, dec]);
-  const withdrawError = withdrawAmount > p.withdrawableNet ? "More than your withdrawable balance." : null;
+  const parsed = parseTokenAmount(withdrawValue, dec);
+  const withdrawAmount = parsed.amount;
+
+  const withdrawError =
+    parsed.error ?? (withdrawAmount > p.withdrawableNet ? "More than your withdrawable balance." : null);
   const canWithdraw = withdrawAmount > 0n && minReceived(withdrawAmount) > 0n && !withdrawError && !p.view!.paused;
   const isFullExit = withdrawAmount >= p.withdrawableNet;
 

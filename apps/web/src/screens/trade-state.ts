@@ -1,19 +1,6 @@
-import { toBaseUnits } from "@yieldshield/core";
 import type { DemoMarket, DemoTradeQuote, DemoTradeRequest } from "@yieldshield/core";
 
-export function parseTradeAmount(value: string, decimals: number): { amount: bigint; error: string | null } {
-  if (!value.trim()) return { amount: 0n, error: null };
-  if (!/^\d+(?:\.\d*)?$/.test(value.trim()))
-    return { amount: 0n, error: "Use a decimal point, without commas, signs or other symbols." };
-  if ((value.trim().split(".")[1]?.length ?? 0) > decimals)
-    return { amount: 0n, error: `Use no more than ${decimals} decimal places.` };
-  try {
-    const amount = toBaseUnits(value.trim(), decimals);
-    return { amount, error: amount > 0n ? null : "Enter an amount greater than zero." };
-  } catch {
-    return { amount: 0n, error: "This amount is too large." };
-  }
-}
+export { parseTokenAmount as parseTradeAmount } from "@/lib/token-amount";
 
 const same = (a: string | undefined, b: string | undefined) => a?.toLowerCase() === b?.toLowerCase();
 export function demoMarketIsFresh(market: DemoMarket | undefined, now: number): market is DemoMarket {

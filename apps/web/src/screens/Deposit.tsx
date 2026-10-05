@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { parseTokenAmount } from "@/lib/token-amount";
+import { useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { fromBaseUnits, minReceived, toBaseUnits, type PositionId } from "@yieldshield/core";
+import { fromBaseUnits, minReceived, type PositionId } from "@yieldshield/core";
 import { Expander, Row } from "@/components/Expander";
 import { AmountInput } from "@/components/AmountInput";
 import { ArrowLeft } from "@/components/icons";
@@ -56,14 +57,19 @@ function PickPool({ requestedAsset }: { requestedAsset: string | null }) {
   return (
     <div className="animate-fade-up">
       <h1 className="mb-4 text-[26px] font-extrabold tracking-tight2">Choose a pool</h1>
-      {open.length === 0 && <Card>No {requestedAsset ?? "test-token"} pools are currently available for deposits.</Card>}
+      {open.length === 0 && (
+        <Card>No {requestedAsset ?? "test-token"} pools are currently available for deposits.</Card>
+      )}
       <div className="grid gap-3.5 md:grid-cols-2">
         {open.map((p) => (
-          <div key={p.address} onClick={() => {
-            const next = new URLSearchParams(location.search);
-            next.set("pool", p.address);
-            navigate(`${location.pathname}?${next.toString()}`);
-          }}>
+          <div
+            key={p.address}
+            onClick={() => {
+              const next = new URLSearchParams(location.search);
+              next.set("pool", p.address);
+              navigate(`${location.pathname}?${next.toString()}`);
+            }}
+          >
             <PoolCard pool={p} />
           </div>
         ))}
@@ -79,38 +85,35 @@ function DepositFlow({ pool }: { pool: PoolView }) {
   const tx = useSubmitTx();
 
   const [step, setStep] = useState<"amount" | "review" | "success">("amount");
-  const [value, setValue] = useState(params.get("asset") === pool.shielded.symbol ? params.get("amount") ?? "" : "");
+  const [value, setValue] = useState(params.get("asset") === pool.shielded.symbol ? (params.get("amount") ?? "") : "");
   const [slippageBps, setSlippageBps] = useState(50);
   const [createdPosition, setCreatedPosition] = useState<PositionId | null>(null);
   const { balance, loading: balanceLoading } = useTokenBalance(shielded.token);
 
-  const amountBase = useMemo(() => {
-    try {
-      return value ? toBaseUnits(value, shielded.decimals) : 0n;
-    } catch {
-      return 0n;
-    }
-  }, [value, shielded.decimals]);
+  const parsed = parseTokenAmount(value, shielded.decimals);
+  const amountBase = parsed.amount;
 
   const minDep = stats.shieldedMinDeposit;
   const maxDep = stats.shieldedMaxDeposit;
   const full = stats.capacityBps !== null && stats.capacityBps >= 10_000n;
 
-  const error = pool.paused
-    ? "Deposits are currently unavailable for this pool."
-    : balanceLoading
-      ? "Checking wallet balance…"
-      : balance === null
-        ? "Wallet balance is unavailable. Refresh before continuing."
-        : full
-          ? "This pool is full right now."
-          : amountBase > 0n && amountBase < minDep
-            ? `Minimum is ${formatToken(minDep, shielded.decimals, shielded.symbol)}.`
-            : maxDep > 0n && amountBase > maxDep
-              ? `Maximum is ${formatToken(maxDep, shielded.decimals, shielded.symbol)}.`
-              : balance !== null && amountBase > balance
-                ? "More than your balance."
-                : null;
+  const error =
+    parsed.error ??
+    (pool.paused
+      ? "Deposits are currently unavailable for this pool."
+      : balanceLoading
+        ? "Checking wallet balance…"
+        : balance === null
+          ? "Wallet balance is unavailable. Refresh before continuing."
+          : full
+            ? "This pool is full right now."
+            : amountBase > 0n && amountBase < minDep
+              ? `Minimum is ${formatToken(minDep, shielded.decimals, shielded.symbol)}.`
+              : maxDep > 0n && amountBase > maxDep
+                ? `Maximum is ${formatToken(maxDep, shielded.decimals, shielded.symbol)}.`
+                : balance !== null && amountBase > balance
+                  ? "More than your balance."
+                  : null);
 
   const canContinue = amountBase > 0n && minReceived(amountBase, slippageBps) > 0n && !error;
   const unlockDate = formatDate(BigInt(Math.floor(Date.now() / 1000)) + stats.minimumPoolTime);
