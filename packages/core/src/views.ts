@@ -126,6 +126,9 @@ export type ShieldPositionView = {
 };
 
 export type ProtectorPositionView = {
+  /** Lifetime of the sealed balance and notice observation (Unix seconds). */
+  evaluatedAt?: bigint;
+  validUntil?: bigint;
   /** On-chain premium currently claimable, in shielded-token units. Undefined when unavailable. */
   claimableCommission?: bigint;
   id: PositionId;

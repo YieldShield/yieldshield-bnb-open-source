@@ -11,6 +11,8 @@ import { formatDuration, formatToken } from "@/lib/format";
 import { useSubmitTx } from "@/chain/useSubmitTx";
 import { useRefreshAll } from "@/data/refresh";
 import { usePositions, type ProtectorVM } from "@/data/positions";
+import { observationBlocker } from "@/lib/action-availability";
+import { useNow } from "@/lib/use-now";
 
 export function Underwriter() {
   const { id } = useParams();
@@ -43,8 +45,12 @@ export function Underwriter() {
   );
 }
 
-function UnderwriterPosition({ p, refresh }: { p: ProtectorVM; refresh: () => void }) {
+function UnderwriterPosition({ p, refresh }: { p: ProtectorVM; refresh: () => Promise<unknown> }) {
   const tx = useSubmitTx();
+  const now = useNow();
+  const [refreshing, setRefreshing] = useState(false);
+  const stale = observationBlocker(p, now);
+  const busy = tx.pending || refreshing;
   const backing = p.view!.backing;
   const shielded = p.view!.shielded;
   const preset = p.view!.preset;
@@ -52,23 +58,33 @@ function UnderwriterPosition({ p, refresh }: { p: ProtectorVM; refresh: () => vo
 
   const earned = p.claimableCommission;
   const unlockDuration = p.view!.stats.unlockDuration;
+  const noticeRemaining = p.isUnlocking && p.availableAt > now ? p.availableAt - now : 0n;
   const noticeProgress =
-    p.isUnlocking && unlockDuration > 0n ? 1 - Number(p.noticeSecondsRemaining) / Number(unlockDuration) : 0;
-  const ready = p.isUnlocking && p.noticeSecondsRemaining === 0n;
+    p.isUnlocking && unlockDuration > 0n ? 1 - Number(noticeRemaining) / Number(unlockDuration) : 0;
+  const ready = !stale && p.isUnlocking && now >= p.availableAt;
 
   const [withdrawValue, setWithdrawValue] = useState("");
   const parsed = parseTokenAmount(withdrawValue, dec);
   const withdrawAmount = parsed.amount;
 
   const withdrawError =
-    parsed.error ?? (withdrawAmount > p.availableToWithdraw ? "More than available to withdraw." : null);
+    stale ?? parsed.error ?? (withdrawAmount > p.availableToWithdraw ? "More than available to withdraw." : null);
   const isFullWithdraw = withdrawAmount === p.collateral;
-  const canWithdraw =
-    withdrawAmount > 0n && minReceived(withdrawAmount) > 0n && !withdrawError && ready && !p.view!.paused;
+  const canWithdraw = withdrawAmount > 0n && minReceived(withdrawAmount) > 0n && !withdrawError && ready && !busy;
 
   async function run(intent: TxIntent) {
-    const res = await tx.submit(intent);
-    if (res) refresh();
+    if (busy || observationBlocker(p, BigInt(Math.floor(Date.now() / 1000)))) return;
+    setRefreshing(true);
+    try {
+      const res = await tx.submit(intent);
+      if (res) {
+        setWithdrawValue("");
+        // The positions hook renders failed reads; a refresh failure cannot undo a mined transaction.
+        await refresh().catch(() => undefined);
+      }
+    } finally {
+      setRefreshing(false);
+    }
   }
 
   function withdrawIntent(): TxIntent {
@@ -104,7 +120,7 @@ function UnderwriterPosition({ p, refresh }: { p: ProtectorVM; refresh: () => vo
         <Button
           variant="indigo"
           full
-          disabled={tx.pending || earned === undefined || earned === 0n}
+          disabled={busy || !!stale || earned === undefined || earned === 0n}
           onClick={() => run({ kind: "claimCommission", pool: p.pool, shieldedToken: shielded.token, position: p.id })}
         >
           Collect premium
@@ -125,6 +141,14 @@ function UnderwriterPosition({ p, refresh }: { p: ProtectorVM; refresh: () => vo
       </Card>
 
       <TransactionError error={tx.error} txId={tx.txId} />
+      {(stale || refreshing) && (
+        <p role="status" className="mt-3 text-[13px] text-muted">
+          {refreshing ? "Updating the confirmed balance and withdrawal notice…" : stale}
+        </p>
+      )}
+      <p className="mt-3 text-[13px] text-muted">
+        After a partial withdrawal, start a new notice before withdrawing the remaining collateral.
+      </p>
 
       {/* Withdrawal: two-step with notice */}
       {!p.isUnlocking ? (
@@ -132,7 +156,7 @@ function UnderwriterPosition({ p, refresh }: { p: ProtectorVM; refresh: () => vo
           <Button
             variant="secondary"
             full
-            disabled={tx.pending || p.collateral === 0n}
+            disabled={busy || !!stale || p.collateral === 0n}
             onClick={() => run({ kind: "startUnlock", position: p.id })}
           >
             Start withdrawal notice
@@ -146,7 +170,7 @@ function UnderwriterPosition({ p, refresh }: { p: ProtectorVM; refresh: () => vo
         <Card className="mt-4">
           <div className="mb-2 flex items-center justify-between text-[13px] font-bold">
             <span className="text-ink">
-              {ready ? "Ready to withdraw" : `Available in ${formatDuration(p.noticeSecondsRemaining)}`}
+              {ready ? "Ready to withdraw" : `Available in ${formatDuration(noticeRemaining)}`}
             </span>
             <span className="text-muted tnum">{Math.round(noticeProgress * 100)}%</span>
           </div>
@@ -168,14 +192,18 @@ function UnderwriterPosition({ p, refresh }: { p: ProtectorVM; refresh: () => vo
             <Row label="Minimum received" value={formatToken(minReceived(withdrawAmount), dec, backing.symbol)} />
           )}
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <Button variant="ghost" disabled={tx.pending} onClick={() => run({ kind: "cancelUnlock", position: p.id })}>
+            <Button
+              variant="ghost"
+              disabled={busy || !!stale}
+              onClick={() => run({ kind: "cancelUnlock", position: p.id })}
+            >
               Cancel notice
             </Button>
             <Button
               variant="indigo"
-              disabled={tx.pending || !ready || !canWithdraw}
+              disabled={busy || !ready || !canWithdraw}
               onClick={() => {
-                if (canWithdraw && !tx.pending) void run(withdrawIntent());
+                if (canWithdraw && !busy) void run(withdrawIntent());
               }}
             >
               {isFullWithdraw ? "Withdraw all" : "Withdraw"}

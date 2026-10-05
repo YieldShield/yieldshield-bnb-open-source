@@ -783,6 +783,8 @@ export function createReader(client: PublicClient, deps: EvmReaderDeps): ChainRe
           const isUnlocking = unlockRequestTime > 0n && now <= BigInt(unlockRequestTime) + PROTECTOR_UNLOCK_WINDOW;
           const availableAt = isUnlocking ? BigInt(unlockRequestTime) : 0n;
           protector.push({
+            evaluatedAt: now,
+            validUntil: now + VIEW_VALIDITY_SECONDS,
             id: encodePositionId(s.pool, "protector", h.tokenId),
             pool: s.pool,
             collateral: amount,
