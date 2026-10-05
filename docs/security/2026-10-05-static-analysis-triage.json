@@ -1,0 +1,2398 @@
+{
+  "checkedAt": "2026-10-05",
+  "scope": "Internal review, not an independent security audit. Detector severities are retained, not suppressed.",
+  "slither": {
+    "version": "0.11.5",
+    "success": true,
+    "highGateExitCode": 255,
+    "counts": [
+      {
+        "severity": "High",
+        "detector": "controlled-delegatecall",
+        "instances": 2
+      },
+      {
+        "severity": "High",
+        "detector": "incorrect-exp",
+        "instances": 1
+      },
+      {
+        "severity": "High",
+        "detector": "msg-value-loop",
+        "instances": 1
+      },
+      {
+        "severity": "High",
+        "detector": "reentrancy-balance",
+        "instances": 2
+      },
+      {
+        "severity": "High",
+        "detector": "uninitialized-state",
+        "instances": 56
+      },
+      {
+        "severity": "High",
+        "detector": "weak-prng",
+        "instances": 2
+      },
+      {
+        "severity": "Low",
+        "detector": "calls-loop",
+        "instances": 294
+      },
+      {
+        "severity": "Low",
+        "detector": "missing-zero-check",
+        "instances": 8
+      },
+      {
+        "severity": "Low",
+        "detector": "reentrancy-benign",
+        "instances": 48
+      },
+      {
+        "severity": "Low",
+        "detector": "reentrancy-events",
+        "instances": 48
+      },
+      {
+        "severity": "Low",
+        "detector": "shadowing-local",
+        "instances": 36
+      },
+      {
+        "severity": "Medium",
+        "detector": "divide-before-multiply",
+        "instances": 17
+      },
+      {
+        "severity": "Medium",
+        "detector": "incorrect-equality",
+        "instances": 130
+      },
+      {
+        "severity": "Medium",
+        "detector": "locked-ether",
+        "instances": 3
+      },
+      {
+        "severity": "Medium",
+        "detector": "pyth-unchecked-confidence",
+        "instances": 5
+      },
+      {
+        "severity": "Medium",
+        "detector": "pyth-unchecked-publishtime",
+        "instances": 4
+      },
+      {
+        "severity": "Medium",
+        "detector": "reentrancy-no-eth",
+        "instances": 101
+      },
+      {
+        "severity": "Medium",
+        "detector": "uninitialized-local",
+        "instances": 28
+      },
+      {
+        "severity": "Medium",
+        "detector": "unused-return",
+        "instances": 67
+      },
+      {
+        "severity": "Medium",
+        "detector": "write-after-write",
+        "instances": 5
+      }
+    ],
+    "highFindings": [
+      {
+        "detector": "weak-prng",
+        "severity": "High",
+        "confidence": "Medium",
+        "review": "Deterministic synthetic testnet price phase, deliberately predictable; not randomness, not a real-asset oracle.",
+        "locations": [
+          {
+            "file": "contracts/bsc/BscScenarioOracle.sol",
+            "lines": [88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100]
+          },
+          {
+            "file": "contracts/bsc/BscScenarioOracle.sol",
+            "lines": [94]
+          }
+        ]
+      },
+      {
+        "detector": "weak-prng",
+        "severity": "High",
+        "confidence": "Medium",
+        "review": "Deterministic synthetic testnet price phase, deliberately predictable; not randomness, not a real-asset oracle.",
+        "locations": [
+          {
+            "file": "contracts/bsc/BscYieldScenarioOracle.sol",
+            "lines": [103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117]
+          },
+          {
+            "file": "contracts/bsc/BscYieldScenarioOracle.sol",
+            "lines": [109]
+          }
+        ]
+      },
+      {
+        "detector": "controlled-delegatecall",
+        "severity": "High",
+        "confidence": "Medium",
+        "review": "Testnet initializer permits only two initialization selectors, calls an immutable target with pinned code hash, and rejects non-synthetic assets.",
+        "locations": [
+          {
+            "file": "contracts/bsc/BscPoolInitializeModule.sol",
+            "lines": [36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56]
+          },
+          {
+            "file": "contracts/bsc/BscPoolInitializeModule.sol",
+            "lines": [51]
+          }
+        ]
+      },
+      {
+        "detector": "controlled-delegatecall",
+        "severity": "High",
+        "confidence": "Medium",
+        "review": "Testnet initializer permits only two initialization selectors, calls an immutable target with pinned code hash, and rejects non-synthetic assets.",
+        "locations": [
+          {
+            "file": "contracts/bsc/BscYieldPoolInitializeModule.sol",
+            "lines": [41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61]
+          },
+          {
+            "file": "contracts/bsc/BscYieldPoolInitializeModule.sol",
+            "lines": [56]
+          }
+        ]
+      },
+      {
+        "detector": "incorrect-exp",
+        "severity": "High",
+        "confidence": "Medium",
+        "review": "Dependency FullMath Newton-Raphson seed uses XOR intentionally.",
+        "locations": [
+          {
+            "file": "node_modules/@pythnetwork/pyth-sdk-solidity/Math.sol",
+            "lines": [
+              83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106,
+              107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127,
+              128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148,
+              149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162
+            ]
+          },
+          {
+            "file": "node_modules/@pythnetwork/pyth-sdk-solidity/Math.sol",
+            "lines": [144]
+          }
+        ]
+      },
+      {
+        "detector": "msg-value-loop",
+        "severity": "High",
+        "confidence": "Medium",
+        "review": "Dependency MockPyth is a test fixture, not a deployed BSC oracle.",
+        "locations": [
+          {
+            "file": "node_modules/@pythnetwork/pyth-sdk-solidity/MockPyth.sol",
+            "lines": [
+              50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75
+            ]
+          },
+          {
+            "file": "node_modules/@pythnetwork/pyth-sdk-solidity/MockPyth.sol",
+            "lines": [54]
+          }
+        ]
+      },
+      {
+        "detector": "reentrancy-balance",
+        "severity": "High",
+        "confidence": "Medium",
+        "review": "Off-chain Foundry minting script, not an application transaction target.",
+        "locations": [
+          {
+            "file": "script/mint-tokens-to-accounts.s.sol",
+            "lines": [
+              93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114,
+              115, 116, 117, 118, 119, 120, 121, 122
+            ]
+          },
+          {
+            "file": "script/mint-tokens-to-accounts.s.sol",
+            "lines": [117]
+          },
+          {
+            "file": "script/mint-tokens-to-accounts.s.sol",
+            "lines": [116]
+          },
+          {
+            "file": "script/mint-tokens-to-accounts.s.sol",
+            "lines": [116]
+          }
+        ]
+      },
+      {
+        "detector": "reentrancy-balance",
+        "severity": "High",
+        "confidence": "Medium",
+        "review": "Off-chain Foundry minting script, not an application transaction target.",
+        "locations": [
+          {
+            "file": "script/mint-tokens-to-accounts.s.sol",
+            "lines": [
+              93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114,
+              115, 116, 117, 118, 119, 120, 121, 122
+            ]
+          },
+          {
+            "file": "script/mint-tokens-to-accounts.s.sol",
+            "lines": [117]
+          },
+          {
+            "file": "script/mint-tokens-to-accounts.s.sol",
+            "lines": [114]
+          },
+          {
+            "file": "script/mint-tokens-to-accounts.s.sol",
+            "lines": [116]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [105]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [
+              490, 491, 492, 493, 494, 495, 496, 497, 498, 499, 500, 501, 502, 503, 504, 505, 506, 507, 508, 509, 510,
+              511, 512, 513, 514, 515, 516, 517, 518, 519, 520, 521, 522, 523, 524, 525, 526, 527, 528, 529, 530, 531,
+              532, 533, 534, 535, 536, 537, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547, 548, 549, 550, 551, 552,
+              553, 554, 555, 556, 557, 558, 559, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 572, 573,
+              574, 575, 576, 577, 578, 579, 580, 581, 582, 583, 584, 585, 586, 587, 588, 589, 590, 591, 592, 593
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [946, 947, 948, 949, 950, 951, 952, 953]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [1099, 1100, 1101, 1102, 1103, 1104, 1105, 1106, 1107, 1108, 1109]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [
+              1129, 1130, 1131, 1132, 1133, 1134, 1135, 1136, 1137, 1138, 1139, 1140, 1141, 1142, 1143, 1144, 1145,
+              1146, 1147, 1148, 1149, 1150, 1151, 1152, 1153, 1154, 1155, 1156, 1157
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [1270, 1271, 1272, 1273, 1274, 1275, 1276, 1277]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [1367, 1368, 1369, 1370]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [1372, 1373, 1374, 1375, 1376, 1377, 1378, 1379, 1380, 1381, 1382, 1383]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [1385, 1386, 1387, 1388, 1389, 1390, 1391]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [1513, 1514, 1515, 1516, 1517, 1518, 1519, 1520, 1521, 1522, 1523]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [1535, 1536, 1537, 1538, 1539, 1540, 1541]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [1556, 1557, 1558, 1559, 1560, 1561, 1562]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [107]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [1033, 1034, 1035, 1036, 1037, 1038, 1039, 1040, 1041, 1042, 1043, 1044, 1045, 1046]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [1048, 1049, 1050, 1051, 1052, 1053, 1054, 1055, 1056, 1057, 1058, 1059, 1060, 1061]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [1083, 1084, 1085, 1086, 1087, 1088, 1089]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [1091, 1092, 1093, 1094, 1095, 1096, 1097]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [1099, 1100, 1101, 1102, 1103, 1104, 1105, 1106, 1107, 1108, 1109]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [1270, 1271, 1272, 1273, 1274, 1275, 1276, 1277]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [1427, 1428, 1429, 1430]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BasePoolViewsModule.sol",
+            "lines": [84]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolViewsModule.sol",
+            "lines": [564, 565, 566]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolViewsModule.sol",
+            "lines": [1677, 1678, 1679, 1680, 1681, 1682, 1683, 1684, 1685, 1686, 1687, 1688]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryOracleModule.sol",
+            "lines": [1711]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryOracleModule.sol",
+            "lines": [759, 760, 761, 762, 763, 764, 765, 766]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryOracleModule.sol",
+            "lines": [1573, 1574, 1575, 1576, 1577, 1578, 1579, 1580]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryOracleModule.sol",
+            "lines": [108]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryOracleModule.sol",
+            "lines": [
+              654, 655, 656, 657, 658, 659, 660, 661, 662, 663, 664, 665, 666, 667, 668, 669, 670, 671, 672, 673, 674,
+              675, 676, 677, 678, 679, 680, 681, 682, 683, 684, 685, 686, 687, 688, 689, 690, 691, 692, 693, 694, 695,
+              696, 697, 698, 699, 700, 701, 702, 703, 704, 705, 706, 707, 708, 709, 710, 711, 712, 713, 714, 715, 716,
+              717, 718, 719, 720, 721, 722, 723, 724, 725, 726, 727, 728, 729, 730, 731, 732, 733, 734, 735, 736, 737,
+              738, 739, 740, 741, 742, 743, 744, 745, 746, 747, 748, 749, 750, 751, 752, 753, 754, 755, 756, 757
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryOracleModule.sol",
+            "lines": [1313, 1314, 1315, 1316, 1317, 1318, 1319, 1320, 1321, 1322, 1323, 1324, 1325]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryAdminModule.sol",
+            "lines": [105]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryAdminModule.sol",
+            "lines": [
+              588, 589, 590, 591, 592, 593, 594, 595, 596, 597, 598, 599, 600, 601, 602, 603, 604, 605, 606, 607, 608,
+              609, 610, 611, 612, 613, 614, 615, 616, 617, 618, 619, 620, 621, 622, 623, 624, 625, 626, 627, 628, 629,
+              630, 631, 632, 633, 634, 635, 636, 637, 638, 639, 640, 641, 642, 643, 644, 645, 646, 647, 648, 649, 650,
+              651, 652, 653, 654, 655, 656, 657, 658, 659, 660, 661, 662, 663, 664, 665, 666, 667, 668, 669, 670, 671,
+              672, 673, 674, 675, 676, 677, 678, 679, 680, 681, 682, 683, 684, 685, 686, 687, 688, 689, 690, 691
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryAdminModule.sol",
+            "lines": [1022, 1023, 1024, 1025, 1026, 1027, 1028, 1029]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryAdminModule.sol",
+            "lines": [1175, 1176, 1177, 1178, 1179, 1180, 1181, 1182, 1183, 1184, 1185]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryAdminModule.sol",
+            "lines": [
+              1205, 1206, 1207, 1208, 1209, 1210, 1211, 1212, 1213, 1214, 1215, 1216, 1217, 1218, 1219, 1220, 1221,
+              1222, 1223, 1224, 1225, 1226, 1227, 1228, 1229, 1230, 1231, 1232, 1233
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryAdminModule.sol",
+            "lines": [1346, 1347, 1348, 1349, 1350, 1351, 1352, 1353]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryAdminModule.sol",
+            "lines": [1443, 1444, 1445, 1446]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryAdminModule.sol",
+            "lines": [1448, 1449, 1450, 1451, 1452, 1453, 1454, 1455, 1456, 1457, 1458, 1459]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryAdminModule.sol",
+            "lines": [1461, 1462, 1463, 1464, 1465, 1466, 1467]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryAdminModule.sol",
+            "lines": [1589, 1590, 1591, 1592, 1593, 1594, 1595, 1596, 1597, 1598, 1599]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryAdminModule.sol",
+            "lines": [1611, 1612, 1613, 1614, 1615, 1616, 1617]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryAdminModule.sol",
+            "lines": [1632, 1633, 1634, 1635, 1636, 1637, 1638]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryOracleModule.sol",
+            "lines": [144]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryOracleModule.sol",
+            "lines": [
+              1232, 1233, 1234, 1235, 1236, 1237, 1238, 1239, 1240, 1241, 1242, 1243, 1244, 1245, 1246, 1247, 1248,
+              1249, 1250, 1251, 1252, 1253, 1254, 1255, 1256, 1257, 1258, 1259, 1260
+            ]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BasePoolViewsModule.sol",
+            "lines": [95]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolViewsModule.sol",
+            "lines": [564, 565, 566]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolViewsModule.sol",
+            "lines": [738, 739, 740, 741, 742, 743, 744, 745, 746, 747, 748, 749, 750, 751, 752]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolViewsModule.sol",
+            "lines": [
+              871, 872, 873, 874, 875, 876, 877, 878, 879, 880, 881, 882, 883, 884, 885, 886, 887, 888, 889, 890
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolViewsModule.sol",
+            "lines": [
+              1496, 1497, 1498, 1499, 1500, 1501, 1502, 1503, 1504, 1505, 1506, 1507, 1508, 1509, 1510, 1511, 1512,
+              1513, 1514, 1515, 1516, 1517, 1518
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolViewsModule.sol",
+            "lines": [1677, 1678, 1679, 1680, 1681, 1682, 1683, 1684, 1685, 1686, 1687, 1688]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolViewsModule.sol",
+            "lines": [1887, 1888, 1889, 1890, 1891, 1892, 1893]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BasePoolAdminModule.sol",
+            "lines": [84]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolAdminModule.sol",
+            "lines": [554, 555, 556]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolAdminModule.sol",
+            "lines": [1636, 1637, 1638, 1639, 1640, 1641, 1642, 1643, 1644, 1645, 1646, 1647]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolAdminModule.sol",
+            "lines": [
+              2268, 2269, 2270, 2271, 2272, 2273, 2274, 2275, 2276, 2277, 2278, 2279, 2280, 2281, 2282, 2283, 2284,
+              2285, 2286, 2287, 2288, 2289, 2290, 2291, 2292, 2293, 2294, 2295, 2296, 2297, 2298, 2299, 2300, 2301
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolAdminModule.sol",
+            "lines": [
+              2306, 2307, 2308, 2309, 2310, 2311, 2312, 2313, 2314, 2315, 2316, 2317, 2318, 2319, 2320, 2321, 2322,
+              2323, 2324, 2325
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolAdminModule.sol",
+            "lines": [
+              2415, 2416, 2417, 2418, 2419, 2420, 2421, 2422, 2423, 2424, 2425, 2426, 2427, 2428, 2429, 2430, 2431,
+              2432, 2433, 2434, 2435, 2436, 2437, 2438, 2439, 2440, 2441
+            ]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [106]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [1270, 1271, 1272, 1273, 1274, 1275, 1276, 1277]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [1422, 1423, 1424, 1425]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BasePoolInitializeModule.sol",
+            "lines": [95]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolInitializeModule.sol",
+            "lines": [586, 587, 588]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolInitializeModule.sol",
+            "lines": [
+              830, 831, 832, 833, 834, 835, 836, 837, 838, 839, 840, 841, 842, 843, 844, 845, 846, 847, 848, 849
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolInitializeModule.sol",
+            "lines": [
+              1455, 1456, 1457, 1458, 1459, 1460, 1461, 1462, 1463, 1464, 1465, 1466, 1467, 1468, 1469, 1470, 1471,
+              1472, 1473, 1474, 1475, 1476, 1477
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolInitializeModule.sol",
+            "lines": [1636, 1637, 1638, 1639, 1640, 1641, 1642, 1643, 1644, 1645, 1646, 1647]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolInitializeModule.sol",
+            "lines": [1835, 1836, 1837, 1838, 1839, 1840, 1841]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BasePoolViewsModule.sol",
+            "lines": [2451]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolViewsModule.sol",
+            "lines": [2292, 2293, 2294, 2295, 2296, 2297, 2298, 2299, 2300, 2301]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [108]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [
+              486, 487, 488, 489, 490, 491, 492, 493, 494, 495, 496, 497, 498, 499, 500, 501, 502, 503, 504, 505, 506,
+              507, 508, 509, 510, 511, 512, 513, 514, 515, 516, 517, 518, 519, 520, 521, 522, 523, 524, 525, 526, 527,
+              528, 529, 530, 531, 532, 533, 534, 535, 536, 537, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547, 548,
+              549, 550, 551, 552, 553, 554, 555, 556, 557, 558, 559, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569,
+              570, 571, 572, 573, 574, 575, 576, 577, 578, 579, 580, 581, 582, 583, 584, 585, 586, 587, 588, 589
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [1189, 1190, 1191, 1192, 1193, 1194, 1195, 1196, 1197, 1198, 1199, 1200, 1201]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BasePoolPartialExitModule.sol",
+            "lines": [2435]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolPartialExitModule.sol",
+            "lines": [2324, 2325, 2326, 2327, 2328]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BasePoolProtectorModule.sol",
+            "lines": [84]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolProtectorModule.sol",
+            "lines": [554, 555, 556]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolProtectorModule.sol",
+            "lines": [1644, 1645, 1646, 1647, 1648, 1649, 1650, 1651, 1652, 1653, 1654, 1655]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BasePoolAdminModule.sol",
+            "lines": [105]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolAdminModule.sol",
+            "lines": [554, 555, 556]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolAdminModule.sol",
+            "lines": [
+              821, 822, 823, 824, 825, 826, 827, 828, 829, 830, 831, 832, 833, 834, 835, 836, 837, 838, 839, 840
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolAdminModule.sol",
+            "lines": [1636, 1637, 1638, 1639, 1640, 1641, 1642, 1643, 1644, 1645, 1646, 1647]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolAdminModule.sol",
+            "lines": [
+              2268, 2269, 2270, 2271, 2272, 2273, 2274, 2275, 2276, 2277, 2278, 2279, 2280, 2281, 2282, 2283, 2284,
+              2285, 2286, 2287, 2288, 2289, 2290, 2291, 2292, 2293, 2294, 2295, 2296, 2297, 2298, 2299, 2300, 2301
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolAdminModule.sol",
+            "lines": [
+              2306, 2307, 2308, 2309, 2310, 2311, 2312, 2313, 2314, 2315, 2316, 2317, 2318, 2319, 2320, 2321, 2322,
+              2323, 2324, 2325
+            ]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [105]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [
+              486, 487, 488, 489, 490, 491, 492, 493, 494, 495, 496, 497, 498, 499, 500, 501, 502, 503, 504, 505, 506,
+              507, 508, 509, 510, 511, 512, 513, 514, 515, 516, 517, 518, 519, 520, 521, 522, 523, 524, 525, 526, 527,
+              528, 529, 530, 531, 532, 533, 534, 535, 536, 537, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547, 548,
+              549, 550, 551, 552, 553, 554, 555, 556, 557, 558, 559, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569,
+              570, 571, 572, 573, 574, 575, 576, 577, 578, 579, 580, 581, 582, 583, 584, 585, 586, 587, 588, 589
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [925, 926, 927, 928, 929, 930, 931, 932]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [1078, 1079, 1080, 1081, 1082, 1083, 1084, 1085, 1086, 1087, 1088]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [
+              1108, 1109, 1110, 1111, 1112, 1113, 1114, 1115, 1116, 1117, 1118, 1119, 1120, 1121, 1122, 1123, 1124,
+              1125, 1126, 1127, 1128, 1129, 1130, 1131, 1132, 1133, 1134, 1135, 1136
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [1249, 1250, 1251, 1252, 1253, 1254, 1255, 1256]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [1346, 1347, 1348, 1349]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [1351, 1352, 1353, 1354, 1355, 1356, 1357, 1358, 1359, 1360, 1361, 1362]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [1364, 1365, 1366, 1367, 1368, 1369, 1370]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [1492, 1493, 1494, 1495, 1496, 1497, 1498, 1499, 1500, 1501, 1502]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [1514, 1515, 1516, 1517, 1518, 1519, 1520]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [1535, 1536, 1537, 1538, 1539, 1540, 1541]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "script/DeployHelpers.s.sol",
+            "lines": [28]
+          },
+          {
+            "file": "script/DeployHelpers.s.sol",
+            "lines": [255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265]
+          },
+          {
+            "file": "script/DeployHelpers.s.sol",
+            "lines": [267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278]
+          },
+          {
+            "file": "script/DeployHelpers.s.sol",
+            "lines": [280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [144]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [
+              1090, 1091, 1092, 1093, 1094, 1095, 1096, 1097, 1098, 1099, 1100, 1101, 1102, 1103, 1104, 1105, 1106,
+              1107, 1108, 1109, 1110, 1111, 1112, 1113, 1114, 1115, 1116, 1117, 1118
+            ]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BasePoolShieldExitModule.sol",
+            "lines": [2444]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolShieldExitModule.sol",
+            "lines": [2333, 2334, 2335, 2336, 2337]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [104]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [
+              514, 515, 516, 517, 518, 519, 520, 521, 522, 523, 524, 525, 526, 527, 528, 529, 530, 531, 532, 533, 534,
+              535, 536, 537, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547, 548, 549, 550, 551, 552, 553, 554, 555,
+              556, 557, 558, 559, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 572, 573, 574, 575, 576,
+              577, 578, 579, 580, 581, 582, 583, 584, 585, 586, 587, 588, 589, 590, 591, 592, 593, 594, 595, 596, 597,
+              598, 599, 600, 601, 602, 603, 604, 605, 606, 607, 608, 609, 610, 611, 612, 613, 614, 615, 616, 617
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [619, 620, 621, 622, 623, 624, 625, 626]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [1431, 1432, 1433, 1434, 1435, 1436, 1437, 1438]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BasePoolFeesModule.sol",
+            "lines": [105]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolFeesModule.sol",
+            "lines": [554, 555, 556]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolFeesModule.sol",
+            "lines": [
+              798, 799, 800, 801, 802, 803, 804, 805, 806, 807, 808, 809, 810, 811, 812, 813, 814, 815, 816, 817
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolFeesModule.sol",
+            "lines": [1691, 1692, 1693, 1694, 1695, 1696, 1697, 1698, 1699, 1700, 1701, 1702]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BasePoolInitializeModule.sol",
+            "lines": [2341]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolInitializeModule.sol",
+            "lines": [2230, 2231, 2232, 2233, 2234]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [105]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [
+              514, 515, 516, 517, 518, 519, 520, 521, 522, 523, 524, 525, 526, 527, 528, 529, 530, 531, 532, 533, 534,
+              535, 536, 537, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547, 548, 549, 550, 551, 552, 553, 554, 555,
+              556, 557, 558, 559, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 572, 573, 574, 575, 576,
+              577, 578, 579, 580, 581, 582, 583, 584, 585, 586, 587, 588, 589, 590, 591, 592, 593, 594, 595, 596, 597,
+              598, 599, 600, 601, 602, 603, 604, 605, 606, 607, 608, 609, 610, 611, 612, 613, 614, 615, 616, 617
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [907, 908, 909, 910, 911, 912, 913, 914]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [1060, 1061, 1062, 1063, 1064, 1065, 1066, 1067, 1068, 1069, 1070]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [
+              1090, 1091, 1092, 1093, 1094, 1095, 1096, 1097, 1098, 1099, 1100, 1101, 1102, 1103, 1104, 1105, 1106,
+              1107, 1108, 1109, 1110, 1111, 1112, 1113, 1114, 1115, 1116, 1117, 1118
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [1231, 1232, 1233, 1234, 1235, 1236, 1237, 1238]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [1328, 1329, 1330, 1331]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [1333, 1334, 1335, 1336, 1337, 1338, 1339, 1340, 1341, 1342, 1343, 1344]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [1346, 1347, 1348, 1349, 1350, 1351, 1352]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [1474, 1475, 1476, 1477, 1478, 1479, 1480, 1481, 1482, 1483, 1484]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [1496, 1497, 1498, 1499, 1500, 1501, 1502]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [1517, 1518, 1519, 1520, 1521, 1522, 1523]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [144]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [
+              1108, 1109, 1110, 1111, 1112, 1113, 1114, 1115, 1116, 1117, 1118, 1119, 1120, 1121, 1122, 1123, 1124,
+              1125, 1126, 1127, 1128, 1129, 1130, 1131, 1132, 1133, 1134, 1135, 1136
+            ]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryOracleModule.sol",
+            "lines": [1704]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryOracleModule.sol",
+            "lines": [1214, 1215, 1216, 1217]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [108]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [
+              514, 515, 516, 517, 518, 519, 520, 521, 522, 523, 524, 525, 526, 527, 528, 529, 530, 531, 532, 533, 534,
+              535, 536, 537, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547, 548, 549, 550, 551, 552, 553, 554, 555,
+              556, 557, 558, 559, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 572, 573, 574, 575, 576,
+              577, 578, 579, 580, 581, 582, 583, 584, 585, 586, 587, 588, 589, 590, 591, 592, 593, 594, 595, 596, 597,
+              598, 599, 600, 601, 602, 603, 604, 605, 606, 607, 608, 609, 610, 611, 612, 613, 614, 615, 616, 617
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [1171, 1172, 1173, 1174, 1175, 1176, 1177, 1178, 1179, 1180, 1181, 1182, 1183]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [1562]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [1072, 1073, 1074, 1075]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [106]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [1231, 1232, 1233, 1234, 1235, 1236, 1237, 1238]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [1383, 1384, 1385, 1386]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryAdminModule.sol",
+            "lines": [107]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryAdminModule.sol",
+            "lines": [1109, 1110, 1111, 1112, 1113, 1114, 1115, 1116, 1117, 1118, 1119, 1120, 1121, 1122]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryAdminModule.sol",
+            "lines": [1124, 1125, 1126, 1127, 1128, 1129, 1130, 1131, 1132, 1133, 1134, 1135, 1136, 1137]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryAdminModule.sol",
+            "lines": [1159, 1160, 1161, 1162, 1163, 1164, 1165]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryAdminModule.sol",
+            "lines": [1167, 1168, 1169, 1170, 1171, 1172, 1173]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryAdminModule.sol",
+            "lines": [1175, 1176, 1177, 1178, 1179, 1180, 1181, 1182, 1183, 1184, 1185]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryAdminModule.sol",
+            "lines": [1346, 1347, 1348, 1349, 1350, 1351, 1352, 1353]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryAdminModule.sol",
+            "lines": [1503, 1504, 1505, 1506]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BasePoolDepositsModule.sol",
+            "lines": [2440]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolDepositsModule.sol",
+            "lines": [2329, 2330, 2331, 2332, 2333]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BasePoolViewsModule.sol",
+            "lines": [105]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolViewsModule.sol",
+            "lines": [564, 565, 566]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolViewsModule.sol",
+            "lines": [
+              777, 778, 779, 780, 781, 782, 783, 784, 785, 786, 787, 788, 789, 790, 791, 792, 793, 794, 795, 796, 797,
+              798, 799, 800, 801, 802, 803, 804, 805, 806, 807, 808, 809, 810, 811, 812, 813, 814, 815
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolViewsModule.sol",
+            "lines": [
+              871, 872, 873, 874, 875, 876, 877, 878, 879, 880, 881, 882, 883, 884, 885, 886, 887, 888, 889, 890
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolViewsModule.sol",
+            "lines": [1677, 1678, 1679, 1680, 1681, 1682, 1683, 1684, 1685, 1686, 1687, 1688]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [106]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [1249, 1250, 1251, 1252, 1253, 1254, 1255, 1256]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [1401, 1402, 1403, 1404]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryOracleModule.sol",
+            "lines": [104]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryOracleModule.sol",
+            "lines": [
+              654, 655, 656, 657, 658, 659, 660, 661, 662, 663, 664, 665, 666, 667, 668, 669, 670, 671, 672, 673, 674,
+              675, 676, 677, 678, 679, 680, 681, 682, 683, 684, 685, 686, 687, 688, 689, 690, 691, 692, 693, 694, 695,
+              696, 697, 698, 699, 700, 701, 702, 703, 704, 705, 706, 707, 708, 709, 710, 711, 712, 713, 714, 715, 716,
+              717, 718, 719, 720, 721, 722, 723, 724, 725, 726, 727, 728, 729, 730, 731, 732, 733, 734, 735, 736, 737,
+              738, 739, 740, 741, 742, 743, 744, 745, 746, 747, 748, 749, 750, 751, 752, 753, 754, 755, 756, 757
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryOracleModule.sol",
+            "lines": [759, 760, 761, 762, 763, 764, 765, 766]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryOracleModule.sol",
+            "lines": [1573, 1574, 1575, 1576, 1577, 1578, 1579, 1580]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [1569]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [619, 620, 621, 622, 623, 624, 625, 626]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [1431, 1432, 1433, 1434, 1435, 1436, 1437, 1438]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryAdminModule.sol",
+            "lines": [106]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryAdminModule.sol",
+            "lines": [1346, 1347, 1348, 1349, 1350, 1351, 1352, 1353]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryAdminModule.sol",
+            "lines": [1498, 1499, 1500, 1501]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BasePoolViewsModule.sol",
+            "lines": [2449]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolViewsModule.sol",
+            "lines": [2338, 2339, 2340, 2341, 2342]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BasePoolProtectorModule.sol",
+            "lines": [95]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolProtectorModule.sol",
+            "lines": [554, 555, 556]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolProtectorModule.sol",
+            "lines": [
+              838, 839, 840, 841, 842, 843, 844, 845, 846, 847, 848, 849, 850, 851, 852, 853, 854, 855, 856, 857
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolProtectorModule.sol",
+            "lines": [
+              1463, 1464, 1465, 1466, 1467, 1468, 1469, 1470, 1471, 1472, 1473, 1474, 1475, 1476, 1477, 1478, 1479,
+              1480, 1481, 1482, 1483, 1484, 1485
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolProtectorModule.sol",
+            "lines": [1644, 1645, 1646, 1647, 1648, 1649, 1650, 1651, 1652, 1653, 1654, 1655]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolProtectorModule.sol",
+            "lines": [1858, 1859, 1860, 1861, 1862, 1863, 1864]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BasePoolInitializeModule.sol",
+            "lines": [105]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolInitializeModule.sol",
+            "lines": [586, 587, 588]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolInitializeModule.sol",
+            "lines": [
+              830, 831, 832, 833, 834, 835, 836, 837, 838, 839, 840, 841, 842, 843, 844, 845, 846, 847, 848, 849
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolInitializeModule.sol",
+            "lines": [1636, 1637, 1638, 1639, 1640, 1641, 1642, 1643, 1644, 1645, 1646, 1647]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BasePoolProtectorModule.sol",
+            "lines": [105]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolProtectorModule.sol",
+            "lines": [554, 555, 556]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolProtectorModule.sol",
+            "lines": [
+              749, 750, 751, 752, 753, 754, 755, 756, 757, 758, 759, 760, 761, 762, 763, 764, 765, 766, 767, 768, 769,
+              770, 771, 772, 773, 774, 775, 776, 777, 778, 779, 780, 781, 782, 783, 784, 785, 786, 787
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolProtectorModule.sol",
+            "lines": [
+              838, 839, 840, 841, 842, 843, 844, 845, 846, 847, 848, 849, 850, 851, 852, 853, 854, 855, 856, 857
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolProtectorModule.sol",
+            "lines": [1644, 1645, 1646, 1647, 1648, 1649, 1650, 1651, 1652, 1653, 1654, 1655]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BasePoolProtectorModule.sol",
+            "lines": [2500]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolProtectorModule.sol",
+            "lines": [2389, 2390, 2391, 2392, 2393]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BasePoolInitializeModule.sol",
+            "lines": [84]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolInitializeModule.sol",
+            "lines": [586, 587, 588]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolInitializeModule.sol",
+            "lines": [1636, 1637, 1638, 1639, 1640, 1641, 1642, 1643, 1644, 1645, 1646, 1647]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [1587]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [591, 592, 593, 594, 595, 596, 597, 598]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [1449, 1450, 1451, 1452, 1453, 1454, 1455, 1456]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BasePoolAdminModule.sol",
+            "lines": [95]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolAdminModule.sol",
+            "lines": [554, 555, 556]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolAdminModule.sol",
+            "lines": [
+              821, 822, 823, 824, 825, 826, 827, 828, 829, 830, 831, 832, 833, 834, 835, 836, 837, 838, 839, 840
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolAdminModule.sol",
+            "lines": [
+              1455, 1456, 1457, 1458, 1459, 1460, 1461, 1462, 1463, 1464, 1465, 1466, 1467, 1468, 1469, 1470, 1471,
+              1472, 1473, 1474, 1475, 1476, 1477
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolAdminModule.sol",
+            "lines": [1636, 1637, 1638, 1639, 1640, 1641, 1642, 1643, 1644, 1645, 1646, 1647]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolAdminModule.sol",
+            "lines": [1835, 1836, 1837, 1838, 1839, 1840, 1841]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolAdminModule.sol",
+            "lines": [
+              2268, 2269, 2270, 2271, 2272, 2273, 2274, 2275, 2276, 2277, 2278, 2279, 2280, 2281, 2282, 2283, 2284,
+              2285, 2286, 2287, 2288, 2289, 2290, 2291, 2292, 2293, 2294, 2295, 2296, 2297, 2298, 2299, 2300, 2301
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolAdminModule.sol",
+            "lines": [
+              2306, 2307, 2308, 2309, 2310, 2311, 2312, 2313, 2314, 2315, 2316, 2317, 2318, 2319, 2320, 2321, 2322,
+              2323, 2324, 2325
+            ]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [104]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [
+              486, 487, 488, 489, 490, 491, 492, 493, 494, 495, 496, 497, 498, 499, 500, 501, 502, 503, 504, 505, 506,
+              507, 508, 509, 510, 511, 512, 513, 514, 515, 516, 517, 518, 519, 520, 521, 522, 523, 524, 525, 526, 527,
+              528, 529, 530, 531, 532, 533, 534, 535, 536, 537, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547, 548,
+              549, 550, 551, 552, 553, 554, 555, 556, 557, 558, 559, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569,
+              570, 571, 572, 573, 574, 575, 576, 577, 578, 579, 580, 581, 582, 583, 584, 585, 586, 587, 588, 589
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [591, 592, 593, 594, 595, 596, 597, 598]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [1449, 1450, 1451, 1452, 1453, 1454, 1455, 1456]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [104]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [
+              490, 491, 492, 493, 494, 495, 496, 497, 498, 499, 500, 501, 502, 503, 504, 505, 506, 507, 508, 509, 510,
+              511, 512, 513, 514, 515, 516, 517, 518, 519, 520, 521, 522, 523, 524, 525, 526, 527, 528, 529, 530, 531,
+              532, 533, 534, 535, 536, 537, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547, 548, 549, 550, 551, 552,
+              553, 554, 555, 556, 557, 558, 559, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 572, 573,
+              574, 575, 576, 577, 578, 579, 580, 581, 582, 583, 584, 585, 586, 587, 588, 589, 590, 591, 592, 593
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [595, 596, 597, 598, 599, 600, 601, 602]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [1470, 1471, 1472, 1473, 1474, 1475, 1476, 1477]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [107]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [994, 995, 996, 997, 998, 999, 1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [1009, 1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019, 1020, 1021, 1022]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [1044, 1045, 1046, 1047, 1048, 1049, 1050]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [1052, 1053, 1054, 1055, 1056, 1057, 1058]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [1060, 1061, 1062, 1063, 1064, 1065, 1066, 1067, 1068, 1069, 1070]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [1231, 1232, 1233, 1234, 1235, 1236, 1237, 1238]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "lines": [1388, 1389, 1390, 1391]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [1601]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [1111, 1112, 1113, 1114]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [1580]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [1090, 1091, 1092, 1093]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BasePoolFeesModule.sol",
+            "lines": [2415]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolFeesModule.sol",
+            "lines": [2304, 2305, 2306, 2307, 2308]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BasePoolFeesModule.sol",
+            "lines": [84]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolFeesModule.sol",
+            "lines": [554, 555, 556]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolFeesModule.sol",
+            "lines": [1691, 1692, 1693, 1694, 1695, 1696, 1697, 1698, 1699, 1700, 1701, 1702]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BasePoolFeesModule.sol",
+            "lines": [95]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolFeesModule.sol",
+            "lines": [554, 555, 556]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolFeesModule.sol",
+            "lines": [
+              798, 799, 800, 801, 802, 803, 804, 805, 806, 807, 808, 809, 810, 811, 812, 813, 814, 815, 816, 817
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolFeesModule.sol",
+            "lines": [
+              1451, 1452, 1453, 1454, 1455, 1456, 1457, 1458, 1459, 1460, 1461, 1462, 1463, 1464, 1465, 1466, 1467,
+              1468, 1469, 1470, 1471, 1472, 1473
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolFeesModule.sol",
+            "lines": [1691, 1692, 1693, 1694, 1695, 1696, 1697, 1698, 1699, 1700, 1701, 1702]
+          },
+          {
+            "file": "contracts/base-modules/BasePoolFeesModule.sol",
+            "lines": [1905, 1906, 1907, 1908, 1909, 1910, 1911]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [107]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019, 1020, 1021, 1022, 1023, 1024, 1025]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [1027, 1028, 1029, 1030, 1031, 1032, 1033, 1034, 1035, 1036, 1037, 1038, 1039, 1040]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [1062, 1063, 1064, 1065, 1066, 1067, 1068]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [1070, 1071, 1072, 1073, 1074, 1075, 1076]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [1078, 1079, 1080, 1081, 1082, 1083, 1084, 1085, 1086, 1087, 1088]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [1249, 1250, 1251, 1252, 1253, 1254, 1255, 1256]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "lines": [1406, 1407, 1408, 1409]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [1608]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [595, 596, 597, 598, 599, 600, 601, 602]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [1470, 1471, 1472, 1473, 1474, 1475, 1476, 1477]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [144]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [
+              1129, 1130, 1131, 1132, 1133, 1134, 1135, 1136, 1137, 1138, 1139, 1140, 1141, 1142, 1143, 1144, 1145,
+              1146, 1147, 1148, 1149, 1150, 1151, 1152, 1153, 1154, 1155, 1156, 1157
+            ]
+          }
+        ]
+      },
+      {
+        "detector": "uninitialized-state",
+        "severity": "High",
+        "confidence": "High",
+        "review": "Generated delegatecall modules read initialized proxy storage; zero-initialized accounting slots are intentional. See module storage/selector and pool accounting regressions.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [108]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [
+              490, 491, 492, 493, 494, 495, 496, 497, 498, 499, 500, 501, 502, 503, 504, 505, 506, 507, 508, 509, 510,
+              511, 512, 513, 514, 515, 516, 517, 518, 519, 520, 521, 522, 523, 524, 525, 526, 527, 528, 529, 530, 531,
+              532, 533, 534, 535, 536, 537, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547, 548, 549, 550, 551, 552,
+              553, 554, 555, 556, 557, 558, 559, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 572, 573,
+              574, 575, 576, 577, 578, 579, 580, 581, 582, 583, 584, 585, 586, 587, 588, 589, 590, 591, 592, 593
+            ]
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "lines": [1210, 1211, 1212, 1213, 1214, 1215, 1216, 1217, 1218, 1219, 1220, 1221, 1222]
+          }
+        ]
+      }
+    ]
+  },
+  "aderyn": {
+    "version": "0.6.8",
+    "counts": {
+      "high": 7,
+      "low": 21
+    },
+    "highClasses": [
+      {
+        "detector": "contract-locks-ether",
+        "severity": "High",
+        "review": "Direct native transfers and disabled upgrades revert; immutable routers forward to nonpayable modules. Force-sent native currency is not accounted as deposits.",
+        "locations": [
+          {
+            "file": "contracts/SplitRiskPool.sol",
+            "line": 33
+          },
+          {
+            "file": "contracts/SplitRiskPoolFactory.sol",
+            "line": 82
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryAdminModule.sol",
+            "line": 83
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "line": 83
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "line": 83
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryOracleModule.sol",
+            "line": 83
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryRouter.sol",
+            "line": 6
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "line": 83
+          },
+          {
+            "file": "contracts/base-modules/BasePoolAdminModule.sol",
+            "line": 34
+          },
+          {
+            "file": "contracts/base-modules/BasePoolDepositsModule.sol",
+            "line": 34
+          },
+          {
+            "file": "contracts/base-modules/BasePoolFeesModule.sol",
+            "line": 34
+          },
+          {
+            "file": "contracts/base-modules/BasePoolInitializeModule.sol",
+            "line": 34
+          },
+          {
+            "file": "contracts/base-modules/BasePoolPartialExitModule.sol",
+            "line": 34
+          },
+          {
+            "file": "contracts/base-modules/BasePoolProtectorModule.sol",
+            "line": 34
+          },
+          {
+            "file": "contracts/base-modules/BasePoolRouter.sol",
+            "line": 6
+          },
+          {
+            "file": "contracts/base-modules/BasePoolShieldExitModule.sol",
+            "line": 34
+          },
+          {
+            "file": "contracts/base-modules/BasePoolViewsModule.sol",
+            "line": 34
+          }
+        ]
+      },
+      {
+        "detector": "eth-send-unchecked-address",
+        "severity": "High",
+        "review": "Inherited Pyth update refunds the payer, or uses a validated explicit recipient. Not used by BSC synthetic protection.",
+        "locations": [
+          {
+            "file": "contracts/oracles/PythOracle.sol",
+            "line": 197
+          },
+          {
+            "file": "contracts/oracles/PythOracle.sol",
+            "line": 230
+          }
+        ]
+      },
+      {
+        "detector": "incorrect-caret-operator",
+        "severity": "High",
+        "review": "Intentional modular-inverse XOR seed, not exponentiation.",
+        "locations": [
+          {
+            "file": "contracts/oracles/libraries/FullMath.sol",
+            "line": 48
+          }
+        ]
+      },
+      {
+        "detector": "reentrancy-state-change",
+        "severity": "High",
+        "review": "Pool external asset entrypoints use nonReentrant; escrow enters its claim lock before token interactions and resets it after exact-debit/receipt checks. Governance paths require authority. Generated duplicates reviewed with module storage checks and adversarial callback regression tests.",
+        "locations": [
+          {
+            "file": "contracts/ProtectorCommissionEscrow.sol",
+            "line": 45
+          },
+          {
+            "file": "contracts/ProtectorCommissionEscrow.sol",
+            "line": 47
+          },
+          {
+            "file": "contracts/ProtectorCommissionEscrow.sol",
+            "line": 51
+          },
+          {
+            "file": "contracts/ProtectorCommissionEscrow.sol",
+            "line": 57
+          },
+          {
+            "file": "contracts/SplitRiskPool.sol",
+            "line": 1971
+          },
+          {
+            "file": "contracts/SplitRiskPool.sol",
+            "line": 2015
+          },
+          {
+            "file": "contracts/SplitRiskPool.sol",
+            "line": 2063
+          },
+          {
+            "file": "contracts/SplitRiskPool.sol",
+            "line": 2109
+          },
+          {
+            "file": "contracts/SplitRiskPool.sol",
+            "line": 2150
+          },
+          {
+            "file": "contracts/SplitRiskPool.sol",
+            "line": 2154
+          },
+          {
+            "file": "contracts/SplitRiskPool.sol",
+            "line": 2199
+          },
+          {
+            "file": "contracts/SplitRiskPool.sol",
+            "line": 2302
+          },
+          {
+            "file": "contracts/SplitRiskPool.sol",
+            "line": 2306
+          },
+          {
+            "file": "contracts/SplitRiskPool.sol",
+            "line": 2336
+          },
+          {
+            "file": "contracts/SplitRiskPool.sol",
+            "line": 2339
+          },
+          {
+            "file": "contracts/SplitRiskPool.sol",
+            "line": 2369
+          },
+          {
+            "file": "contracts/SplitRiskPool.sol",
+            "line": 2463
+          },
+          {
+            "file": "contracts/SplitRiskPool.sol",
+            "line": 2517
+          },
+          {
+            "file": "contracts/SplitRiskPool.sol",
+            "line": 2571
+          },
+          {
+            "file": "contracts/SplitRiskPool.sol",
+            "line": 2587
+          },
+          {
+            "file": "contracts/SplitRiskPool.sol",
+            "line": 2603
+          },
+          {
+            "file": "contracts/SplitRiskPool.sol",
+            "line": 2611
+          },
+          {
+            "file": "contracts/SplitRiskPool.sol",
+            "line": 2927
+          },
+          {
+            "file": "contracts/SplitRiskPool.sol",
+            "line": 2971
+          },
+          {
+            "file": "contracts/SplitRiskPoolFactory.sol",
+            "line": 519
+          },
+          {
+            "file": "contracts/SplitRiskPoolFactory.sol",
+            "line": 531
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryOracleModule.sol",
+            "line": 423
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryOracleModule.sol",
+            "line": 435
+          },
+          {
+            "file": "contracts/base-modules/BasePoolAdminModule.sol",
+            "line": 2150
+          },
+          {
+            "file": "contracts/base-modules/BasePoolAdminModule.sol",
+            "line": 2194
+          },
+          {
+            "file": "contracts/base-modules/BasePoolDepositsModule.sol",
+            "line": 1730
+          },
+          {
+            "file": "contracts/base-modules/BasePoolDepositsModule.sol",
+            "line": 1774
+          },
+          {
+            "file": "contracts/base-modules/BasePoolDepositsModule.sol",
+            "line": 1822
+          },
+          {
+            "file": "contracts/base-modules/BasePoolDepositsModule.sol",
+            "line": 1868
+          },
+          {
+            "file": "contracts/base-modules/BasePoolPartialExitModule.sol",
+            "line": 1811
+          },
+          {
+            "file": "contracts/base-modules/BasePoolPartialExitModule.sol",
+            "line": 1815
+          },
+          {
+            "file": "contracts/base-modules/BasePoolPartialExitModule.sol",
+            "line": 1845
+          },
+          {
+            "file": "contracts/base-modules/BasePoolPartialExitModule.sol",
+            "line": 1848
+          },
+          {
+            "file": "contracts/base-modules/BasePoolPartialExitModule.sol",
+            "line": 1878
+          },
+          {
+            "file": "contracts/base-modules/BasePoolPartialExitModule.sol",
+            "line": 1948
+          },
+          {
+            "file": "contracts/base-modules/BasePoolProtectorModule.sol",
+            "line": 1942
+          },
+          {
+            "file": "contracts/base-modules/BasePoolProtectorModule.sol",
+            "line": 1996
+          },
+          {
+            "file": "contracts/base-modules/BasePoolProtectorModule.sol",
+            "line": 2012
+          },
+          {
+            "file": "contracts/base-modules/BasePoolProtectorModule.sol",
+            "line": 2028
+          },
+          {
+            "file": "contracts/base-modules/BasePoolProtectorModule.sol",
+            "line": 2036
+          },
+          {
+            "file": "contracts/base-modules/BasePoolShieldExitModule.sol",
+            "line": 1787
+          },
+          {
+            "file": "contracts/base-modules/BasePoolShieldExitModule.sol",
+            "line": 1791
+          },
+          {
+            "file": "contracts/base-modules/BasePoolShieldExitModule.sol",
+            "line": 1836
+          },
+          {
+            "file": "contracts/bsc/BscPoolInitializeModule.sol",
+            "line": 47
+          },
+          {
+            "file": "contracts/bsc/BscScenarioOracle.sol",
+            "line": 47
+          },
+          {
+            "file": "contracts/bsc/BscTestExchange.sol",
+            "line": 51
+          },
+          {
+            "file": "contracts/bsc/BscTestExchange.sol",
+            "line": 53
+          },
+          {
+            "file": "contracts/bsc/BscTestExchange.sol",
+            "line": 54
+          },
+          {
+            "file": "contracts/bsc/BscTestExchange.sol",
+            "line": 57
+          },
+          {
+            "file": "contracts/bsc/BscYieldPoolInitializeModule.sol",
+            "line": 31
+          },
+          {
+            "file": "contracts/bsc/BscYieldPoolInitializeModule.sol",
+            "line": 51
+          },
+          {
+            "file": "contracts/bsc/BscYieldScenarioOracle.sol",
+            "line": 43
+          },
+          {
+            "file": "contracts/bsc/BscYieldScenarioOracle.sol",
+            "line": 58
+          },
+          {
+            "file": "contracts/bsc/BscYieldScenarioOracle.sol",
+            "line": 66
+          },
+          {
+            "file": "contracts/bsc/BscYieldTestExchange.sol",
+            "line": 45
+          },
+          {
+            "file": "contracts/bsc/BscYieldTestExchange.sol",
+            "line": 46
+          },
+          {
+            "file": "contracts/bsc/BscYieldTestExchange.sol",
+            "line": 48
+          },
+          {
+            "file": "contracts/bsc/BscYieldTestExchange.sol",
+            "line": 56
+          },
+          {
+            "file": "contracts/bsc/BscYieldTestExchange.sol",
+            "line": 57
+          },
+          {
+            "file": "contracts/oracles/BaseSepoliaStockAggregator.sol",
+            "line": 21
+          },
+          {
+            "file": "contracts/oracles/BaseSepoliaStockRegistry.sol",
+            "line": 119
+          },
+          {
+            "file": "contracts/oracles/ChainlinkOracleFeed.sol",
+            "line": 211
+          },
+          {
+            "file": "contracts/oracles/ChainlinkOracleFeed.sol",
+            "line": 424
+          },
+          {
+            "file": "contracts/oracles/CoinbaseStockOracleFeed.sol",
+            "line": 105
+          },
+          {
+            "file": "contracts/oracles/ERC4626OracleFeed.sol",
+            "line": 201
+          },
+          {
+            "file": "contracts/oracles/RobinhoodStockOracleFeed.sol",
+            "line": 128
+          },
+          {
+            "file": "contracts/oracles/SequencerUptimeGuard.sol",
+            "line": 83
+          },
+          {
+            "file": "contracts/oracles/UniswapV3TWAPFeed.sol",
+            "line": 187
+          },
+          {
+            "file": "contracts/oracles/UniswapV3TWAPFeed.sol",
+            "line": 188
+          }
+        ]
+      },
+      {
+        "detector": "reused-contract-name",
+        "severity": "High",
+        "review": "Duplicate interfaces in separately generated modules; module ABI/storage verification checks compiled targets.",
+        "locations": [
+          {
+            "file": "contracts/SplitRiskPoolFactory.sol",
+            "line": 27
+          },
+          {
+            "file": "contracts/SplitRiskPoolFactory.sol",
+            "line": 32
+          },
+          {
+            "file": "contracts/SplitRiskPoolFactory.sol",
+            "line": 50
+          },
+          {
+            "file": "contracts/SplitRiskPoolFactory.sol",
+            "line": 65
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryAdminModule.sol",
+            "line": 28
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryAdminModule.sol",
+            "line": 33
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryAdminModule.sol",
+            "line": 51
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryAdminModule.sol",
+            "line": 66
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "line": 28
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "line": 33
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "line": 51
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryCreateModule.sol",
+            "line": 66
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "line": 28
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "line": 33
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "line": 51
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryLifecycleModule.sol",
+            "line": 66
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryOracleModule.sol",
+            "line": 28
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryOracleModule.sol",
+            "line": 33
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryOracleModule.sol",
+            "line": 51
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryOracleModule.sol",
+            "line": 66
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "line": 28
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "line": 33
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "line": 51
+          },
+          {
+            "file": "contracts/base-modules/BaseFactoryViewsModule.sol",
+            "line": 66
+          }
+        ]
+      },
+      {
+        "detector": "weak-randomness",
+        "severity": "High",
+        "review": "UTC calendar offset for inherited equity session gating, not randomness; not used in BSC token scenarios.",
+        "locations": [
+          {
+            "file": "contracts/oracles/USMarketSessionGate.sol",
+            "line": 120
+          }
+        ]
+      },
+      {
+        "detector": "yul-return",
+        "severity": "High",
+        "review": "Intentional delegatecall return forwarding in immutable routers and testnet initializers.",
+        "locations": [
+          {
+            "file": "contracts/base-modules/BaseFactoryRouter.sol",
+            "line": 146
+          },
+          {
+            "file": "contracts/base-modules/BasePoolRouter.sol",
+            "line": 162
+          },
+          {
+            "file": "contracts/bsc/BscPoolInitializeModule.sol",
+            "line": 55
+          },
+          {
+            "file": "contracts/bsc/BscYieldPoolInitializeModule.sol",
+            "line": 60
+          }
+        ]
+      }
+    ]
+  }
+}

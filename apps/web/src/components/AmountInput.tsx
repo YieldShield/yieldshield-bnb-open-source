@@ -1,6 +1,7 @@
+import { useId } from "react";
 import { cn } from "@/lib/cn";
 
-/** Big amount entry with preset chips + optional balance/Max. Sanitizes to a plain decimal. */
+/** Preserve the entered quantity; transaction forms validate it before review. */
 export function AmountInput({
   value,
   onChange,
@@ -20,11 +21,7 @@ export function AmountInput({
   onMax?: () => void;
   error?: string | null;
 }) {
-  const sanitize = (raw: string) => {
-    const cleaned = raw.replace(/[^\d.]/g, "");
-    const parts = cleaned.split(".");
-    return parts.length > 2 ? `${parts[0]}.${parts.slice(1).join("")}` : cleaned;
-  };
+  const errorId = useId();
 
   return (
     <div>
@@ -33,8 +30,12 @@ export function AmountInput({
           inputMode="decimal"
           autoFocus
           placeholder="0"
+          aria-label={`Amount in ${symbol}`}
+          aria-invalid={!!error}
+          aria-describedby={error ? errorId : undefined}
+          maxLength={100}
           value={value}
-          onChange={(e) => onChange(sanitize(e.target.value))}
+          onChange={(e) => onChange(e.target.value)}
           className="hero-num w-full bg-transparent text-[44px] text-ink outline-none placeholder:text-disabled"
         />
         <span className="text-[18px] font-bold text-muted">{symbol}</span>
@@ -68,7 +69,11 @@ export function AmountInput({
         </div>
       )}
 
-      {error && <p className="mt-3 px-1 text-[13px] font-medium text-amber-deep">{error}</p>}
+      {error && (
+        <p id={errorId} role="alert" className="mt-3 px-1 text-[13px] font-medium text-amber-deep">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

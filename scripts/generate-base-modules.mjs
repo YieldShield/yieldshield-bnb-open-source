@@ -29,7 +29,7 @@ const inheritedFiles = [
 ];
 function declarations(source) {
  const clean=mask(source), declarations=[];
- const rx=/^    (function|modifier)\s+(\w+)\s*([^{}]*?)\{/gm;
+ const rx=/^ {4}(function|modifier)\s+(\w+)\s*([^{}]*?)\{/gm;
  for(const match of clean.matchAll(rx)) {
   const bodyStart=match.index+match[0].length-1;
   let depth=1,end=bodyStart+1;

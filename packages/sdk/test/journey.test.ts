@@ -108,7 +108,7 @@ async function send(payer: TransactionSigner, instructions: Instruction[]): Prom
     await rpc.sendTransaction(wire, { encoding: "base64", preflightCommitment: "confirmed" }).send();
   } catch (e) {
     const logs = (e as { context?: { logs?: string[] } }).context?.logs;
-    throw new Error(`send failed: ${(e as Error).message}\n${logs ? logs.join("\n") : "(no logs)"}`);
+    throw new Error(`send failed: ${(e as Error).message}\n${logs ? logs.join("\n") : "(no logs)"}`, { cause: e });
   }
   await confirm(signature);
   return signature;

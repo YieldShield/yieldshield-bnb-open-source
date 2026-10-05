@@ -73,7 +73,7 @@ export function TestTokens() {
       </div>
       <div className="mt-6 flex flex-wrap gap-3">
         <Link to={next} className={buttonStyles({ variant: "primary" })}>
-          Continue to {next.startsWith("/markets") ? "protection" : "Trade"} →
+          Continue →
         </Link>
         <Link to="/how-it-works" className={buttonStyles({ variant: "secondary" })}>
           How it works

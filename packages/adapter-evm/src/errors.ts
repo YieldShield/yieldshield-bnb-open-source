@@ -1,6 +1,11 @@
 /** Map raw EVM transaction/wallet errors to calm, plain-language copy (never a raw revert/stack). */
 export function friendlyError(e: unknown): string {
   const msg = (e instanceof Error ? e.message : String(e)).toLowerCase();
+  if (msg.includes("provider not found"))
+    return "No installed wallet was detected. Open this site in your wallet’s browser.";
+  if (msg.includes("test bnb")) return "Add BSC Testnet test BNB to pay the network fee.";
+  if (msg.includes("quote expired") || msg.includes("reviewed limit"))
+    return "The quote expired or the price moved beyond your limit. Review a fresh quote.";
   if (msg.includes("connect a wallet")) return "Connect a wallet to continue.";
   if (msg.includes("wallet account changed")) return "Your wallet account changed. Review the action and start again.";
   if (msg.includes("cancelled or replaced"))
@@ -11,7 +16,7 @@ export function friendlyError(e: unknown): string {
     return "On-chain data is unavailable. Refresh before continuing.";
   if (msg.includes("user rejected") || msg.includes("user denied") || msg.includes("rejected the request"))
     return "You cancelled the signature.";
-  if (msg.includes("insufficient funds")) return "Not enough ETH to cover the network fee.";
+  if (msg.includes("insufficient funds")) return "Not enough of the network’s native token to cover the fee.";
   if (msg.includes("exceeds balance") || msg.includes("insufficient allowance") || msg.includes("insufficient balance"))
     return "Not enough balance for this amount.";
   if (msg.includes("stocktokenoraclepaused") || msg.includes("oraclepaused"))

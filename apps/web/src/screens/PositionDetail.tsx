@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { parseTokenAmount } from "@/lib/token-amount";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { fromBaseUnits, minReceived, toBaseUnits } from "@yieldshield/core";
+import { fromBaseUnits, minReceived } from "@yieldshield/core";
 import { AmountInput } from "@/components/AmountInput";
 import { ArrowLeft } from "@/components/icons";
 import { Row } from "@/components/Expander";
@@ -10,6 +11,8 @@ import { formatDate, formatToken, formatUsd8 } from "@/lib/format";
 import { useSubmitTx } from "@/chain/useSubmitTx";
 import { usePositions, type ShieldVM } from "@/data/positions";
 import { VOCAB } from "@/vocab";
+import { actionBlocker } from "@/lib/action-availability";
+import { useNow } from "@/lib/use-now";
 
 export function PositionDetail() {
   const { id } = useParams();
@@ -58,6 +61,9 @@ function SaverPosition({ p, onDone }: { p: ShieldVM; onDone: () => void }) {
   const tx = useSubmitTx();
   const [withdrawing, setWithdrawing] = useState(false);
   const [withdrawValue, setWithdrawValue] = useState("");
+  const now = useNow();
+  const sameAssetBlocker = actionBlocker(p, p.sameAssetExit, now);
+  const protectedBlocker = actionBlocker(p, p.protectedExit, now);
 
   const dec = p.view!.shielded.decimals;
   const sym = p.view?.shielded.symbol ?? "";
@@ -66,19 +72,18 @@ function SaverPosition({ p, onDone }: { p: ShieldVM; onDone: () => void }) {
   const coverage = p.view!.stats.coverageBps === null ? null : Number(p.view!.stats.coverageBps) / 100;
   const protectors = p.view ? Number(p.view.stats.protectorPositionCount) : 0;
 
-  const withdrawAmount = useMemo(() => {
-    try {
-      return withdrawValue ? toBaseUnits(withdrawValue, dec) : 0n;
-    } catch {
-      return 0n;
-    }
-  }, [withdrawValue, dec]);
-  const withdrawError = withdrawAmount > p.withdrawableNet ? "More than your withdrawable balance." : null;
-  const canWithdraw = withdrawAmount > 0n && minReceived(withdrawAmount) > 0n && !withdrawError && !p.view!.paused;
+  const parsed = parseTokenAmount(withdrawValue, dec);
+  const withdrawAmount = parsed.amount;
+
+  const withdrawError =
+    sameAssetBlocker ??
+    parsed.error ??
+    (withdrawAmount > p.withdrawableNet ? "More than your withdrawable balance." : null);
+  const canWithdraw = withdrawAmount > 0n && minReceived(withdrawAmount) > 0n && !withdrawError;
   const isFullExit = withdrawAmount >= p.withdrawableNet;
 
   async function confirmWithdraw() {
-    if (!canWithdraw || tx.pending) return;
+    if (!canWithdraw || tx.pending || actionBlocker(p, p.sameAssetExit, BigInt(Math.floor(Date.now() / 1000)))) return;
     const shieldedToken = p.view!.shielded.token;
     const res = await tx.submit(
       isFullExit
@@ -140,6 +145,16 @@ function SaverPosition({ p, onDone }: { p: ShieldVM; onDone: () => void }) {
       </Card>
 
       <TransactionError error={tx.error} txId={tx.txId} />
+      {protectedBlocker && (
+        <p role="status" className="mt-3 text-[13px] text-muted">
+          Backing-token exit: {protectedBlocker}
+        </p>
+      )}
+      {sameAssetBlocker && (
+        <p role="status" className="mt-3 text-[13px] text-muted">
+          Token withdrawal: {sameAssetBlocker}
+        </p>
+      )}
 
       {withdrawing ? (
         <Card className="mt-5">
@@ -169,7 +184,7 @@ function SaverPosition({ p, onDone }: { p: ShieldVM; onDone: () => void }) {
           <Button
             variant="green"
             full
-            disabled={p.view!.paused || !p.protectedExitUnlocked}
+            disabled={!!protectedBlocker}
             onClick={() => navigate(`/activate/${p.id}`)}
             className="border border-green bg-transparent text-green-dark hover:bg-green-tint"
           >
@@ -181,7 +196,7 @@ function SaverPosition({ p, onDone }: { p: ShieldVM; onDone: () => void }) {
             </Button>
             <Button
               variant="secondary"
-              disabled={p.view!.paused || p.withdrawableNet === 0n}
+              disabled={!!sameAssetBlocker || p.withdrawableNet === 0n}
               onClick={() => setWithdrawing(true)}
             >
               {VOCAB.withdraw}

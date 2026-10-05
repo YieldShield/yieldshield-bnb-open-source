@@ -6,6 +6,8 @@ import { AssetGlyph, Button, Card, Dot } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatToken, formatUsd8 } from "@/lib/format";
 import { usePositions, type ProtectorVM, type ShieldVM } from "@/data/positions";
+import { actionBlocker } from "@/lib/action-availability";
+import { useNow } from "@/lib/use-now";
 
 export function Home() {
   const { loading, error, shield, protector } = usePositions();
@@ -24,6 +26,7 @@ export function Home() {
 
 function HomeFunded({ shield, protector }: { shield: ShieldVM[]; protector: ProtectorVM[] }) {
   const navigate = useNavigate();
+  const now = useNow();
 
   const value = useMemo(
     () =>
@@ -32,7 +35,7 @@ function HomeFunded({ shield, protector }: { shield: ShieldVM[]; protector: Prot
         : null,
     [shield],
   );
-  const firstShield = shield.find((p) => p.protectedExitUnlocked && p.view && !p.view.paused);
+  const firstShield = shield.find((p) => p.view && !actionBlocker(p, p.protectedExit, now));
   const coveragePcts = shield.map((p) => p.view?.stats.coverageBps);
   const minimumCoverage =
     shield.length > 0 && coveragePcts.every((p) => p !== null && p !== undefined)

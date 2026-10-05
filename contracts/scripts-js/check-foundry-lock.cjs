@@ -47,7 +47,7 @@ const submodulePaths = getSubmodulePaths();
 let hasError = false;
 
 for (const submodulePath of submodulePaths) {
-    const lockedRev = lock[submodulePath]?.tag?.rev;
+    const lockedRev = lock[submodulePath]?.tag?.rev ?? lock[submodulePath]?.rev;
     if (!lockedRev) {
         console.error(`foundry.lock is missing ${submodulePath}`);
         hasError = true;

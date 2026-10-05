@@ -3,7 +3,7 @@
  * `WalletConnectionApi` / `IntentSenderApi` shapes. The web app imports these through its
  * `src/chain/` seam — never from wagmi/viem directly.
  */
-import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { getAccount, switchChain, waitForTransactionReceipt, writeContract, type Config } from "@wagmi/core";
 import {
@@ -28,6 +28,7 @@ import type {
 } from "@yieldshield/core";
 import type { EvmAdapter } from "./adapter.js";
 import { planIntent, type EvmStep } from "./intents.js";
+import { installedWallets } from "./wallet-discovery.js";
 
 const AdapterContext = createContext<EvmAdapter | null>(null);
 
@@ -71,6 +72,21 @@ export function useWalletConnection(): WalletConnectionApi {
   const { address, status, connector } = useAccount();
   const { connectors, connectAsync, isPending } = useConnect();
   const { disconnectAsync } = useDisconnect();
+  const [available, setAvailable] = useState<typeof connectors>([]);
+  useEffect(() => {
+    let active = true;
+    const discover = () => {
+      void installedWallets(connectors).then((wallets) => {
+        if (active) setAvailable(wallets);
+      });
+    };
+    discover();
+    window.addEventListener("ethereum#initialized", discover);
+    return () => {
+      active = false;
+      window.removeEventListener("ethereum#initialized", discover);
+    };
+  }, [connectors]);
   return {
     // Until wagmi's reconnect settles, report not-ready so guards don't flash the welcome screen.
     isReady: status !== "reconnecting",
@@ -78,9 +94,9 @@ export function useWalletConnection(): WalletConnectionApi {
     connecting: isPending || status === "connecting",
     address: address ?? null,
     walletName: connector?.name ?? null,
-    connectors: connectors.map((c) => ({ id: c.id, name: c.name })),
+    connectors: available.map((c) => ({ id: c.id, name: c.name })),
     connect: async (connectorId: string) => {
-      const target = connectors.find((c) => c.id === connectorId);
+      const target = available.find((c) => c.id === connectorId);
       if (!target) throw new Error(`unknown wallet connector: ${connectorId}`);
       try {
         await connectAsync({ connector: target, chainId: adapter.chain.id });

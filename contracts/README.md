@@ -280,8 +280,10 @@ Run both:
 make security
 ```
 
-CI blocks on Slither high-severity findings. Aderyn currently runs as a
-report-only artifact for manual triage.
+The BNB repository CI runs application, script and contract regressions,
+dependency audits and Foundry lock checks. Static analysis is run separately
+and requires manual triage; it is not a clean-audit certification. See the
+[2026-10-05 internal review](../docs/BNB_E2E_SECURITY_REVIEW_2026-10-05.md).
 
 Security reports and follow-up notes are stored in the root audit files and
 under `docs_ok/security/`.

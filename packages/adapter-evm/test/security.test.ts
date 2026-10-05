@@ -475,6 +475,8 @@ describe("truthful pool and position reads", () => {
     const positions = await createReader(clientFor(), deps).getOwnerPositions(owner);
     expect(positions.protector[0]!.availableAt).toBe(1100n);
     expect(positions.protector[0]!.noticeSecondsRemaining).toBe(100n);
+    expect(positions.protector[0]!.evaluatedAt).toBe(1000n);
+    expect(positions.protector[0]!.validUntil).toBe(1020n);
   });
   it("allows expired notice windows to be restarted", async () => {
     const client = clientFor();

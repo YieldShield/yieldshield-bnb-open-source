@@ -19,7 +19,7 @@
     "test:sdk": "npm run test -w @yieldshield/sdk",
     "test:web": "npm run test -w web",
     "typecheck": "npm run typecheck -w web",
-    "lint": "eslint .",
+    "lint": "eslint --config eslint.config.mjs .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "dev": "npm run dev -w web",

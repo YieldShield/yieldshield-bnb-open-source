@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { parseTokenAmount } from "@/lib/token-amount";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { fromBaseUnits, minReceived, toBaseUnits, type PositionId } from "@yieldshield/core";
+import { fromBaseUnits, minReceived, type PositionId } from "@yieldshield/core";
 import { AmountInput } from "@/components/AmountInput";
 import { Row } from "@/components/Expander";
 import { ArrowLeft, ShieldIcon } from "@/components/icons";
@@ -14,6 +15,8 @@ import { useTokenBalance } from "@/data/balance";
 import { usePools, type PoolView } from "@/data/pools";
 import { requestedPool } from "@/lib/pool-selection";
 import { VOCAB } from "@/vocab";
+import { actionBlocker } from "@/lib/action-availability";
+import { useNow } from "@/lib/use-now";
 
 type Step = "pick" | "amount" | "review" | "success";
 
@@ -28,6 +31,10 @@ export function Provide() {
   const [step, setStep] = useState<Step>(requestedAddress ? "amount" : "pick");
   const [selectedAddress, setSelectedAddress] = useState<string | null>(requestedAddress);
   const selected = requestedPool(data, selectedAddress);
+  const now = useNow();
+  const collateralBlocker = selected
+    ? actionBlocker(selected.availability, selected.availability?.provideCollateral, now)
+    : null;
   useEffect(() => {
     setSelectedAddress(requestedAddress);
     setStep(requestedAddress ? "amount" : "pick");
@@ -38,31 +45,42 @@ export function Provide() {
 
   const backing = selected?.backing;
   const { balance, loading: balanceLoading } = useTokenBalance(backing?.token);
-  const amountBase = useMemo(() => {
-    try {
-      return value && backing ? toBaseUnits(value, backing.decimals) : 0n;
-    } catch {
-      return 0n;
-    }
-  }, [value, backing]);
+  const parsed = parseTokenAmount(value, backing?.decimals ?? 6);
+  const amountBase = parsed.amount;
 
-  const balError = selected?.paused
-    ? "This pool is currently unavailable."
-    : balanceLoading
-      ? "Checking wallet balance…"
-      : balance === null
-        ? "Wallet balance is unavailable. Refresh before continuing."
-        : amountBase > balance
-          ? "More than your balance."
-          : selected && amountBase > 0n && amountBase < selected.stats.backingMinDeposit
-            ? `Minimum ${formatToken(selected.stats.backingMinDeposit, backing!.decimals, backing!.symbol)}.`
-            : selected && selected.stats.backingMaxDeposit > 0n && amountBase > selected.stats.backingMaxDeposit
-              ? `Maximum ${formatToken(selected.stats.backingMaxDeposit, backing!.decimals, backing!.symbol)}.`
-              : null;
+  const balError =
+    collateralBlocker ??
+    parsed.error ??
+    (selected?.paused
+      ? "This pool is currently unavailable."
+      : balanceLoading
+        ? "Checking wallet balance…"
+        : balance === null
+          ? "Wallet balance is unavailable. Refresh before continuing."
+          : amountBase > balance
+            ? "More than your balance."
+            : selected && amountBase > (selected.availability?.maxBackingDeposit ?? 0n)
+              ? "This amount exceeds the pool's current backing deposit capacity."
+              : selected && amountBase > 0n && amountBase < selected.stats.backingMinDeposit
+                ? `Minimum ${formatToken(selected.stats.backingMinDeposit, backing!.decimals, backing!.symbol)}.`
+                : selected && selected.stats.backingMaxDeposit > 0n && amountBase > selected.stats.backingMaxDeposit
+                  ? `Maximum ${formatToken(selected.stats.backingMaxDeposit, backing!.decimals, backing!.symbol)}.`
+                  : null);
   const canContinue = !!selected && !loadError && amountBase > 0n && minReceived(amountBase) > 0n && !balError;
 
   async function confirm() {
-    if (!selected || !backing || !canContinue || tx.pending) return;
+    if (
+      !selected ||
+      !backing ||
+      !canContinue ||
+      tx.pending ||
+      actionBlocker(
+        selected.availability,
+        selected.availability?.provideCollateral,
+        BigInt(Math.floor(Date.now() / 1000)),
+      )
+    )
+      return;
     const res = await tx.submit({
       kind: "depositBacking",
       pool: selected.address,
