@@ -47,6 +47,9 @@ jobs:
       - name: BSC synthetic protection and chain guards
         working-directory: contracts
         run: forge test --match-path 'test/Bsc*.t.sol' --extra-output storageLayout
+      - name: Inherited reward accounting regressions
+        working-directory: contracts
+        run: forge test --match-path 'test/SplitRiskPoolAuditFollowupB.t.sol' --extra-output storageLayout
       - run: node scripts/verify-base-modules.mjs
       - name: Yield demo initializer storage and size guards
         run: node scripts/verify-bsc-yield-layout.mjs
