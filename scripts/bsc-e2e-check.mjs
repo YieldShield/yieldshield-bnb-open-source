@@ -180,6 +180,19 @@ export async function main() {
       console.log(`Reconciled approval only, without a duplicate trade: ${key}`);
     }
     for (const [key, saved] of Object.entries(journal.actions).filter(([, action]) => !action.complete)) {
+      if (
+        saved.intent.kind === "withdrawProtector" &&
+        saved.steps.every((_, index) => !journal.transactions[`${saved.id}:${index}`])
+      ) {
+        (journal.unsubmittedActions ??= {})[saved.id] = {
+          ...saved,
+          reason: "Simulation stopped before any signature; remaining collateral needs a fresh notice.",
+        };
+        delete journal.actions[key];
+        (journal.attempts ??= {})[key] = (journal.attempts[key] ?? 0) + 1;
+        atomicJson(journalPath, journal);
+        continue;
+      }
       if (saved.intent.kind === "demoTrade") {
         await reconcileApprovalOnly(key, saved);
         continue;
@@ -473,29 +486,46 @@ export async function main() {
       if (journal.actions[`${symbol}:backing-exit`]?.complete) continue;
       const started = Date.now();
       let p;
+      if (!journal.actions[`${symbol}:partial-backing-exit`]?.complete) {
+        while (true) {
+          p = (await adapter.reader.getOwnerPositions(account.address)).protector.find((p) => p.id === position);
+          assert(p);
+          if (p.isUnlocking && p.noticeSecondsRemaining === 0n) break;
+          assert(Date.now() - started < 180000, "Notice did not complete");
+          console.log(`Waiting for public testnet backing notice: ${symbol}`);
+          await delay(5000);
+        }
+        if (p.claimableCommission > 0n)
+          await action(`${symbol}:premium`, {
+            kind: "claimCommission",
+            pool: p.pool,
+            shieldedToken: market.assets.find((a) => a.symbol === symbol).token,
+            position,
+          });
+        await action(`${symbol}:partial-backing-exit`, {
+          kind: "partialWithdrawProtector",
+          pool: p.pool,
+          backingToken: market.quoteToken.token,
+          position,
+          amount: 100_000_000n,
+          minOut: 99_500_000n,
+        });
+      }
+      p = (await adapter.reader.getOwnerPositions(account.address)).protector.find((p) => p.id === position);
+      assert(p);
+      if (!journal.actions[`${symbol}:remaining-notice`]?.complete) {
+        assert(!p.isUnlocking, "A partial withdrawal must reset the notice");
+        await action(`${symbol}:remaining-notice`, { kind: "startUnlock", position });
+      }
+      const remainingStarted = Date.now();
       while (true) {
         p = (await adapter.reader.getOwnerPositions(account.address)).protector.find((p) => p.id === position);
         assert(p);
         if (p.isUnlocking && p.noticeSecondsRemaining === 0n) break;
-        assert(Date.now() - started < 180000, "Notice did not complete");
-        console.log(`Waiting for public testnet backing notice: ${symbol}`);
+        assert(Date.now() - remainingStarted < 180000, "Remaining collateral notice did not complete");
+        console.log(`Waiting for the new notice after a partial withdrawal: ${symbol}`);
         await delay(5000);
       }
-      if (p.claimableCommission > 0n)
-        await action(`${symbol}:premium`, {
-          kind: "claimCommission",
-          pool: p.pool,
-          shieldedToken: market.assets.find((a) => a.symbol === symbol).token,
-          position,
-        });
-      await action(`${symbol}:partial-backing-exit`, {
-        kind: "partialWithdrawProtector",
-        pool: p.pool,
-        backingToken: market.quoteToken.token,
-        position,
-        amount: 100_000_000n,
-        minOut: 99_500_000n,
-      });
       p = (await adapter.reader.getOwnerPositions(account.address)).protector.find((p) => p.id === position);
       assert(p && p.availableToWithdraw === p.collateral);
       await action(`${symbol}:backing-exit`, {
