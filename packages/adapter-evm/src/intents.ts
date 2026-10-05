@@ -23,6 +23,9 @@ import { assertDepositPreflight } from "./preflight.js";
 import { readFaucetStatus, extractFaucetClaim } from "./faucet.js";
 import { demoExchangeAbi } from "./abis/demoExchange.js";
 import { findFactoryForPool } from "./factory-routing.js";
+import { creationDeploymentFor } from "./creation-deployments.js";
+import { assertCreatedPools } from "./pool-registry.js";
+import { readSnapshot } from "./snapshot.js";
 import type { EvmFaucetDeployment } from "./yield-deployments.js";
 import { assertDemoTrade } from "./demo-trading.js";
 import { creationFactoryForPair, readPoolCreationOptions, validateCreationParams } from "./pool-creation.js";
@@ -148,333 +151,356 @@ export async function planIntent(
   }
   const pool = (address: Address) => ({ address, abi: splitRiskPoolAbi as Abi });
 
-  switch (intent.kind) {
-    case "demoTrade": {
-      validAddress(intent.asset);
-      const beforeStep = async () => {
-        await assertDemoTrade(client, owner, intent);
-      };
-      const quote = await assertDemoTrade(client, owner, intent);
-      const buy = intent.side === "buy";
-      const approvals = await approvalStep(
-        client,
-        owner,
-        quote.inputToken as Address,
-        quote.exchange as Address,
-        buy ? intent.limit : intent.amount,
-      );
-      return {
-        beforeStep,
-        steps: [
-          ...approvals,
-          {
-            label: buy ? "Buy test token" : "Sell test token",
-            address: quote.exchange as Address,
-            abi: demoExchangeAbi,
-            functionName: "swap",
-            args: [quote.asset, buy, intent.amount, intent.limit, intent.deadline],
-          },
-        ],
-        extract: (receipt) => {
-          const trades = parseEventLogs({
-            abi: demoExchangeAbi,
-            logs: receipt.logs,
-            eventName: "Swapped",
-            strict: true,
-          }).filter((log) => log.address.toLowerCase() === quote.exchange.toLowerCase());
-          if (
-            trades.length !== 1 ||
-            !trades.some(
-              (log) =>
-                log.args.trader.toLowerCase() === owner.toLowerCase() &&
-                log.args.stock.toLowerCase() === quote.asset.toLowerCase() &&
-                log.args.buy === buy &&
-                log.args.stockAmount === intent.amount &&
-                log.args.usdcAmount > 0n &&
-                (buy ? log.args.usdcAmount <= intent.limit : log.args.usdcAmount >= intent.limit),
+  const authenticatePool = async () => {
+    if (!poolAddress || !creationDeploymentFor(actionFactory)) return;
+    const snapshot = await readSnapshot(client, "Transaction target");
+    await assertCreatedPools(client, actionFactory, [poolAddress], snapshot.block.number);
+    await snapshot.finish(undefined);
+  };
+  await authenticatePool();
+
+  const plan = await (async (): Promise<IntentPlan> => {
+    switch (intent.kind) {
+      case "demoTrade": {
+        validAddress(intent.asset);
+        const beforeStep = async () => {
+          await assertDemoTrade(client, owner, intent);
+        };
+        const quote = await assertDemoTrade(client, owner, intent);
+        const buy = intent.side === "buy";
+        const approvals = await approvalStep(
+          client,
+          owner,
+          quote.inputToken as Address,
+          quote.exchange as Address,
+          buy ? intent.limit : intent.amount,
+        );
+        return {
+          beforeStep,
+          steps: [
+            ...approvals,
+            {
+              label: buy ? "Buy test token" : "Sell test token",
+              address: quote.exchange as Address,
+              abi: demoExchangeAbi,
+              functionName: "swap",
+              args: [quote.asset, buy, intent.amount, intent.limit, intent.deadline],
+            },
+          ],
+          extract: (receipt) => {
+            const trades = parseEventLogs({
+              abi: demoExchangeAbi,
+              logs: receipt.logs,
+              eventName: "Swapped",
+              strict: true,
+            }).filter((log) => log.address.toLowerCase() === quote.exchange.toLowerCase());
+            if (
+              trades.length !== 1 ||
+              !trades.some(
+                (log) =>
+                  log.args.trader.toLowerCase() === owner.toLowerCase() &&
+                  log.args.stock.toLowerCase() === quote.asset.toLowerCase() &&
+                  log.args.buy === buy &&
+                  log.args.stockAmount === intent.amount &&
+                  log.args.usdcAmount > 0n &&
+                  (buy ? log.args.usdcAmount <= intent.limit : log.args.usdcAmount >= intent.limit),
+              )
             )
-          )
-            throw new Error(
-              "The sealed receipt does not confirm the reviewed test-token trade. Check wallet activity before retrying.",
-            );
-          return {};
-        },
-      };
-    }
-    case "depositShielded": {
-      const poolAddr = intent.pool as Address;
-      const asset = intent.shieldedToken as Address;
-      const beforeStep = () =>
-        assertDepositPreflight(client, actionFactory, poolAddr, owner, "shield", asset, intent.amount);
-      await beforeStep();
-      const [approvals, nft] = await Promise.all([
-        approvalStep(client, owner, asset, poolAddr, intent.amount),
-        client.readContract({ address: poolAddr, abi: splitRiskPoolAbi, functionName: "shieldReceiptNFT" }),
-      ]);
-      return {
-        beforeStep,
-        steps: [
-          ...approvals,
-          {
-            label: "Confirm deposit",
-            ...pool(poolAddr),
-            functionName: "depositShieldedAsset",
-            args: [asset, intent.amount, intent.minReceived],
+              throw new Error(
+                "The sealed receipt does not confirm the reviewed test-token trade. Check wallet activity before retrying.",
+              );
+            return {};
           },
-        ],
-        extract: (receipt) => {
-          const tokenId = mintedTokenId(receipt, nft, owner);
-          if (tokenId === null)
-            throw new Error("Confirmed deposit receipt does not contain the expected protection position.");
-          return { positionId: encodePositionId(poolAddr, "shield", tokenId) };
-        },
-      };
-    }
-
-    case "depositBacking": {
-      const poolAddr = intent.pool as Address;
-      const asset = intent.backingToken as Address;
-      const beforeStep = () =>
-        assertDepositPreflight(client, actionFactory, poolAddr, owner, "backing", asset, intent.amount);
-      await beforeStep();
-      const [approvals, nft] = await Promise.all([
-        approvalStep(client, owner, asset, poolAddr, intent.amount),
-        client.readContract({ address: poolAddr, abi: splitRiskPoolAbi, functionName: "protectorReceiptNFT" }),
-      ]);
-      return {
-        beforeStep,
-        steps: [
-          ...approvals,
-          {
-            label: "Confirm deposit",
-            ...pool(poolAddr),
-            functionName: "depositBackingAsset",
-            args: [asset, intent.amount, intent.minReceived],
+        };
+      }
+      case "depositShielded": {
+        const poolAddr = intent.pool as Address;
+        const asset = intent.shieldedToken as Address;
+        const beforeStep = () =>
+          assertDepositPreflight(client, actionFactory, poolAddr, owner, "shield", asset, intent.amount);
+        await beforeStep();
+        const [approvals, nft] = await Promise.all([
+          approvalStep(client, owner, asset, poolAddr, intent.amount),
+          client.readContract({ address: poolAddr, abi: splitRiskPoolAbi, functionName: "shieldReceiptNFT" }),
+        ]);
+        return {
+          beforeStep,
+          steps: [
+            ...approvals,
+            {
+              label: "Confirm deposit",
+              ...pool(poolAddr),
+              functionName: "depositShieldedAsset",
+              args: [asset, intent.amount, intent.minReceived],
+            },
+          ],
+          extract: (receipt) => {
+            const tokenId = mintedTokenId(receipt, nft, owner);
+            if (tokenId === null)
+              throw new Error("Confirmed deposit receipt does not contain the expected protection position.");
+            return { positionId: encodePositionId(poolAddr, "shield", tokenId) };
           },
-        ],
-        extract: (receipt) => {
-          const tokenId = mintedTokenId(receipt, nft, owner);
-          if (tokenId === null)
-            throw new Error("Confirmed deposit receipt does not contain the expected collateral position.");
-          return { positionId: encodePositionId(poolAddr, "protector", tokenId) };
-        },
-      };
-    }
+        };
+      }
 
-    case "activateShielded": {
-      // Cross-asset exit: withdraw the shield position as the backing (safe) asset.
-      const { pool: poolAddr, tokenId } = decodePositionId(intent.position);
-      return {
-        steps: [
-          {
-            label: "Activate protection",
-            ...pool(poolAddr),
-            functionName: "shieldedWithdraw",
-            args: [tokenId, intent.backingToken as Address, intent.minOut],
+      case "depositBacking": {
+        const poolAddr = intent.pool as Address;
+        const asset = intent.backingToken as Address;
+        const beforeStep = () =>
+          assertDepositPreflight(client, actionFactory, poolAddr, owner, "backing", asset, intent.amount);
+        await beforeStep();
+        const [approvals, nft] = await Promise.all([
+          approvalStep(client, owner, asset, poolAddr, intent.amount),
+          client.readContract({ address: poolAddr, abi: splitRiskPoolAbi, functionName: "protectorReceiptNFT" }),
+        ]);
+        return {
+          beforeStep,
+          steps: [
+            ...approvals,
+            {
+              label: "Confirm deposit",
+              ...pool(poolAddr),
+              functionName: "depositBackingAsset",
+              args: [asset, intent.amount, intent.minReceived],
+            },
+          ],
+          extract: (receipt) => {
+            const tokenId = mintedTokenId(receipt, nft, owner);
+            if (tokenId === null)
+              throw new Error("Confirmed deposit receipt does not contain the expected collateral position.");
+            return { positionId: encodePositionId(poolAddr, "protector", tokenId) };
           },
-        ],
-      };
-    }
+        };
+      }
 
-    case "withdrawShielded": {
-      const { pool: poolAddr, tokenId } = decodePositionId(intent.position);
-      return {
-        steps: [
-          {
-            label: "Confirm withdrawal",
-            ...pool(poolAddr),
-            functionName: "shieldedWithdraw",
-            args: [tokenId, intent.shieldedToken as Address, intent.minOut],
+      case "activateShielded": {
+        // Cross-asset exit: withdraw the shield position as the backing (safe) asset.
+        const { pool: poolAddr, tokenId } = decodePositionId(intent.position);
+        return {
+          steps: [
+            {
+              label: "Activate protection",
+              ...pool(poolAddr),
+              functionName: "shieldedWithdraw",
+              args: [tokenId, intent.backingToken as Address, intent.minOut],
+            },
+          ],
+        };
+      }
+
+      case "withdrawShielded": {
+        const { pool: poolAddr, tokenId } = decodePositionId(intent.position);
+        return {
+          steps: [
+            {
+              label: "Confirm withdrawal",
+              ...pool(poolAddr),
+              functionName: "shieldedWithdraw",
+              args: [tokenId, intent.shieldedToken as Address, intent.minOut],
+            },
+          ],
+        };
+      }
+
+      case "partialWithdrawShielded": {
+        const { pool: poolAddr, tokenId } = decodePositionId(intent.position);
+        return {
+          steps: [
+            {
+              label: "Confirm withdrawal",
+              ...pool(poolAddr),
+              functionName: "partialWithdrawShielded",
+              args: [tokenId, intent.amount, intent.shieldedToken as Address, intent.minOut],
+            },
+          ],
+          // Partial withdrawals close the old receipt and mint a new one for the remainder.
+          extract: (receipt) => {
+            const logs = parseEventLogs({ abi: splitRiskPoolAbi, logs: receipt.logs, eventName: "PartialWithdrawal" });
+            const newTokenId = logs.find(
+              (log) =>
+                log.address.toLowerCase() === poolAddr.toLowerCase() &&
+                log.args.user.toLowerCase() === owner.toLowerCase() &&
+                log.args.oldTokenId === tokenId,
+            )?.args.newTokenId;
+            if (newTokenId === undefined)
+              throw new Error("Confirmed withdrawal receipt does not identify the remaining position.");
+            return { positionId: encodePositionId(poolAddr, "shield", newTokenId) };
           },
-        ],
-      };
-    }
+        };
+      }
 
-    case "partialWithdrawShielded": {
-      const { pool: poolAddr, tokenId } = decodePositionId(intent.position);
-      return {
-        steps: [
-          {
-            label: "Confirm withdrawal",
-            ...pool(poolAddr),
-            functionName: "partialWithdrawShielded",
-            args: [tokenId, intent.amount, intent.shieldedToken as Address, intent.minOut],
-          },
-        ],
-        // Partial withdrawals close the old receipt and mint a new one for the remainder.
-        extract: (receipt) => {
-          const logs = parseEventLogs({ abi: splitRiskPoolAbi, logs: receipt.logs, eventName: "PartialWithdrawal" });
-          const newTokenId = logs.find(
-            (log) =>
-              log.address.toLowerCase() === poolAddr.toLowerCase() &&
-              log.args.user.toLowerCase() === owner.toLowerCase() &&
-              log.args.oldTokenId === tokenId,
-          )?.args.newTokenId;
-          if (newTokenId === undefined)
-            throw new Error("Confirmed withdrawal receipt does not identify the remaining position.");
-          return { positionId: encodePositionId(poolAddr, "shield", newTokenId) };
-        },
-      };
-    }
-
-    case "withdrawProtector": {
-      // Full exit: the port intent carries no amount, so withdraw the position's full balance.
-      const { pool: poolAddr, tokenId } = decodePositionId(intent.position);
-      const amount = await client.readContract({
-        address: poolAddr,
-        abi: splitRiskPoolAbi,
-        functionName: "getProtectorPositionAmount",
-        args: [tokenId],
-      });
-      return {
-        steps: [
-          {
-            label: "Confirm withdrawal",
-            ...pool(poolAddr),
-            functionName: "protectorWithdraw",
-            args: [tokenId, amount, intent.backingToken as Address, intent.minOut],
-          },
-        ],
-      };
-    }
-
-    case "partialWithdrawProtector": {
-      const { pool: poolAddr, tokenId } = decodePositionId(intent.position);
-      return {
-        steps: [
-          {
-            label: "Confirm withdrawal",
-            ...pool(poolAddr),
-            functionName: "protectorWithdraw",
-            args: [tokenId, intent.amount, intent.backingToken as Address, intent.minOut],
-          },
-        ],
-      };
-    }
-
-    case "startUnlock": {
-      const { pool: poolAddr, tokenId } = decodePositionId(intent.position);
-      return {
-        steps: [{ label: "Start notice", ...pool(poolAddr), functionName: "startUnlockProcess", args: [tokenId] }],
-      };
-    }
-
-    case "cancelUnlock": {
-      const { pool: poolAddr, tokenId } = decodePositionId(intent.position);
-      return {
-        steps: [{ label: "Cancel notice", ...pool(poolAddr), functionName: "cancelUnlockProcess", args: [tokenId] }],
-      };
-    }
-
-    case "claimCommission": {
-      const { pool: poolAddr, tokenId } = decodePositionId(intent.position);
-      return {
-        steps: [{ label: "Collect premium", ...pool(poolAddr), functionName: "claimCommission", args: [tokenId] }],
-      };
-    }
-
-    case "claimRewards": {
-      const { pool: poolAddr, tokenId } = decodePositionId(intent.position);
-      return {
-        steps: [{ label: "Collect rewards", ...pool(poolAddr), functionName: "claimRewards", args: [tokenId] }],
-      };
-    }
-
-    case "createPool": {
-      const p = intent.params;
-      validAddress(p.shieldedToken);
-      validAddress(p.backingToken);
-      const factoryAddress = creationFactoryForPair(deps.factories ?? [deps.factory], p.shieldedToken, p.backingToken);
-      const options = await readPoolCreationOptions(client, factoryAddress);
-      const { shielded, backing } = validateCreationParams(p, options);
-      const bond = p.creationBondAmount ?? 0n;
-      const beforeStep = async () => {
-        // Recheck after each approval too: governance or the required bond may have changed.
-        validateCreationParams(p, await readPoolCreationOptions(client, factoryAddress));
-        const balance = await client.readContract({
-          address: backing.token as Address,
-          abi: erc20Abi,
-          functionName: "balanceOf",
-          args: [owner],
+      case "withdrawProtector": {
+        // Full exit: the port intent carries no amount, so withdraw the position's full balance.
+        const { pool: poolAddr, tokenId } = decodePositionId(intent.position);
+        const amount = await client.readContract({
+          address: poolAddr,
+          abi: splitRiskPoolAbi,
+          functionName: "getProtectorPositionAmount",
+          args: [tokenId],
         });
-        if (balance < bond) throw new Error("Add enough TestUSDC to cover the creation bond.");
-      };
-      await beforeStep();
-      return {
-        beforeStep,
-        steps: [
-          ...(bond > 0n ? await approvalStep(client, owner, backing.token as Address, factoryAddress, bond) : []),
-          {
-            label: "Create pool",
-            address: factoryAddress,
-            abi: splitRiskPoolFactoryAbi as Abi,
-            functionName: "createPool",
-            args: [
-              shielded.token,
-              shielded.symbol,
-              backing.token,
-              backing.symbol,
-              BigInt(p.commissionRateBp),
-              BigInt(p.poolFeeBp),
-              BigInt(p.collateralRatioBp),
-              bond,
-            ],
-          },
-        ],
-        extract: (receipt) => {
-          const logs = parseEventLogs({ abi: splitRiskPoolFactoryAbi, logs: receipt.logs, eventName: "PoolCreated" });
-          const matches = logs.filter((log) => log.address.toLowerCase() === factoryAddress.toLowerCase());
-          const result = matches[0]?.args;
-          if (
-            matches.length !== 1 ||
-            !result ||
-            result.poolAddress === zeroAddress ||
-            result.creator.toLowerCase() !== owner.toLowerCase() ||
-            result.shieldedToken.toLowerCase() !== shielded.token.toLowerCase() ||
-            result.backingToken.toLowerCase() !== backing.token.toLowerCase() ||
-            result.commissionRate !== BigInt(p.commissionRateBp) ||
-            result.poolFee !== BigInt(p.poolFeeBp) ||
-            result.collateralRatio !== BigInt(p.collateralRatioBp)
-          )
-            throw new Error("The confirmed receipt does not match the reviewed pool terms.");
-          return { poolId: result.poolAddress };
-        },
-      };
-    }
+        return {
+          steps: [
+            {
+              label: "Confirm withdrawal",
+              ...pool(poolAddr),
+              functionName: "protectorWithdraw",
+              args: [tokenId, amount, intent.backingToken as Address, intent.minOut],
+            },
+          ],
+        };
+      }
 
-    case "faucetDrip": {
-      const faucet = intent.faucet ? validAddress(intent.faucet) : deps.faucet;
-      if (!faucet) throw new Error("No on-chain faucet on this deployment.");
-      const sources = deps.faucets ?? (deps.faucet ? [{ address: deps.faucet, label: "Test tokens" }] : []);
-      const source = sources.find((item) => item.address.toLowerCase() === faucet.toLowerCase());
-      if (!source) throw new Error("Choose a reviewed test-token dispenser.");
-      validAddress(faucet);
-      const recipient = validAddress(intent.recipient ?? owner);
-      const beforeStep = async () => {
-        const status = await readFaucetStatus(client, faucet, recipient, source.tokens, source.codehash);
-        if (!status.ready)
-          throw new Error("No test tokens are available for this wallet yet. Check the dispenser status.");
-        const senderBalance =
-          recipient.toLowerCase() === owner.toLowerCase()
-            ? status.nativeBalance
-            : await client.getBalance({ address: owner });
-        if (senderBalance <= 0n) throw new Error("Add BSC Testnet test BNB to pay the transaction fee.");
-      };
-      await beforeStep();
-      // dripAll skips tokens still on cooldown; an empty successful call is not a claim.
-      return {
-        beforeStep,
-        extract: (receipt) => extractFaucetClaim(receipt, faucet, recipient),
-        steps: [
-          {
-            label: "Get test tokens",
-            address: faucet,
-            abi: tokenFaucetAbi as Abi,
-            functionName: "dripAll",
-            args: [recipient],
+      case "partialWithdrawProtector": {
+        const { pool: poolAddr, tokenId } = decodePositionId(intent.position);
+        return {
+          steps: [
+            {
+              label: "Confirm withdrawal",
+              ...pool(poolAddr),
+              functionName: "protectorWithdraw",
+              args: [tokenId, intent.amount, intent.backingToken as Address, intent.minOut],
+            },
+          ],
+        };
+      }
+
+      case "startUnlock": {
+        const { pool: poolAddr, tokenId } = decodePositionId(intent.position);
+        return {
+          steps: [{ label: "Start notice", ...pool(poolAddr), functionName: "startUnlockProcess", args: [tokenId] }],
+        };
+      }
+
+      case "cancelUnlock": {
+        const { pool: poolAddr, tokenId } = decodePositionId(intent.position);
+        return {
+          steps: [{ label: "Cancel notice", ...pool(poolAddr), functionName: "cancelUnlockProcess", args: [tokenId] }],
+        };
+      }
+
+      case "claimCommission": {
+        const { pool: poolAddr, tokenId } = decodePositionId(intent.position);
+        return {
+          steps: [{ label: "Collect premium", ...pool(poolAddr), functionName: "claimCommission", args: [tokenId] }],
+        };
+      }
+
+      case "claimRewards": {
+        const { pool: poolAddr, tokenId } = decodePositionId(intent.position);
+        return {
+          steps: [{ label: "Collect rewards", ...pool(poolAddr), functionName: "claimRewards", args: [tokenId] }],
+        };
+      }
+
+      case "createPool": {
+        const p = intent.params;
+        validAddress(p.shieldedToken);
+        validAddress(p.backingToken);
+        const factoryAddress = creationFactoryForPair(
+          deps.factories ?? [deps.factory],
+          p.shieldedToken,
+          p.backingToken,
+        );
+        const options = await readPoolCreationOptions(client, factoryAddress);
+        const { shielded, backing } = validateCreationParams(p, options);
+        const bond = p.creationBondAmount ?? 0n;
+        const beforeStep = async () => {
+          // Recheck after each approval too: governance or the required bond may have changed.
+          validateCreationParams(p, await readPoolCreationOptions(client, factoryAddress));
+          const balance = await client.readContract({
+            address: backing.token as Address,
+            abi: erc20Abi,
+            functionName: "balanceOf",
+            args: [owner],
+          });
+          if (balance < bond) throw new Error("Add enough TestUSDC to cover the creation bond.");
+        };
+        await beforeStep();
+        return {
+          beforeStep,
+          steps: [
+            ...(bond > 0n ? await approvalStep(client, owner, backing.token as Address, factoryAddress, bond) : []),
+            {
+              label: "Create pool",
+              address: factoryAddress,
+              abi: splitRiskPoolFactoryAbi as Abi,
+              functionName: "createPool",
+              args: [
+                shielded.token,
+                shielded.symbol,
+                backing.token,
+                backing.symbol,
+                BigInt(p.commissionRateBp),
+                BigInt(p.poolFeeBp),
+                BigInt(p.collateralRatioBp),
+                bond,
+              ],
+            },
+          ],
+          extract: (receipt) => {
+            const logs = parseEventLogs({ abi: splitRiskPoolFactoryAbi, logs: receipt.logs, eventName: "PoolCreated" });
+            const matches = logs.filter((log) => log.address.toLowerCase() === factoryAddress.toLowerCase());
+            const result = matches[0]?.args;
+            if (
+              matches.length !== 1 ||
+              !result ||
+              result.poolAddress === zeroAddress ||
+              result.creator.toLowerCase() !== owner.toLowerCase() ||
+              result.shieldedToken.toLowerCase() !== shielded.token.toLowerCase() ||
+              result.backingToken.toLowerCase() !== backing.token.toLowerCase() ||
+              result.commissionRate !== BigInt(p.commissionRateBp) ||
+              result.poolFee !== BigInt(p.poolFeeBp) ||
+              result.collateralRatio !== BigInt(p.collateralRatioBp)
+            )
+              throw new Error("The confirmed receipt does not match the reviewed pool terms.");
+            return { poolId: result.poolAddress };
           },
-        ],
-      };
+        };
+      }
+
+      case "faucetDrip": {
+        const faucet = intent.faucet ? validAddress(intent.faucet) : deps.faucet;
+        if (!faucet) throw new Error("No on-chain faucet on this deployment.");
+        const sources = deps.faucets ?? (deps.faucet ? [{ address: deps.faucet, label: "Test tokens" }] : []);
+        const source = sources.find((item) => item.address.toLowerCase() === faucet.toLowerCase());
+        if (!source) throw new Error("Choose a reviewed test-token dispenser.");
+        validAddress(faucet);
+        const recipient = validAddress(intent.recipient ?? owner);
+        const beforeStep = async () => {
+          const status = await readFaucetStatus(client, faucet, recipient, source.tokens, source.codehash);
+          if (!status.ready)
+            throw new Error("No test tokens are available for this wallet yet. Check the dispenser status.");
+          const senderBalance =
+            recipient.toLowerCase() === owner.toLowerCase()
+              ? status.nativeBalance
+              : await client.getBalance({ address: owner });
+          if (senderBalance <= 0n) throw new Error("Add BSC Testnet test BNB to pay the transaction fee.");
+        };
+        await beforeStep();
+        // dripAll skips tokens still on cooldown; an empty successful call is not a claim.
+        return {
+          beforeStep,
+          extract: (receipt) => extractFaucetClaim(receipt, faucet, recipient),
+          steps: [
+            {
+              label: "Get test tokens",
+              address: faucet,
+              abi: tokenFaucetAbi as Abi,
+              functionName: "dripAll",
+              args: [recipient],
+            },
+          ],
+        };
+      }
     }
+  })();
+  if (poolAddress && creationDeploymentFor(actionFactory)) {
+    const preflight = plan.beforeStep;
+    plan.beforeStep = async () => {
+      // Authentication must still hold after approvals and before every signature.
+      await authenticatePool();
+      await preflight?.();
+    };
   }
+  return plan;
 }
