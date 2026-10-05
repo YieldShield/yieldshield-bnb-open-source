@@ -113,6 +113,7 @@ export async function main() {
   }
   if (mode === "--check") {
     for (const action of Object.values(journal.actions)) await verifyAction(action);
+    for (const action of Object.values(journal.abortedActions ?? {})) await verifyAction(action);
     console.log(`Read-only verification passed for ${Object.keys(journal.actions).length} recorded actions.`);
     return;
   }
@@ -440,6 +441,26 @@ export async function main() {
         }
       }
     }
+    for (const asset of market.assets) {
+      const id = `${asset.symbol}:seeded-premium`;
+      if (journal.actions[id]?.complete) {
+        await verifyAction(journal.actions[id]);
+        continue;
+      }
+      const matchingPools = pools.filter((pool) => same(pool.shielded.token, asset.token));
+      const candidates = (await adapter.reader.getOwnerPositions(account.address)).protector;
+      const earned = candidates.find(
+        (position) =>
+          matchingPools.some((pool) => same(pool.address, position.pool)) && position.claimableCommission > 0n,
+      );
+      if (earned)
+        await action(id, {
+          kind: "claimCommission",
+          pool: earned.pool,
+          shieldedToken: asset.token,
+          position: earned.id,
+        });
+    }
     for (const symbol of ["tWBNB", "tvUSDT"]) {
       const position = journal.createdPools[`${symbol}:backing`];
       if (journal.actions[`${symbol}:backing-exit`]?.complete) continue;
@@ -504,6 +525,8 @@ export async function main() {
         .reduce((sum, t) => sum + BigInt(t.request.gas) * BigInt(t.request.gasPrice), 0n)
         .toString(),
     };
+    for (const recorded of Object.values(journal.actions)) await verifyAction(recorded);
+    for (const recorded of Object.values(journal.abortedActions ?? {})) await verifyAction(recorded);
     atomicJson(proofPath, proof);
     console.log(`E2E passed: ${proof.actions.length} actions, ${proof.transactions.length} canonical transactions.`);
   } finally {
