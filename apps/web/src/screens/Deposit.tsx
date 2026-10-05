@@ -15,6 +15,8 @@ import { useSubmitTx } from "@/chain/useSubmitTx";
 import { useTokenBalance } from "@/data/balance";
 import { usePool, usePools, type PoolView } from "@/data/pools";
 import { VOCAB } from "@/vocab";
+import { actionBlocker } from "@/lib/action-availability";
+import { useNow } from "@/lib/use-now";
 
 export function Deposit() {
   const [params] = useSearchParams();
@@ -39,7 +41,7 @@ export function Deposit() {
         <p className="text-body">This pool isn't available.</p>
       </Card>
     );
-  return <DepositFlow pool={pool} />;
+  return <DepositFlow key={pool.address} pool={pool} />;
 }
 
 function PickPool({ requestedAsset }: { requestedAsset: string | null }) {
@@ -83,6 +85,8 @@ function DepositFlow({ pool }: { pool: PoolView }) {
   const [params] = useSearchParams();
   const { shielded, preset, stats } = pool;
   const tx = useSubmitTx();
+  const now = useNow();
+  const openingBlocker = actionBlocker(pool.availability, pool.availability?.openPosition, now);
 
   const [step, setStep] = useState<"amount" | "review" | "success">("amount");
   const [value, setValue] = useState(params.get("asset") === pool.shielded.symbol ? (params.get("amount") ?? "") : "");
@@ -98,6 +102,7 @@ function DepositFlow({ pool }: { pool: PoolView }) {
   const full = stats.capacityBps !== null && stats.capacityBps >= 10_000n;
 
   const error =
+    openingBlocker ??
     parsed.error ??
     (pool.paused
       ? "Deposits are currently unavailable for this pool."
@@ -105,21 +110,28 @@ function DepositFlow({ pool }: { pool: PoolView }) {
         ? "Checking wallet balance…"
         : balance === null
           ? "Wallet balance is unavailable. Refresh before continuing."
-          : full
-            ? "This pool is full right now."
-            : amountBase > 0n && amountBase < minDep
-              ? `Minimum is ${formatToken(minDep, shielded.decimals, shielded.symbol)}.`
-              : maxDep > 0n && amountBase > maxDep
-                ? `Maximum is ${formatToken(maxDep, shielded.decimals, shielded.symbol)}.`
-                : balance !== null && amountBase > balance
-                  ? "More than your balance."
-                  : null);
+          : amountBase > (pool.availability?.maxShieldedDeposit ?? 0n)
+            ? "This amount exceeds the pool's current available collateral or deposit capacity."
+            : full
+              ? "This pool is full right now."
+              : amountBase > 0n && amountBase < minDep
+                ? `Minimum is ${formatToken(minDep, shielded.decimals, shielded.symbol)}.`
+                : maxDep > 0n && amountBase > maxDep
+                  ? `Maximum is ${formatToken(maxDep, shielded.decimals, shielded.symbol)}.`
+                  : balance !== null && amountBase > balance
+                    ? "More than your balance."
+                    : null);
 
   const canContinue = amountBase > 0n && minReceived(amountBase, slippageBps) > 0n && !error;
   const unlockDate = formatDate(BigInt(Math.floor(Date.now() / 1000)) + stats.minimumPoolTime);
 
   async function confirm() {
-    if (!canContinue || tx.pending) return;
+    if (
+      !canContinue ||
+      tx.pending ||
+      actionBlocker(pool.availability, pool.availability?.openPosition, BigInt(Math.floor(Date.now() / 1000)))
+    )
+      return;
     const res = await tx.submit({
       kind: "depositShielded",
       pool: pool.address,
