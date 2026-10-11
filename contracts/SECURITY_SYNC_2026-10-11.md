@@ -36,3 +36,7 @@ ABI command: `node scripts/generate-evm-abis.mjs`; it defaults to `contracts/out
 Contract checks used Solidity 0.8.35 and Foundry 1.7.1, with offline RPC-independent tests.
 
 The CI dependency review additionally identified GHSA-68fv-2mgg-jv7q in the unchanged application lockfile. Its transitive source-map-js entry was updated from 1.2.1 to 1.2.2 in a separate patch commit, followed by adapter tests and typechecking.
+
+## Final upstream revision
+
+The final audited upstream revision is `043dd7bc54b27d05a5295c49bb46e64853d58024`. The verified fork implementations retain equivalent pre-refactoring ABI decoding, redundant ceiling guards, epoch reads, and full migration-marker cleanup from the security-fix baseline `883e625e927e12597ff72e30d5dd2ca1ce9c54ef`. The upstream-only size refactoring has no ABI or storage change; these modules already satisfy the chain limits. Their validated source hashes and compiled runtime evidence are unchanged.
