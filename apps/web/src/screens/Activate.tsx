@@ -5,7 +5,13 @@ import { useNavigate, useParams } from "react-router-dom";
 import { minReceived } from "@yieldshield/core";
 import { Row } from "@/components/Expander";
 import { ShieldIcon } from "@/components/icons";
-import { TransactionError, PendingOverlay, SuccessCard, TransactionReceiptLink } from "@/components/TxFeedback";
+import {
+  TransactionError,
+  PendingOverlay,
+  SuccessCard,
+  TransactionReceiptLink,
+  SubmittedTransactionError,
+} from "@/components/TxFeedback";
 import { Button, Card } from "@/components/ui";
 import { formatDate, formatToken } from "@/lib/format";
 import { useSubmitTx, type SubmitTx } from "@/chain/useSubmitTx";
@@ -35,6 +41,8 @@ export function Activate() {
     );
   if (tx.pending)
     return <PendingOverlay step={tx.step} txId={tx.txId} phase={tx.phase} label="Confirming backing-token exit…" />;
+  if (tx.phase === "failed" && tx.txId)
+    return <SubmittedTransactionError error={tx.error} txId={tx.txId} onClose={() => navigate("/positions")} />;
   if (loading) return <div className="h-72 animate-pulse rounded-card bg-subtle" />;
   if (loadError)
     return (

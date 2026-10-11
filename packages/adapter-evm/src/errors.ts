@@ -1,6 +1,8 @@
 /** Map raw EVM transaction/wallet errors to calm, plain-language copy (never a raw revert/stack). */
 export function friendlyError(e: unknown): string {
   const msg = (e instanceof Error ? e.message : String(e)).toLowerCase();
+  if (msg.includes("confirmation could not be verified"))
+    return "The transaction was submitted, but its confirmation could not be verified. Check the receipt before retrying.";
   if (msg.includes("provider not found"))
     return "No installed wallet was detected. Open this site in your wallet’s browser.";
   if (msg.includes("test bnb")) return "Add BSC Testnet test BNB to pay the network fee.";
