@@ -5,7 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { minReceived } from "@yieldshield/core";
 import { Row } from "@/components/Expander";
 import { ShieldIcon } from "@/components/icons";
-import { TransactionError, PendingOverlay, SuccessCard } from "@/components/TxFeedback";
+import { TransactionError, PendingOverlay, SuccessCard, TransactionReceiptLink } from "@/components/TxFeedback";
 import { Button, Card } from "@/components/ui";
 import { formatDate, formatToken } from "@/lib/format";
 import { useSubmitTx } from "@/chain/useSubmitTx";
@@ -16,7 +16,7 @@ import { actionBlocker } from "@/lib/action-availability";
 export function Activate() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [completed, setCompleted] = useState(false);
+  const [completed, setCompleted] = useState<string | null>(null);
   const { loading, error: loadError, shield } = usePositions();
   const position = shield.find((p) => p.id === id);
 
@@ -26,6 +26,7 @@ export function Activate() {
         <SuccessCard title="Test-token exit confirmed.">
           Check the confirmed receipt and your wallet for the exact amount received.
         </SuccessCard>
+        <TransactionReceiptLink txId={completed} />
         <Button variant="ink" full className="mt-5" onClick={() => navigate("/positions")}>
           Done
         </Button>
@@ -44,10 +45,10 @@ export function Activate() {
         <p className="text-body">This position isn't available.</p>
       </Card>
     );
-  return <ActivatePanel p={position} onClose={() => navigate(-1)} onDone={() => setCompleted(true)} />;
+  return <ActivatePanel p={position} onClose={() => navigate(-1)} onDone={setCompleted} />;
 }
 
-function ActivatePanel({ p, onClose, onDone }: { p: ShieldVM; onClose: () => void; onDone: () => void }) {
+function ActivatePanel({ p, onClose, onDone }: { p: ShieldVM; onClose: () => void; onDone: (txId: string) => void }) {
   const tx = useSubmitTx();
 
   const backing = p.view!.backing;
@@ -98,7 +99,7 @@ function ActivatePanel({ p, onClose, onDone }: { p: ShieldVM; onClose: () => voi
       position: p.id,
       minOut,
     });
-    if (res) onDone();
+    if (res) onDone(res.txId);
   }
 
   return (

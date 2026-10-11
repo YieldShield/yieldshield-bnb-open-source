@@ -5,7 +5,7 @@ import { fromBaseUnits, minReceived } from "@yieldshield/core";
 import { AmountInput } from "@/components/AmountInput";
 import { ArrowLeft } from "@/components/icons";
 import { Row } from "@/components/Expander";
-import { TransactionError, PendingOverlay, SuccessCard } from "@/components/TxFeedback";
+import { TransactionError, PendingOverlay, SuccessCard, TransactionReceiptLink } from "@/components/TxFeedback";
 import { Bar, Button, Card, ChainBadge, Pill } from "@/components/ui";
 import { formatDate, formatToken, formatUsd8 } from "@/lib/format";
 import { useSubmitTx } from "@/chain/useSubmitTx";
@@ -17,7 +17,7 @@ import { useNow } from "@/lib/use-now";
 export function PositionDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [completed, setCompleted] = useState(false);
+  const [completed, setCompleted] = useState<string | null>(null);
   const { loading, error: loadError, shield } = usePositions();
   const position = shield.find((p) => p.id === id);
 
@@ -27,6 +27,7 @@ export function PositionDetail() {
         <SuccessCard title="Test withdrawal confirmed.">
           Check the transaction receipt and wallet for the exact amount received.
         </SuccessCard>
+        <TransactionReceiptLink txId={completed} />
         <Button variant="ink" full className="mt-5" onClick={() => navigate("/positions")}>
           Done
         </Button>
@@ -51,12 +52,12 @@ export function PositionDetail() {
       <button onClick={() => navigate("/positions")} className="mb-5 flex items-center gap-1.5 text-[14px] text-body">
         <ArrowLeft className="h-4.5 w-4.5" /> Home
       </button>
-      <SaverPosition p={position} onDone={() => setCompleted(true)} />
+      <SaverPosition p={position} onDone={setCompleted} />
     </div>
   );
 }
 
-function SaverPosition({ p, onDone }: { p: ShieldVM; onDone: () => void }) {
+function SaverPosition({ p, onDone }: { p: ShieldVM; onDone: (txId: string) => void }) {
   const navigate = useNavigate();
   const tx = useSubmitTx();
   const [withdrawing, setWithdrawing] = useState(false);
@@ -103,7 +104,7 @@ function SaverPosition({ p, onDone }: { p: ShieldVM; onDone: () => void }) {
             minOut: minReceived(withdrawAmount),
           },
     );
-    if (res) onDone();
+    if (res) onDone(res.txId);
   }
 
   return (
