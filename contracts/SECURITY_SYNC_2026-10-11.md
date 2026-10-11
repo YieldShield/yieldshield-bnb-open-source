@@ -34,3 +34,5 @@ ABI command: `node scripts/generate-evm-abis.mjs`; it defaults to `contracts/out
 - Deployment manifests, addresses, and published evidence are unchanged.
 
 Contract checks used Solidity 0.8.35 and Foundry 1.7.1, with offline RPC-independent tests.
+
+The CI dependency review additionally identified GHSA-68fv-2mgg-jv7q in the unchanged application lockfile. Its transitive source-map-js entry was updated from 1.2.1 to 1.2.2 in a separate patch commit, followed by adapter tests and typechecking.
