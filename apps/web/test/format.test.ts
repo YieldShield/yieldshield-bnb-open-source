@@ -1,11 +1,40 @@
 import { describe, expect, it } from "vitest";
-import { formatAmount, formatBps, formatDuration, formatPct, formatRelative, formatUsd8 } from "@/lib/format";
+import {
+  formatAmount,
+  formatBps,
+  formatDuration,
+  formatPct,
+  formatRelative,
+  formatToken,
+  formatUsd8,
+} from "@/lib/format";
 
 describe("format", () => {
   it("formatAmount groups + trims fraction", () => {
     expect(formatAmount(1234567000n, 6)).toBe("1,234.56");
     expect(formatAmount(1000000n, 6)).toBe("1");
     expect(formatAmount(0n, 6)).toBe("0");
+  });
+
+  it("shows a small positive token withdrawal instead of zero", () => {
+    expect(formatToken(995000n, 8, "tWBNB")).toBe("0.00995 tWBNB");
+    expect(formatToken(0n, 8, "tWBNB")).toBe("0 tWBNB");
+    expect(formatToken(12345678n, 6, "TestUSDC")).toBe("12.345678 TestUSDC");
+  });
+
+  it("preserves exact integer digits beyond floating-point precision", () => {
+    const amount = 9007199254740993n * 1000000n + 123456n;
+    expect(formatAmount(amount, 6, 6)).toBe("9,007,199,254,740,993.123456");
+    expect(formatAmount(-amount, 6, 6)).toBe("-9,007,199,254,740,993.123456");
+    expect(formatAmount(10n ** 30n, 0)).toBe("1,000,000,000,000,000,000,000,000,000,000");
+  });
+
+  it("distinguishes subprecision amounts from zero without rounding payouts up", () => {
+    expect(formatAmount(1n, 8)).toBe("<0.01");
+    expect(formatToken(1n, 8, "tWBNB")).toBe("<0.000001 tWBNB");
+    expect(formatToken(1n, 8, "tWBNB", 8)).toBe("0.00000001 tWBNB");
+    expect(formatAmount(1n, 8, 0)).toBe("<1");
+    expect(formatAmount(-1n, 8)).toBe(">-0.01");
   });
 
   it("formatBps", () => {
