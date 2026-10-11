@@ -1,3 +1,5 @@
+![YieldShield on BNB Chain — Testnet trading & token protection.](.github/assets/banner.png)
+
 # YieldShield on BNB Chain
 
 A BSC Testnet trading and token-protection demo for BNB staking, ETH staking, stablecoin yield and lending receipts, using valueless synthetic tokens. A separate read-only explorer shows BSC mainnet reference prices and modeled scenarios.
