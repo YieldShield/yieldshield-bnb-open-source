@@ -5,7 +5,12 @@ import { tokenFaucetAbi } from "../src/abis/tokenFaucet";
 import { splitRiskPoolAbi } from "../src/abis/splitRiskPool";
 import { planIntent } from "../src/intents";
 import { createReader, netShieldAmount, maximumDeposit } from "../src/reader";
-import { assertWalletSession, sendEvmIntent, readCanonicalStepReceipt } from "../src/react";
+import {
+  assertWalletSession,
+  sendEvmIntent,
+  readCanonicalStepReceipt,
+  waitForCanonicalStepReceipt,
+} from "../src/react";
 import { encodePositionId } from "../src/positionId";
 import { friendlyError } from "../src/errors";
 import { getAccount, waitForTransactionReceipt, writeContract } from "@wagmi/core";
@@ -417,13 +422,38 @@ describe("wallet session and receipt safety", () => {
     expect(events.map((step) => step.txId)).toEqual([undefined, txHash, replacementHash]);
   });
   it("keeps the submitted hash available if receipt verification later fails", async () => {
-    const events: any[] = [];
-    const client = clientFor({ allowance: 100n });
-    client.request = rawRpc({ receipt: { blockHash: zeroHash } });
-    await expect(
-      sendEvmIntent(adapter(client), config, owner, deposit, { onStep: (step) => events.push(step) }),
-    ).rejects.toThrow("sealed confirmation");
-    expect(events.at(-1).txId).toBe(txHash);
+    vi.useFakeTimers();
+    try {
+      const events: any[] = [];
+      const client = clientFor({ allowance: 100n });
+      client.request = rawRpc({ receipt: { blockHash: zeroHash } });
+      const pending = expect(
+        sendEvmIntent(adapter(client), config, owner, deposit, { onStep: (step) => events.push(step) }),
+      ).rejects.toThrow("sealed confirmation could not be verified");
+      await vi.runAllTimersAsync();
+      await pending;
+      expect(events.at(-1).txId).toBe(txHash);
+      expect(writeContract).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  it("verifies the signed action directly when the receipt waiter fails after mining", async () => {
+    vi.mocked(waitForTransactionReceipt).mockRejectedValue(new Error("RPC connection reset"));
+    const result = await sendEvmIntent(adapter(clientFor({ allowance: 100n })), config, owner, deposit);
+    expect(result.txId).toBe(txHash);
+    expect(result.positionId).toBe(encodePositionId(pool, "shield", 1n));
+    expect(writeContract).toHaveBeenCalledTimes(1);
+  });
+  it("still rejects a cancellation if the receipt waiter subsequently fails", async () => {
+    vi.mocked(waitForTransactionReceipt).mockImplementation(async (_config, args: any) => {
+      args.onReplaced({ reason: "cancelled" });
+      throw new Error("RPC connection reset");
+    });
+    await expect(sendEvmIntent(adapter(clientFor({ allowance: 100n })), config, owner, deposit)).rejects.toThrow(
+      "cancelled or replaced",
+    );
+    expect(writeContract).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -675,6 +705,64 @@ describe("canonical wallet transaction evidence", () => {
   it("does not confirm a position without the matching receipt NFT mint", async () => {
     const plan = await planIntent(clientFor({ allowance: 100n }), owner, { factory }, deposit);
     expect(() => plan.extract!({ logs: [] } as any)).toThrow("expected protection position");
+  });
+});
+
+describe("confirmation read recovery", () => {
+  it.each(["RPC failure", "missing receipt", "lagging head"])(
+    "recovers from %s without trusting cached evidence",
+    async (failure) => {
+      vi.useFakeTimers();
+      try {
+        const client = clientFor();
+        const good = rawRpc({ step: canonicalStep });
+        let unavailable = true;
+        client.request = vi.fn(async (request: any) => {
+          if (
+            unavailable &&
+            request.method === (failure === "lagging head" ? "eth_getBlockByNumber" : "eth_getTransactionReceipt")
+          ) {
+            if (failure === "lagging head" && request.params[0] !== "latest") return good(request);
+            unavailable = false;
+            if (failure === "RPC failure") throw new Error("RPC connection reset");
+            if (failure === "missing receipt") return null;
+            return { number: "0xa", hash: canonicalBlockHash };
+          }
+          return good(request);
+        });
+        const pending = waitForCanonicalStepReceipt(client, txHash as any, owner, canonicalStep as any, 97);
+        await vi.runAllTimersAsync();
+        expect((await pending).transactionHash).toBe(txHash);
+        expect(
+          good.mock.calls.filter(([request]: any) => request.method === "eth_getTransactionReceipt").length,
+        ).toBeGreaterThanOrEqual(2);
+      } finally {
+        vi.useRealTimers();
+      }
+    },
+  );
+  it("stops immediately for an action mismatch instead of retrying invalid evidence", async () => {
+    const client = clientFor();
+    client.request = rawRpc({ step: canonicalStep, transaction: { input: "0x1234" } });
+    await expect(waitForCanonicalStepReceipt(client, txHash as any, owner, canonicalStep as any, 97)).rejects.toThrow(
+      "reviewed action",
+    );
+    expect(
+      client.request.mock.calls.filter(([request]: any) => request.method === "eth_getTransactionReceipt"),
+    ).toHaveLength(1);
+  });
+  it("never accepts a reverted receipt", async () => {
+    const client = clientFor();
+    client.request = rawRpc({ step: canonicalStep, receipt: { status: "0x0" } });
+    await expect(waitForCanonicalStepReceipt(client, txHash as any, owner, canonicalStep as any, 97)).rejects.toThrow(
+      "did not succeed",
+    );
+    expect(client.request).toHaveBeenCalledTimes(1);
+  });
+  it("reports uncertain confirmation without telling the user to submit again", async () => {
+    expect(friendlyError(new Error("Transaction submitted, but sealed confirmation could not be verified."))).toBe(
+      "The transaction was submitted, but its confirmation could not be verified. Check the receipt before retrying.",
+    );
   });
 });
 

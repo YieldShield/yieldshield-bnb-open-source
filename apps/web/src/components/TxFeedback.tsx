@@ -2,7 +2,7 @@ import { chain } from "@/chain/adapter";
 import type { TxPhase } from "@yieldshield/core";
 import type { ReactNode } from "react";
 import { CheckIcon } from "@/components/icons";
-import { Spinner } from "@/components/ui";
+import { Button, Card, Spinner } from "@/components/ui";
 
 /** Full-bleed pending state shown while a transaction is submitted/confirming. */
 export function PendingOverlay({
@@ -67,6 +67,48 @@ export function TransactionError({ error, txId }: { error: string | null; txId?:
         </a>
       )}
     </div>
+  );
+}
+
+/** A submitted transaction still needs a reviewable receipt when its position has disappeared. */
+export function SubmittedTransactionError({
+  error,
+  txId,
+  onClose,
+}: {
+  error: string | null;
+  txId: string;
+  onClose: () => void;
+}) {
+  return (
+    <Card>
+      <h1 className="text-[22px] font-bold text-ink">Review your submitted transaction.</h1>
+      <p className="mt-2 text-[14px] leading-relaxed text-body">
+        Your wallet submitted this action. Check its receipt for the status before starting another action.
+      </p>
+      <TransactionError
+        error={error ?? "Confirmation is unavailable. Check the receipt before retrying."}
+        txId={txId}
+      />
+      <Button variant="ink" full className="mt-5" onClick={onClose}>
+        Back to my positions
+      </Button>
+    </Card>
+  );
+}
+
+/** Keep the canonical receipt reachable after the temporary confirmation toast disappears. */
+export function TransactionReceiptLink({ txId }: { txId: string | null }) {
+  if (!txId) return null;
+  return (
+    <a
+      href={chain.explorerTxUrl(txId)}
+      target="_blank"
+      rel="noreferrer"
+      className="mt-4 block text-center text-[13px] font-semibold text-brand-deep underline"
+    >
+      View confirmed transaction ↗
+    </a>
   );
 }
 

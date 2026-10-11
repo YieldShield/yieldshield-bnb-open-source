@@ -5,10 +5,16 @@ import { fromBaseUnits, minReceived, type TxIntent } from "@yieldshield/core";
 import { AmountInput } from "@/components/AmountInput";
 import { Row } from "@/components/Expander";
 import { ArrowLeft } from "@/components/icons";
-import { TransactionError, PendingOverlay } from "@/components/TxFeedback";
+import {
+  TransactionError,
+  PendingOverlay,
+  SuccessCard,
+  TransactionReceiptLink,
+  SubmittedTransactionError,
+} from "@/components/TxFeedback";
 import { Bar, Button, Card, ChainBadge } from "@/components/ui";
 import { formatDuration, formatToken } from "@/lib/format";
-import { useSubmitTx } from "@/chain/useSubmitTx";
+import { useSubmitTx, type SubmitTx } from "@/chain/useSubmitTx";
 import { useRefreshAll } from "@/data/refresh";
 import { usePositions, type ProtectorVM } from "@/data/positions";
 import { observationBlocker } from "@/lib/action-availability";
@@ -18,8 +24,49 @@ export function Underwriter() {
   const { id } = useParams();
   const navigate = useNavigate();
   const refresh = useRefreshAll();
+  const tx = useSubmitTx();
+  const [refreshing, setRefreshing] = useState(false);
+  const [completed, setCompleted] = useState<string | null>(null);
   const { loading, error: loadError, protector } = usePositions();
   const position = protector.find((p) => p.id === id);
+
+  async function run(intent: TxIntent) {
+    if (
+      tx.pending ||
+      refreshing ||
+      loadError ||
+      !position ||
+      observationBlocker(position, BigInt(Math.floor(Date.now() / 1000)))
+    )
+      return;
+    setRefreshing(true);
+    try {
+      const result = await tx.submit(intent);
+      if (result) {
+        if (intent.kind === "withdrawProtector") setCompleted(result.txId);
+        await refresh().catch(() => undefined);
+      }
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
+  if (completed)
+    return (
+      <>
+        <SuccessCard title="Test backing withdrawal confirmed.">
+          Your backing position is closed. Check the receipt and wallet for the exact amount received.
+        </SuccessCard>
+        <TransactionReceiptLink txId={completed} />
+        <Button variant="ink" full className="mt-5" onClick={() => navigate("/positions")}>
+          Done
+        </Button>
+      </>
+    );
+  if (tx.pending)
+    return <PendingOverlay step={tx.step} txId={tx.txId} phase={tx.phase} label="Confirming backing action…" />;
+  if (tx.phase === "failed" && tx.txId)
+    return <SubmittedTransactionError error={tx.error} txId={tx.txId} onClose={() => navigate("/positions")} />;
 
   if (loading) return <div className="h-72 animate-pulse rounded-card bg-subtle" />;
   if (loadError)
@@ -40,15 +87,23 @@ export function Underwriter() {
       <button onClick={() => navigate("/positions")} className="mb-5 flex items-center gap-1.5 text-[14px] text-body">
         <ArrowLeft className="h-4.5 w-4.5" /> Home
       </button>
-      <UnderwriterPosition p={position} refresh={refresh} />
+      <UnderwriterPosition p={position} tx={tx} refreshing={refreshing} run={run} />
     </div>
   );
 }
 
-function UnderwriterPosition({ p, refresh }: { p: ProtectorVM; refresh: () => Promise<unknown> }) {
-  const tx = useSubmitTx();
+function UnderwriterPosition({
+  p,
+  tx,
+  refreshing,
+  run,
+}: {
+  p: ProtectorVM;
+  tx: SubmitTx;
+  refreshing: boolean;
+  run: (intent: TxIntent) => Promise<void>;
+}) {
   const now = useNow();
-  const [refreshing, setRefreshing] = useState(false);
   const stale = observationBlocker(p, now);
   const busy = tx.pending || refreshing;
   const backing = p.view!.backing;
@@ -72,21 +127,6 @@ function UnderwriterPosition({ p, refresh }: { p: ProtectorVM; refresh: () => Pr
   const isFullWithdraw = withdrawAmount === p.collateral;
   const canWithdraw = withdrawAmount > 0n && minReceived(withdrawAmount) > 0n && !withdrawError && ready && !busy;
 
-  async function run(intent: TxIntent) {
-    if (busy || observationBlocker(p, BigInt(Math.floor(Date.now() / 1000)))) return;
-    setRefreshing(true);
-    try {
-      const res = await tx.submit(intent);
-      if (res) {
-        setWithdrawValue("");
-        // The positions hook renders failed reads; a refresh failure cannot undo a mined transaction.
-        await refresh().catch(() => undefined);
-      }
-    } finally {
-      setRefreshing(false);
-    }
-  }
-
   function withdrawIntent(): TxIntent {
     // Bound the actual backing-token payout to the reviewed amount (0.5% slippage).
     const minOut = minReceived(withdrawAmount);
@@ -104,8 +144,6 @@ function UnderwriterPosition({ p, refresh }: { p: ProtectorVM; refresh: () => Pr
 
   return (
     <>
-      {tx.pending && <PendingOverlay step={tx.step} txId={tx.txId} phase={tx.phase} label="Confirming…" />}
-
       <div className="flex items-center justify-between">
         <span className="text-[15px] font-bold text-body">Backing {preset.asset}</span>
         <ChainBadge />

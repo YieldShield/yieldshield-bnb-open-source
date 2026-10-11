@@ -151,6 +151,16 @@ const sealedHash = (value: unknown): value is Hash =>
 const quantity = (value: unknown): bigint | null =>
   typeof value === "string" && /^0x[0-9a-fA-F]+$/.test(value) ? BigInt(value) : null;
 
+class ConfirmationReadUnavailable extends Error {}
+
+async function confirmationRead<T>(read: () => Promise<T>): Promise<T> {
+  try {
+    return await read();
+  } catch (cause) {
+    throw new ConfirmationReadUnavailable("Transaction confirmation read is unavailable.", { cause });
+  }
+}
+
 /** Confirmation uses raw sealed RPC evidence, not cached/chain-formatted preconfirmation data. */
 export async function readCanonicalStepReceipt(
   client: PublicClient,
@@ -161,9 +171,11 @@ export async function readCanonicalStepReceipt(
 ): Promise<TransactionReceipt> {
   const data = encodeFunctionData({ abi: step.abi, functionName: step.functionName, args: step.args });
   const readReceipt = async () => {
-    const receipt = await client.request({ method: "eth_getTransactionReceipt", params: [hash] });
-    if (!receipt || !sameHex(receipt.transactionHash, hash))
-      throw new Error("Transaction receipt identity is unavailable.");
+    const receipt = await confirmationRead(() =>
+      client.request({ method: "eth_getTransactionReceipt", params: [hash] }),
+    );
+    if (!receipt) throw new ConfirmationReadUnavailable("Transaction receipt is not available yet.");
+    if (!sameHex(receipt.transactionHash, hash)) throw new Error("Transaction receipt identity is unavailable.");
     if (receipt.status !== "0x1") throw new Error(`Transaction did not succeed: ${hash}`);
     const height = quantity(receipt.blockNumber);
     const index = quantity(receipt.transactionIndex);
@@ -174,7 +186,7 @@ export async function readCanonicalStepReceipt(
       index === null ||
       index > BigInt(Number.MAX_SAFE_INTEGER)
     )
-      throw new Error(`Transaction is awaiting sealed confirmation. Check wallet activity before retrying: ${hash}`);
+      throw new ConfirmationReadUnavailable(`Transaction is awaiting sealed confirmation: ${hash}`);
     if (!sameHex(receipt.from, owner) || !sameHex(receipt.to, step.address))
       throw new Error("Transaction receipt does not match the reviewed account and contract.");
     const logIndices = new Set<string>();
@@ -195,12 +207,14 @@ export async function readCanonicalStepReceipt(
     return { receipt, height, index: Number(index) };
   };
   const verifyBlock = async (observed: Awaited<ReturnType<typeof readReceipt>>) => {
-    const block = await client.request({
-      method: "eth_getBlockByNumber",
-      params: [observed.receipt.blockNumber, false],
-    });
+    const block = await confirmationRead(() =>
+      client.request({
+        method: "eth_getBlockByNumber",
+        params: [observed.receipt.blockNumber, false],
+      }),
+    );
+    if (!block) throw new ConfirmationReadUnavailable("Transaction block is not available yet.");
     if (
-      !block ||
       quantity(block.number) !== observed.height ||
       !sameHex(block.hash, observed.receipt.blockHash) ||
       !sameHex(block.transactions[observed.index], hash)
@@ -210,11 +224,11 @@ export async function readCanonicalStepReceipt(
   const observed = await readReceipt();
   await verifyBlock(observed);
   const [transaction, latest] = await Promise.all([
-    client.request({ method: "eth_getTransactionByHash", params: [hash] }),
-    client.request({ method: "eth_getBlockByNumber", params: ["latest", false] }),
+    confirmationRead(() => client.request({ method: "eth_getTransactionByHash", params: [hash] })),
+    confirmationRead(() => client.request({ method: "eth_getBlockByNumber", params: ["latest", false] })),
   ]);
+  if (!transaction) throw new ConfirmationReadUnavailable("Mined transaction is not available yet.");
   if (
-    !transaction ||
     !sameHex(transaction.hash, hash) ||
     !sameHex(transaction.from, owner) ||
     !sameHex(transaction.to, step.address) ||
@@ -228,12 +242,36 @@ export async function readCanonicalStepReceipt(
     throw new Error("Mined transaction differs from the reviewed action. Check wallet activity before retrying.");
   const latestHeight = quantity(latest?.number);
   if (!latest || !sealedHash(latest.hash) || latestHeight === null || latestHeight < observed.height + 1n)
-    throw new Error(`Transaction needs two sealed confirmations. Check wallet activity before retrying: ${hash}`);
+    throw new ConfirmationReadUnavailable(`Transaction needs two sealed confirmations: ${hash}`);
   const fresh = await readReceipt();
   if (fresh.height !== observed.height || !sameHex(fresh.receipt.blockHash, observed.receipt.blockHash))
     throw new Error("Transaction changed blocks during confirmation. Check wallet activity before retrying.");
   await verifyBlock(fresh);
   return formatTransactionReceipt(fresh.receipt as RpcTransactionReceipt);
+}
+
+/** Retry unavailable confirmation reads only; every attempt repeats all integrity checks. Never signs again. */
+export async function waitForCanonicalStepReceipt(
+  client: PublicClient,
+  hash: Hash,
+  owner: Address,
+  step: EvmStep,
+  chainId: number,
+): Promise<TransactionReceipt> {
+  for (let attempt = 0; attempt < 8; attempt++) {
+    try {
+      return await readCanonicalStepReceipt(client, hash, owner, step, chainId);
+    } catch (error) {
+      if (!(error instanceof ConfirmationReadUnavailable)) throw error;
+      if (attempt === 7)
+        throw new ConfirmationReadUnavailable(
+          "Transaction submitted, but sealed confirmation could not be verified. Check its receipt before retrying.",
+          { cause: error },
+        );
+      await new Promise<void>((resolve) => setTimeout(resolve, 1000));
+    }
+  }
+  throw new Error("Unreachable confirmation state.");
 }
 
 /** Plan once for the selected account; stop if it changes while any signature is pending. */
@@ -291,34 +329,34 @@ export async function sendEvmIntent(
     opts?.onPhase?.("confirming");
     let cancelled = false;
     let expectedHash = hash;
-    lastReceipt = await waitForTransactionReceipt(config, {
-      hash,
-      chainId: adapter.chain.id,
-      confirmations: 2,
-      onReplaced: (replacement) => {
-        if (
-          replacement.reason !== "repriced" ||
-          !sameHex(replacement.replacedTransaction.hash, expectedHash) ||
-          !sealedHash(replacement.transaction.hash)
-        )
-          cancelled = true;
-        else {
-          expectedHash = replacement.transaction.hash;
-          opts?.onStep?.({ ...stepProgress, txId: expectedHash });
-        }
-      },
-    });
-    if (cancelled || !sameHex(lastReceipt.transactionHash, expectedHash))
+    let waiterReceipt: TransactionReceipt | null = null;
+    try {
+      waiterReceipt = await waitForTransactionReceipt(config, {
+        hash,
+        chainId: adapter.chain.id,
+        confirmations: 2,
+        onReplaced: (replacement) => {
+          if (
+            replacement.reason !== "repriced" ||
+            !sameHex(replacement.replacedTransaction.hash, expectedHash) ||
+            !sealedHash(replacement.transaction.hash)
+          )
+            cancelled = true;
+          else {
+            expectedHash = replacement.transaction.hash;
+            opts?.onStep?.({ ...stepProgress, txId: expectedHash });
+          }
+        },
+      });
+    } catch {
+      // The waiter can fail after mining (for example, a temporary RPC read failure).
+      // Confirmation still requires the exact signed action and two sealed canonical blocks below.
+    }
+    if (cancelled || (waiterReceipt && !sameHex(waiterReceipt.transactionHash, expectedHash)))
       throw new Error("Transaction was cancelled or replaced. Review your wallet activity before retrying.");
     // Even repriced replacements must preserve the exact account, calldata,
     // contract and zero-value intent. Never extract position IDs from a waiter cache.
-    lastReceipt = await readCanonicalStepReceipt(
-      adapter.publicClient,
-      lastReceipt.transactionHash,
-      owner,
-      step,
-      adapter.chain.id,
-    );
+    lastReceipt = await waitForCanonicalStepReceipt(adapter.publicClient, expectedHash, owner, step, adapter.chain.id);
   }
   if (!lastReceipt) throw new Error("Nothing to submit.");
   return { txId: lastReceipt.transactionHash, ...(plan.extract?.(lastReceipt) ?? {}) };

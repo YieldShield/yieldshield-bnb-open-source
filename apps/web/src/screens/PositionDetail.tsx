@@ -5,10 +5,16 @@ import { fromBaseUnits, minReceived } from "@yieldshield/core";
 import { AmountInput } from "@/components/AmountInput";
 import { ArrowLeft } from "@/components/icons";
 import { Row } from "@/components/Expander";
-import { TransactionError, PendingOverlay, SuccessCard } from "@/components/TxFeedback";
+import {
+  TransactionError,
+  PendingOverlay,
+  SuccessCard,
+  TransactionReceiptLink,
+  SubmittedTransactionError,
+} from "@/components/TxFeedback";
 import { Bar, Button, Card, ChainBadge, Pill } from "@/components/ui";
 import { formatDate, formatToken, formatUsd8 } from "@/lib/format";
-import { useSubmitTx } from "@/chain/useSubmitTx";
+import { useSubmitTx, type SubmitTx } from "@/chain/useSubmitTx";
 import { usePositions, type ShieldVM } from "@/data/positions";
 import { VOCAB } from "@/vocab";
 import { actionBlocker } from "@/lib/action-availability";
@@ -17,7 +23,8 @@ import { useNow } from "@/lib/use-now";
 export function PositionDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [completed, setCompleted] = useState(false);
+  const tx = useSubmitTx();
+  const [completed, setCompleted] = useState<string | null>(null);
   const { loading, error: loadError, shield } = usePositions();
   const position = shield.find((p) => p.id === id);
 
@@ -27,11 +34,17 @@ export function PositionDetail() {
         <SuccessCard title="Test withdrawal confirmed.">
           Check the transaction receipt and wallet for the exact amount received.
         </SuccessCard>
+        <TransactionReceiptLink txId={completed} />
         <Button variant="ink" full className="mt-5" onClick={() => navigate("/positions")}>
           Done
         </Button>
       </>
     );
+  // The transaction belongs to this screen, even if a background position read fails.
+  if (tx.pending)
+    return <PendingOverlay step={tx.step} txId={tx.txId} phase={tx.phase} label="Confirming withdrawal…" />;
+  if (tx.phase === "failed" && tx.txId)
+    return <SubmittedTransactionError error={tx.error} txId={tx.txId} onClose={() => navigate("/positions")} />;
   if (loading) return <div className="h-72 animate-pulse rounded-card bg-subtle" />;
   if (loadError)
     return (
@@ -51,14 +64,13 @@ export function PositionDetail() {
       <button onClick={() => navigate("/positions")} className="mb-5 flex items-center gap-1.5 text-[14px] text-body">
         <ArrowLeft className="h-4.5 w-4.5" /> Home
       </button>
-      <SaverPosition p={position} onDone={() => setCompleted(true)} />
+      <SaverPosition p={position} tx={tx} onDone={setCompleted} />
     </div>
   );
 }
 
-function SaverPosition({ p, onDone }: { p: ShieldVM; onDone: () => void }) {
+function SaverPosition({ p, tx, onDone }: { p: ShieldVM; tx: SubmitTx; onDone: (txId: string) => void }) {
   const navigate = useNavigate();
-  const tx = useSubmitTx();
   const [withdrawing, setWithdrawing] = useState(false);
   const [withdrawValue, setWithdrawValue] = useState("");
   const now = useNow();
@@ -103,13 +115,11 @@ function SaverPosition({ p, onDone }: { p: ShieldVM; onDone: () => void }) {
             minOut: minReceived(withdrawAmount),
           },
     );
-    if (res) onDone();
+    if (res) onDone(res.txId);
   }
 
   return (
     <>
-      {tx.pending && <PendingOverlay step={tx.step} txId={tx.txId} phase={tx.phase} label="Confirming withdrawal…" />}
-
       <div className="flex items-center justify-between">
         <span className="text-[15px] font-bold text-body">{preset?.asset ?? sym} savings</span>
         <ChainBadge />
