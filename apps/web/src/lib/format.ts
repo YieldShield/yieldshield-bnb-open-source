@@ -4,8 +4,8 @@ import { fromBaseUnits } from "@yieldshield/core";
 /** Format base units as a grouped decimal string (e.g. 1234567n @6 → "1.23"). */
 export function formatAmount(raw: bigint, decimals: number, maxFrac = 2): string {
   const full = fromBaseUnits(raw, decimals);
-  const [whole, frac = ""] = full.split(".");
-  const groupedWhole = Number(whole).toLocaleString("en-US");
+  const [whole = "0", frac = ""] = full.split(".");
+  const groupedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   const trimmed = frac.slice(0, maxFrac).replace(/0+$/, "");
   if (raw !== 0n && (whole === "0" || whole === "-0") && !trimmed) {
     const threshold = maxFrac === 0 ? "1" : `0.${"0".repeat(maxFrac - 1)}1`;

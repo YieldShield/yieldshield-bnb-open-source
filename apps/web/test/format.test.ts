@@ -22,6 +22,13 @@ describe("format", () => {
     expect(formatToken(12345678n, 6, "TestUSDC")).toBe("12.345678 TestUSDC");
   });
 
+  it("preserves exact integer digits beyond floating-point precision", () => {
+    const amount = 9007199254740993n * 1000000n + 123456n;
+    expect(formatAmount(amount, 6, 6)).toBe("9,007,199,254,740,993.123456");
+    expect(formatAmount(-amount, 6, 6)).toBe("-9,007,199,254,740,993.123456");
+    expect(formatAmount(10n ** 30n, 0)).toBe("1,000,000,000,000,000,000,000,000,000,000");
+  });
+
   it("distinguishes subprecision amounts from zero without rounding payouts up", () => {
     expect(formatAmount(1n, 8)).toBe("<0.01");
     expect(formatToken(1n, 8, "tWBNB")).toBe("<0.000001 tWBNB");
