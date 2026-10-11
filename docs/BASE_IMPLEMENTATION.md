@@ -1,6 +1,6 @@
 # YieldShield Base alpha
 
-The consumer interface is based on YieldShield/yieldshield-app. The contracts are imported from YieldShield/smart-contracts at fa236d04fe2dfc570f7c1ea22e2d904194f728f5.
+The consumer interface is based on YieldShield/yieldshield-app. The original contract import was YieldShield/smart-contracts at fa236d04fe2dfc570f7c1ea22e2d904194f728f5. Current security fix provenance for the vendored implementations and immutable modules is recorded in [contracts/upstream-source.json](../contracts/upstream-source.json).
 
 Initial target: Base Sepolia (84532), with valueless test assets and separately labelled live Coinbase tokenized stock data from Base mainnet (8453). Never represent test tokens as issuer-backed shares.
 

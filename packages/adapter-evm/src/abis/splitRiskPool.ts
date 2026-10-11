@@ -403,6 +403,30 @@ export const splitRiskPoolAbi = [
   },
   {
     type: "function",
+    name: "escrowExpiredProtectorCommission",
+    inputs: [
+      {
+        name: "tokenId",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    outputs: [
+      {
+        name: "escrow",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "escrowedAmount",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
     name: "feeValueBaselineUsd",
     inputs: [
       {
@@ -2131,6 +2155,49 @@ export const splitRiskPoolAbi = [
   },
   {
     type: "event",
+    name: "CommissionEscrowed",
+    inputs: [
+      {
+        name: "caller",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "beneficiary",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "tokenId",
+        type: "uint256",
+        indexed: true,
+        internalType: "uint256",
+      },
+      {
+        name: "escrow",
+        type: "address",
+        indexed: false,
+        internalType: "address",
+      },
+      {
+        name: "token",
+        type: "address",
+        indexed: false,
+        internalType: "address",
+      },
+      {
+        name: "amount",
+        type: "uint256",
+        indexed: false,
+        internalType: "uint256",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
     name: "CommissionForfeited",
     inputs: [
       {
@@ -3414,6 +3481,33 @@ export const splitRiskPoolAbi = [
     type: "error",
     name: "PoolNotEmptyForDeactivation",
     inputs: [],
+  },
+  {
+    type: "error",
+    name: "ProtectionOpeningClosed",
+    inputs: [
+      {
+        name: "token",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+  },
+  {
+    type: "error",
+    name: "ProtectionOpeningEligibilityUnavailable",
+    inputs: [
+      {
+        name: "token",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "oracle",
+        type: "address",
+        internalType: "address",
+      },
+    ],
   },
   {
     type: "error",

@@ -213,6 +213,19 @@ export const compositeOracleAbi = [
   },
   {
     type: "function",
+    name: "decimals",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "uint8",
+        internalType: "uint8",
+      },
+    ],
+    stateMutability: "pure",
+  },
+  {
+    type: "function",
     name: "deviationThresholdBps",
     inputs: [],
     outputs: [
@@ -391,6 +404,25 @@ export const compositeOracleAbi = [
   {
     type: "function",
     name: "getPrice",
+    inputs: [
+      {
+        name: "token",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getPriceForClosedSessionExit",
     inputs: [
       {
         name: "token",
@@ -649,6 +681,25 @@ export const compositeOracleAbi = [
   },
   {
     type: "function",
+    name: "isProtectionOpeningAllowed",
+    inputs: [
+      {
+        name: "token",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [
+      {
+        name: "allowed",
+        type: "bool",
+        internalType: "bool",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
     name: "isTokenChallengeable",
     inputs: [
       {
@@ -700,6 +751,25 @@ export const compositeOracleAbi = [
   },
   {
     type: "function",
+    name: "protectionOpeningEligibilityRequired",
+    inputs: [
+      {
+        name: "",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "bool",
+        internalType: "bool",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
     name: "removeTokenOracleFeed",
     inputs: [
       {
@@ -730,6 +800,19 @@ export const compositeOracleAbi = [
     ],
     outputs: [],
     stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "robinhoodStockOracleFeed",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    stateMutability: "view",
   },
   {
     type: "function",
@@ -828,6 +911,19 @@ export const compositeOracleAbi = [
         name: "newThresholdBps",
         type: "uint256",
         internalType: "uint256",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "setRobinhoodStockOracleFeed",
+    inputs: [
+      {
+        name: "oracleFeed",
+        type: "address",
+        internalType: "address",
       },
     ],
     outputs: [],
@@ -1282,6 +1378,19 @@ export const compositeOracleAbi = [
   },
   {
     type: "event",
+    name: "RobinhoodStockOracleFeedPinned",
+    inputs: [
+      {
+        name: "oracleFeed",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
     name: "StrictCircuitBreakerRequirementUpdated",
     inputs: [
       {
@@ -1387,6 +1496,22 @@ export const compositeOracleAbi = [
   },
   {
     type: "error",
+    name: "CanonicalStockOracleNotConfigured",
+    inputs: [
+      {
+        name: "token",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "feed",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+  },
+  {
+    type: "error",
     name: "ChallengeNotPossible",
     inputs: [
       {
@@ -1412,6 +1537,48 @@ export const compositeOracleAbi = [
       },
       {
         name: "feed",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+  },
+  {
+    type: "error",
+    name: "ClosedSessionExitPriceMismatch",
+    inputs: [
+      {
+        name: "token",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "primaryFeed",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "backupFeed",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+  },
+  {
+    type: "error",
+    name: "CorporateActionPauseGuardMismatch",
+    inputs: [
+      {
+        name: "token",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "primaryFeed",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "backupFeed",
         type: "address",
         internalType: "address",
       },
@@ -1648,6 +1815,17 @@ export const compositeOracleAbi = [
   },
   {
     type: "error",
+    name: "InvalidRobinhoodStockOracleFeed",
+    inputs: [
+      {
+        name: "oracleFeed",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+  },
+  {
+    type: "error",
     name: "InvalidTokenAddress",
     inputs: [
       {
@@ -1670,6 +1848,22 @@ export const compositeOracleAbi = [
         name: "decimals",
         type: "uint8",
         internalType: "uint8",
+      },
+    ],
+  },
+  {
+    type: "error",
+    name: "NestedCompositeFeedUnsupported",
+    inputs: [
+      {
+        name: "token",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "feed",
+        type: "address",
+        internalType: "address",
       },
     ],
   },
@@ -1741,6 +1935,38 @@ export const compositeOracleAbi = [
         name: "reason",
         type: "string",
         internalType: "string",
+      },
+    ],
+  },
+  {
+    type: "error",
+    name: "RobinhoodStockOracleFeedAlreadyPinned",
+    inputs: [
+      {
+        name: "oracleFeed",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+  },
+  {
+    type: "error",
+    name: "RobinhoodStockOracleFeedRequired",
+    inputs: [
+      {
+        name: "token",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "providedFeed",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "requiredFeed",
+        type: "address",
+        internalType: "address",
       },
     ],
   },
