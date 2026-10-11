@@ -183,7 +183,7 @@ export const splitRiskPoolFactoryAbi = [
         internalType: "uint256",
       },
       {
-        name: "staticBalanceAcknowledged",
+        name: "tokenBehaviorAcknowledged",
         type: "bool",
         internalType: "bool",
       },
@@ -226,7 +226,7 @@ export const splitRiskPoolFactoryAbi = [
         internalType: "uint256",
       },
       {
-        name: "staticBalanceAcknowledged",
+        name: "tokenBehaviorAcknowledged",
         type: "bool",
         internalType: "bool",
       },
@@ -366,6 +366,24 @@ export const splitRiskPoolFactoryAbi = [
     inputs: [
       {
         name: "pool",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "closePoolTo",
+    inputs: [
+      {
+        name: "pool",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "bondRecipient",
         type: "address",
         internalType: "address",
       },
@@ -1924,7 +1942,7 @@ export const splitRiskPoolFactoryAbi = [
         internalType: "address",
       },
       {
-        name: "creator",
+        name: "recipient",
         type: "address",
         indexed: true,
         internalType: "address",
