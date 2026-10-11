@@ -5,7 +5,13 @@ import { fromBaseUnits, minReceived } from "@yieldshield/core";
 import { AmountInput } from "@/components/AmountInput";
 import { ArrowLeft } from "@/components/icons";
 import { Row } from "@/components/Expander";
-import { TransactionError, PendingOverlay, SuccessCard, TransactionReceiptLink } from "@/components/TxFeedback";
+import {
+  TransactionError,
+  PendingOverlay,
+  SuccessCard,
+  TransactionReceiptLink,
+  SubmittedTransactionError,
+} from "@/components/TxFeedback";
 import { Bar, Button, Card, ChainBadge, Pill } from "@/components/ui";
 import { formatDate, formatToken, formatUsd8 } from "@/lib/format";
 import { useSubmitTx, type SubmitTx } from "@/chain/useSubmitTx";
@@ -37,6 +43,8 @@ export function PositionDetail() {
   // The transaction belongs to this screen, even if a background position read fails.
   if (tx.pending)
     return <PendingOverlay step={tx.step} txId={tx.txId} phase={tx.phase} label="Confirming withdrawal…" />;
+  if (tx.phase === "failed" && tx.txId)
+    return <SubmittedTransactionError error={tx.error} txId={tx.txId} onClose={() => navigate("/positions")} />;
   if (loading) return <div className="h-72 animate-pulse rounded-card bg-subtle" />;
   if (loadError)
     return (

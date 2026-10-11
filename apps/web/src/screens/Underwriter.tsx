@@ -5,7 +5,13 @@ import { fromBaseUnits, minReceived, type TxIntent } from "@yieldshield/core";
 import { AmountInput } from "@/components/AmountInput";
 import { Row } from "@/components/Expander";
 import { ArrowLeft } from "@/components/icons";
-import { TransactionError, PendingOverlay, SuccessCard, TransactionReceiptLink } from "@/components/TxFeedback";
+import {
+  TransactionError,
+  PendingOverlay,
+  SuccessCard,
+  TransactionReceiptLink,
+  SubmittedTransactionError,
+} from "@/components/TxFeedback";
 import { Bar, Button, Card, ChainBadge } from "@/components/ui";
 import { formatDuration, formatToken } from "@/lib/format";
 import { useSubmitTx, type SubmitTx } from "@/chain/useSubmitTx";
@@ -59,6 +65,8 @@ export function Underwriter() {
     );
   if (tx.pending)
     return <PendingOverlay step={tx.step} txId={tx.txId} phase={tx.phase} label="Confirming backing action…" />;
+  if (tx.phase === "failed" && tx.txId)
+    return <SubmittedTransactionError error={tx.error} txId={tx.txId} onClose={() => navigate("/positions")} />;
 
   if (loading) return <div className="h-72 animate-pulse rounded-card bg-subtle" />;
   if (loadError)
