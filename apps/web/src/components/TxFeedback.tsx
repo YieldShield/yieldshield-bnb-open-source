@@ -70,6 +70,21 @@ export function TransactionError({ error, txId }: { error: string | null; txId?:
   );
 }
 
+/** Keep the canonical receipt reachable after the temporary confirmation toast disappears. */
+export function TransactionReceiptLink({ txId }: { txId: string | null }) {
+  if (!txId) return null;
+  return (
+    <a
+      href={chain.explorerTxUrl(txId)}
+      target="_blank"
+      rel="noreferrer"
+      className="mt-4 block text-center text-[13px] font-semibold text-brand-deep underline"
+    >
+      View confirmed transaction ↗
+    </a>
+  );
+}
+
 /** Success state with a check pop. `accent` tints the badge (green saver / indigo protector). */
 export function SuccessCard({
   accent = "green",

@@ -5,10 +5,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import { minReceived } from "@yieldshield/core";
 import { Row } from "@/components/Expander";
 import { ShieldIcon } from "@/components/icons";
-import { TransactionError, PendingOverlay, SuccessCard } from "@/components/TxFeedback";
+import { TransactionError, PendingOverlay, SuccessCard, TransactionReceiptLink } from "@/components/TxFeedback";
 import { Button, Card } from "@/components/ui";
 import { formatDate, formatToken } from "@/lib/format";
-import { useSubmitTx } from "@/chain/useSubmitTx";
+import { useSubmitTx, type SubmitTx } from "@/chain/useSubmitTx";
 import { usePositions, type ShieldVM } from "@/data/positions";
 import { VOCAB } from "@/vocab";
 import { actionBlocker } from "@/lib/action-availability";
@@ -16,7 +16,8 @@ import { actionBlocker } from "@/lib/action-availability";
 export function Activate() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [completed, setCompleted] = useState(false);
+  const tx = useSubmitTx();
+  const [completed, setCompleted] = useState<string | null>(null);
   const { loading, error: loadError, shield } = usePositions();
   const position = shield.find((p) => p.id === id);
 
@@ -26,11 +27,14 @@ export function Activate() {
         <SuccessCard title="Test-token exit confirmed.">
           Check the confirmed receipt and your wallet for the exact amount received.
         </SuccessCard>
+        <TransactionReceiptLink txId={completed} />
         <Button variant="ink" full className="mt-5" onClick={() => navigate("/positions")}>
           Done
         </Button>
       </>
     );
+  if (tx.pending)
+    return <PendingOverlay step={tx.step} txId={tx.txId} phase={tx.phase} label="Confirming backing-token exit…" />;
   if (loading) return <div className="h-72 animate-pulse rounded-card bg-subtle" />;
   if (loadError)
     return (
@@ -44,12 +48,20 @@ export function Activate() {
         <p className="text-body">This position isn't available.</p>
       </Card>
     );
-  return <ActivatePanel p={position} onClose={() => navigate(-1)} onDone={() => setCompleted(true)} />;
+  return <ActivatePanel p={position} tx={tx} onClose={() => navigate(-1)} onDone={setCompleted} />;
 }
 
-function ActivatePanel({ p, onClose, onDone }: { p: ShieldVM; onClose: () => void; onDone: () => void }) {
-  const tx = useSubmitTx();
-
+function ActivatePanel({
+  p,
+  tx,
+  onClose,
+  onDone,
+}: {
+  p: ShieldVM;
+  tx: SubmitTx;
+  onClose: () => void;
+  onDone: (txId: string) => void;
+}) {
   const backing = p.view!.backing;
   const shielded = p.view!.shielded;
 
@@ -98,16 +110,12 @@ function ActivatePanel({ p, onClose, onDone }: { p: ShieldVM; onClose: () => voi
       position: p.id,
       minOut,
     });
-    if (res) onDone();
+    if (res) onDone(res.txId);
   }
 
   return (
     <div className="md:fixed md:inset-0 md:z-40 md:flex md:items-center md:justify-center md:bg-green/15 md:p-4 md:backdrop-blur-sm">
       <div className="animate-fade-up rounded-hero bg-green-tint-2 p-6 md:w-full md:max-w-[440px] md:p-8 md:shadow-modal">
-        {tx.pending && (
-          <PendingOverlay step={tx.step} txId={tx.txId} phase={tx.phase} label="Confirming backing-token exit…" />
-        )}
-
         <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-pill bg-green-tint text-green-dark">
           <ShieldIcon className="h-7 w-7" />
         </div>
