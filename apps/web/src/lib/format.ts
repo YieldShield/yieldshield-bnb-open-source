@@ -7,11 +7,15 @@ export function formatAmount(raw: bigint, decimals: number, maxFrac = 2): string
   const [whole, frac = ""] = full.split(".");
   const groupedWhole = Number(whole).toLocaleString("en-US");
   const trimmed = frac.slice(0, maxFrac).replace(/0+$/, "");
+  if (raw !== 0n && (whole === "0" || whole === "-0") && !trimmed) {
+    const threshold = maxFrac === 0 ? "1" : `0.${"0".repeat(maxFrac - 1)}1`;
+    return raw > 0n ? `<${threshold}` : `>-${threshold}`;
+  }
   return trimmed ? `${groupedWhole}.${trimmed}` : groupedWhole;
 }
 
 /** Format a token amount with its symbol (e.g. "1,200 USDC"). */
-export function formatToken(raw: bigint, decimals: number, symbol: string, maxFrac = 2): string {
+export function formatToken(raw: bigint, decimals: number, symbol: string, maxFrac = Math.min(decimals, 6)): string {
   return `${formatAmount(raw, decimals, maxFrac)} ${symbol}`;
 }
 
@@ -80,7 +84,7 @@ export function formatDuration(seconds: bigint): string {
 /** Cubic-ease-out count-up that animates a number from 0 → target on mount/change (~850ms). */
 export function useCountUp(target: number, durationMs = 850): number {
   const [value, setValue] = useState(0);
-  const frame = useRef<number>();
+  const frame = useRef<number | undefined>(undefined);
   const from = useRef(0);
   useEffect(() => {
     const start = performance.now();
