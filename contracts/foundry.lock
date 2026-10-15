@@ -3,7 +3,7 @@
     "rev": "f3dae6e6ee381f25eb6a246f7da9b85c91a68219"
   },
   "lib/openzeppelin-contracts": {
-    "rev": "40a51f7e78852e48d0b128d4ee3d620cbc7d35d8"
+    "rev": "b0c7bd5a09152a635687070648bdb28571812194"
   },
   "lib/openzeppelin-contracts-upgradeable": {
     "rev": "6c0ddb3163f008313df2faac3340ab059d4f452c"
