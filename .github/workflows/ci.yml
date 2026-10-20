@@ -18,6 +18,8 @@ jobs:
       - run: npm ci
       - name: Verify React runtime and renderer compatibility
         run: node --test scripts/react-runtime.test.mjs
+      - name: Regenerate SDK clients before compiling consumers
+        run: npm run codegen
       - run: npm run build
       - run: npm run test:web
       - run: npm run test:bnb
