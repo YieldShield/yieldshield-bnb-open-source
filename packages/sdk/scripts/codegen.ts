@@ -61,7 +61,6 @@ function vendorIdl(idlFile: string): AnchorIdl {
 
 async function render(idl: AnchorIdl, clientDir: string): Promise<void> {
   const out = resolve(GENERATED_DIR, clientDir);
-  rmSync(out, { recursive: true, force: true });
 
   // renderers-js scaffolds a sub-package: <scaffold>/{package.json, src/generated/**}.
   // We render into a scaffold dir, then flatten the real client (src/generated/**) up to `out`
@@ -75,6 +74,8 @@ async function render(idl: AnchorIdl, clientDir: string): Promise<void> {
   if (!existsSync(rendered)) {
     throw new Error(`expected rendered client at ${rendered} — renderer layout changed?`);
   }
+  // Keep the last usable client intact if rendering fails.
+  rmSync(out, { recursive: true, force: true });
   cpSync(rendered, out, { recursive: true });
   rmSync(scaffold, { recursive: true, force: true });
   console.log(`  rendered src/generated/${clientDir}/`);
