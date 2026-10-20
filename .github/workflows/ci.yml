@@ -16,6 +16,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - name: Verify React runtime and renderer compatibility
+        run: node --test scripts/react-runtime.test.mjs
       - run: npm run build
       - run: npm run test:web
       - run: npm run test:bnb
