@@ -34,7 +34,7 @@
   },
   "devDependencies": {
     "@codama/nodes-from-anchor": "^1.5.1",
-    "@codama/renderers-js": "^2.5.0",
+    "@codama/renderers-js": "^2.8.0",
     "@types/node": "^26.6.5",
     "codama": "^1.11.0",
     "tsx": "^4.23.15",
