@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.11",
-    "@wagmi/core": "^3.6.5",
+    "@wagmi/core": "^3.6.7",
     "@yieldshield/core": "*",
     "viem": "^2.57.10",
     "wagmi": "^3.7.7"
