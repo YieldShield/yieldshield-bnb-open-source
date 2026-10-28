@@ -67,8 +67,12 @@ export {
   fetchOracleConfig,
 };
 
-/** Minimal RPC shape the generated fetchers need (a subset of a kit RPC client). */
-export type RpcLike = Parameters<typeof fetchPool>[0];
+/**
+ * Minimal RPC shape the generated fetchers need (a subset of a kit RPC client). Since
+ * @codama/renderers-js 2.8 the fetchers also accept a client wrapping the RPC; keep the plain
+ * RPC member, because the helpers here call its methods directly.
+ */
+export type RpcLike = Extract<Parameters<typeof fetchPool>[0], { getAccountInfo: unknown }>;
 
 /** Assert a fetched account is owned by the expected program (untrusted-RPC guard). */
 export function assertOwner<T extends { programAddress: Address }>(account: T, expected: Address): T {
