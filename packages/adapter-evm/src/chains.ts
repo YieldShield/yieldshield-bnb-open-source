@@ -1,10 +1,14 @@
 import { base, baseSepolia, bsc, bscTestnet as viemBscTestnet } from "viem/chains";
 export { base, baseSepolia, bsc };
-import { defineChain } from "viem";
+import { defineChain, type Chain, type ChainContract } from "viem";
+
+// viem >= 2.57.10 infers a ChainTransactionReplacement type it doesn't export, so declaration
+// emit can't name the inferred chain types (TS2883). Annotate with exported types instead.
+type DefinedChain<id extends number> = Chain & { id: id; contracts: { multicall3: ChainContract } };
 
 // Current official BSC RPC list: https://docs.bnbchain.org/bnb-smart-chain/developers/json_rpc/json-rpc-endpoint/
 // Share this endpoint between application reads and wallet network-registration metadata.
-export const bscTestnet = defineChain({
+export const bscTestnet: DefinedChain<97> = defineChain({
   ...viemBscTestnet,
   rpcUrls: {
     ...viemBscTestnet.rpcUrls,
@@ -16,7 +20,7 @@ export const bscTestnet = defineChain({
 const multicall3 = { address: "0xcA11bde05977b3631167028862bE2a173976CA11" } as const;
 
 /** Robinhood Chain mainnet (L2). */
-export const robinhood = defineChain({
+export const robinhood: DefinedChain<4663> = defineChain({
   id: 4663,
   contracts: { multicall3 },
   name: "Robinhood Chain",
@@ -38,7 +42,7 @@ export const robinhood = defineChain({
 });
 
 /** Robinhood Chain testnet — the seeded YieldShield deployment lives here (see deployments.ts). */
-export const robinhoodTestnet = defineChain({
+export const robinhoodTestnet: DefinedChain<46630> = defineChain({
   id: 46630,
   contracts: { multicall3 },
   name: "Robinhood Chain Testnet",
@@ -59,5 +63,12 @@ export const robinhoodTestnet = defineChain({
   testnet: true,
 });
 
-export const evmChains = { base, baseSepolia, bsc, bscTestnet, robinhood, robinhoodTestnet } as const;
+export const evmChains: {
+  readonly base: typeof base;
+  readonly baseSepolia: typeof baseSepolia;
+  readonly bsc: typeof bsc;
+  readonly bscTestnet: typeof bscTestnet;
+  readonly robinhood: typeof robinhood;
+  readonly robinhoodTestnet: typeof robinhoodTestnet;
+} = { base, baseSepolia, bsc, bscTestnet, robinhood, robinhoodTestnet };
 export type EvmChainName = keyof typeof evmChains;

@@ -45,11 +45,19 @@
   "dependencies": {
     "@pythnetwork/hermes-client": "^3.1.0",
     "@pythnetwork/pyth-sdk-solidity": "4.3.1",
-    "dotenv": "~18.0.8",
+    "dotenv": "~18.0.9",
     "ethers": "^6.17.0",
     "prettier": "~3.9.10",
     "qrcode": "~1.5.3",
     "toml": "~5.0.1"
   },
-  "devDependencies": {}
+  "devDependencies": {},
+  "overrides": {
+    "@pythnetwork/hermes-client": {
+      "zod": "^4.6.6"
+    },
+    "@zodios/core": {
+      "zod": "^4.6.6"
+    }
+  }
 }
