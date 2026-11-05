@@ -17,7 +17,6 @@
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "@chain-impl": ["./src/chain/impl.solana.tsx"]
