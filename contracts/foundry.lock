@@ -3,10 +3,10 @@
     "rev": "f3dae6e6ee381f25eb6a246f7da9b85c91a68219"
   },
   "lib/openzeppelin-contracts": {
-    "rev": "598d3905a6f4ebe68a52c79d461bedb7246fa187"
+    "rev": "5b76c00f07dcf0fc480b92938c34e23c952912c8"
   },
   "lib/openzeppelin-contracts-upgradeable": {
-    "rev": "1717bdd8e6b75a1fa82abb99dbdc29e08b013c59"
+    "rev": "ce38bf158fa761281345d5c78e0956cfa2e32522"
   },
   "lib/solidity-bytes-utils": {
     "tag": {
