@@ -41,10 +41,10 @@
     "verify:bsc:yield:faucet": "node scripts/bsc-yield-faucet-check.mjs --check"
   },
   "dependencies": {
-    "@solana-program/token": "^0.17.0",
+    "@solana-program/token": "^0.18.0",
     "@solana-program/token-2022": "^0.20.0",
     "@solana/kit": "^8.5.0",
-    "viem": "^2.57.10"
+    "viem": "^2.57.14"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -52,8 +52,11 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.13.0",
     "prettier": "^3.9.8",
-    "typescript-eslint": "^8.72.0",
+    "typescript-eslint": "^8.72.1",
     "vite": "^8.3.4",
-    "vitest": "^5.0.3"
+    "vitest": "^5.0.5"
+  },
+  "overrides": {
+    "minimatch": "^11.0.1"
   }
 }
