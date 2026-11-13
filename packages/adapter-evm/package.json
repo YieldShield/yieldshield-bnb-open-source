@@ -26,7 +26,7 @@
     "@tanstack/react-query": "^5.90.11",
     "@wagmi/core": "^3.6.7",
     "@yieldshield/core": "*",
-    "viem": "^2.57.14",
+    "viem": "^2.57.17",
     "wagmi": "^3.7.7"
   },
   "peerDependencies": {

@@ -44,7 +44,7 @@
     "@solana-program/token": "^0.18.0",
     "@solana-program/token-2022": "^0.20.0",
     "@solana/kit": "^8.5.0",
-    "viem": "^2.57.14"
+    "viem": "^2.57.17"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
