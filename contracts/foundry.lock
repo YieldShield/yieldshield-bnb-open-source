@@ -6,7 +6,7 @@
     "rev": "5b76c00f07dcf0fc480b92938c34e23c952912c8"
   },
   "lib/openzeppelin-contracts-upgradeable": {
-    "rev": "ce38bf158fa761281345d5c78e0956cfa2e32522"
+    "rev": "64dd3a6334bb83122c9e029929331b18e9f2d172"
   },
   "lib/solidity-bytes-utils": {
     "tag": {
