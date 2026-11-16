@@ -28,7 +28,7 @@
   "dependencies": {
     "@solana-program/system": "^0.15.0",
     "@solana-program/token": "^0.18.0",
-    "@solana/kit": "^8.5.0",
+    "@solana/kit": "^8.6.0",
     "@solana/program-client-core": "^8.6.0",
     "@yieldshield/core": "*"
   },
